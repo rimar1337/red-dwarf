@@ -329,9 +329,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               />
               <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
                 Red Dwarf{" "}
-                <span className="text-gray-500 dark:text-gray-400 text-sm">
+                {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
                   lite
-                </span>
+                </span> */}
               </span>
             </div>
             <div className="flex items-center gap-2">

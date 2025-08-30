@@ -1167,12 +1167,48 @@ import { useAuth } from "~/providers/PassAuthProvider";
 // const agent = new AtpAgent({
 //   service: 'https://public.api.bsky.app'
 // })
+type HitSlopButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  hitSlop?: number;
+};
+
+const HitSlopButtonCustom: React.FC<HitSlopButtonProps> = ({
+  children,
+  hitSlop = 8,
+  style,
+  ...rest
+}) => (
+  <button
+    {...rest}
+    style={{
+      position: "relative",
+      background: "none",
+      border: "none",
+      padding: 0,
+      cursor: "pointer",
+      ...style,
+    }}
+  >
+    {/* Invisible hit slop area */}
+    <span
+      style={{
+        position: "absolute",
+        top: -hitSlop,
+        left: -hitSlop,
+        right: -hitSlop,
+        bottom: -hitSlop,
+      }}
+    />
+    {/* Actual button content stays positioned normally */}
+    <span style={{ position: "relative", zIndex: 1 }}>{children}</span>
+  </button>
+);
 
 const HitSlopButton = ({
   onClick,
   children,
   style = {},
-}: {
+  ...rest
+}: React.HTMLAttributes<HTMLSpanElement> & {
   onClick?: (e: React.MouseEvent) => void;
   children: React.ReactNode;
   style?: React.CSSProperties;
@@ -1201,6 +1237,7 @@ const HitSlopButton = ({
         zIndex: 1,
         pointerEvents: "none",
       }}
+      {...rest}
     >
       {children}
     </span>
@@ -1350,7 +1387,7 @@ function UniversalPostRenderer({
         //boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         position: "relative",
         // dont cursor: "pointer",
-        borderBottomWidth: bottomBorder ? 1 : 0,
+        borderBottomWidth: bottomBorder ? isQuote ? 0 : 1 : 0,
       }}
       className="border-gray-300 dark:border-gray-600"
     >
@@ -1577,7 +1614,7 @@ function UniversalPostRenderer({
           <div
             style={{
               fontSize: 16,
-              marginBottom: 8,
+              marginBottom: (!post.embed && !expanded) ? 0 : 8,
               whiteSpace: "pre-wrap",
               textAlign: "left",
               overflowWrap: "anywhere",
@@ -1799,6 +1836,7 @@ function PostEmbeds({
   salt: string;
   navigate: ({}: any) => void;
 }) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   if (
     AppBskyEmbedRecordWithMedia.isView(embed) &&
     AppBskyEmbedRecord.isViewRecord(embed.record.record) &&
@@ -2000,6 +2038,12 @@ function PostEmbeds({
   if (AppBskyEmbedImages.isView(embed)) {
     const { images } = embed;
 
+    const lightboxImages = images.map((img) => ({
+      src: img.fullsize,
+      alt: img.alt,
+    }));
+
+
     if (images.length > 0) {
       // const items = embed.images.map(img => ({
       //   uri: img.fullsize,
@@ -2030,6 +2074,14 @@ function PostEmbeds({
               }}
               className="border border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-900"
             >
+            {lightboxIndex !== null && (
+              <Lightbox
+                images={lightboxImages}
+                index={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+              />
+            )}
               <img
                 src={image.fullsize}
                 alt={image.alt}
@@ -2038,6 +2090,7 @@ function PostEmbeds({
                   height: "100%",
                   objectFit: "contain", // letterbox or scale to fit
                 }}
+                onClick={(e) => {e.stopPropagation();setLightboxIndex(0)}}
               />
             </div>
           </div>
@@ -2058,6 +2111,14 @@ function PostEmbeds({
             }}
             className="border border-gray-200 dark:border-gray-700"
           >
+            {lightboxIndex !== null && (
+              <Lightbox
+                images={lightboxImages}
+                index={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+              />
+            )}
             {images.map((img, i) => (
               <div
                 key={i}
@@ -2072,6 +2133,7 @@ function PostEmbeds({
                     objectFit: "cover",
                     borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0",
                   }}
+                  onClick={(e) => {e.stopPropagation();setLightboxIndex(i)}}
                 />
               </div>
             ))}
@@ -2095,6 +2157,14 @@ function PostEmbeds({
             }}
             className="border border-gray-200 dark:border-gray-700"
           >
+            {lightboxIndex !== null && (
+              <Lightbox
+                images={lightboxImages}
+                index={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+              />
+            )}
             {/* Left: 1:1 */}
             <div
               style={{ flex: 1, aspectRatio: "1 / 1", position: "relative" }}
@@ -2108,6 +2178,7 @@ function PostEmbeds({
                   objectFit: "cover",
                   borderRadius: "12px 0 0 12px",
                 }}
+                onClick={(e) => {e.stopPropagation();setLightboxIndex(0)}}
               />
             </div>
             {/* Right: two stacked 2:1 */}
@@ -2137,6 +2208,7 @@ function PostEmbeds({
                       objectFit: "cover",
                       borderRadius: i === 1 ? "0 12px 0 0" : "0 0 12px 0",
                     }}
+                    onClick={(e) => {e.stopPropagation();setLightboxIndex(i+1)}}
                   />
                 </div>
               ))}
@@ -2163,6 +2235,14 @@ function PostEmbeds({
             }}
             className="border border-gray-200 dark:border-gray-700"
           >
+            {lightboxIndex !== null && (
+              <Lightbox
+                images={lightboxImages}
+                index={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+              />
+            )}
             {images.map((img, i) => (
               <div
                 key={i}
@@ -2189,6 +2269,7 @@ function PostEmbeds({
                             ? "0 0 0 12px"
                             : "0 0 12px 0",
                   }}
+                  onClick={(e) => {e.stopPropagation();setLightboxIndex(i)}}
                 />
               </div>
             ))}
@@ -2248,6 +2329,66 @@ function PostEmbeds({
 
   return <div />;
 }
+
+import { createPortal } from "react-dom";
+type LightboxProps = {
+  images: { src: string; alt?: string }[];
+  index: number;
+  onClose: () => void;
+  onNavigate?: (newIndex: number) => void;
+};
+export function Lightbox({ images, index, onClose, onNavigate }: LightboxProps) {
+  const image = images[index];
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight" && onNavigate) onNavigate((index + 1) % images.length);
+      if (e.key === "ArrowLeft" && onNavigate) onNavigate((index - 1 + images.length) % images.length);
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [index, images.length, onClose, onNavigate]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      onClick={(e)=>{e.stopPropagation();onClose()}}
+    >
+      <img
+        src={image.src}
+        alt={image.alt}
+        className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate?.((index - 1 + images.length) % images.length);
+            }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width={28} height={28} viewBox="0 0 24 24"><g fill="none" fillRule="evenodd"><path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path><path fill="currentColor" d="M8.293 12.707a1 1 0 0 1 0-1.414l5.657-5.657a1 1 0 1 1 1.414 1.414L10.414 12l4.95 4.95a1 1 0 0 1-1.414 1.414z"></path></g></svg>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate?.((index + 1) % images.length);
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width={28} height={28} viewBox="0 0 24 24"><g fill="none" fillRule="evenodd"><path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path><path fill="currentColor" d="M15.707 11.293a1 1 0 0 1 0 1.414l-5.657 5.657a1 1 0 1 1-1.414-1.414l4.95-4.95l-4.95-4.95a1 1 0 0 1 1.414-1.414z"></path></g></svg>
+          </button>
+        </>
+      )}
+    </div>,
+    document.body
+  );
+}
+
 function getDomain(url: string) {
   try {
     const { hostname } = new URL(url);
