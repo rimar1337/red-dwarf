@@ -14,6 +14,10 @@ export interface UniversalPostRendererATURILoaderProps {
   atUri: string;
   onConstellation?: (data: any) => void;
   detailed?: boolean;
+  bottomReplyLine?: boolean;
+  topReplyLine?: boolean;
+  bottomBorder?:boolean;
+  feedviewpost?:boolean;
 }
 
 export async function cachedGetRecord({
@@ -113,6 +117,10 @@ export function UniversalPostRendererATURILoader({
   atUri,
   onConstellation,
   detailed = false,
+  bottomReplyLine,
+  topReplyLine,
+  bottomBorder= true,
+  feedviewpost = false,
 }: UniversalPostRendererATURILoaderProps) {
   console.log("atUri", atUri);
   const { get, set } = usePersistentStore();
@@ -359,6 +367,10 @@ export function UniversalPostRendererATURILoader({
       likesCount={likes}
       repostsCount={reposts}
       repliesCount={replies}
+      bottomReplyLine={bottomReplyLine}
+      topReplyLine={topReplyLine}
+      bottomBorder={bottomBorder}
+      feedviewpost={feedviewpost}
     />
   );
 }
@@ -372,6 +384,10 @@ export function UniversalPostRendererRawRecordShim({
   repostsCount,
   repliesCount,
   detailed = false,
+  bottomReplyLine = false,
+  topReplyLine = false,
+  bottomBorder= true,
+  feedviewpost= false,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -381,6 +397,10 @@ export function UniversalPostRendererRawRecordShim({
   repostsCount?: number | null;
   repliesCount?: number | null;
   detailed?: boolean;
+  bottomReplyLine?: boolean;
+  topReplyLine?: boolean;
+  bottomBorder?: boolean;
+  feedviewpost?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -458,6 +478,70 @@ export function UniversalPostRendererRawRecordShim({
 
   const parsedaturi = parseAtUri(aturi);
 
+  const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(() => ({
+    $type: "app.bsky.feed.defs#postView",
+    uri: aturi,
+    cid: postRecord?.cid || "",
+    author: {
+      did: resolved?.did || "",
+      handle: resolved?.handle || "",
+      displayName: profileRecord?.value?.displayName || "",
+      avatar: getAvatarUrl(profileRecord) || "",
+      viewer: undefined,
+      labels: profileRecord?.labels || undefined,
+      verification: undefined,
+    },
+    record: postRecord?.value || {},
+    embed: hydratedEmbed ?? undefined,
+    replyCount: repliesCount ?? 0,
+    repostCount: repostsCount ?? 0,
+    likeCount: likesCount ?? 0,
+    quoteCount: 0,
+    indexedAt: postRecord?.value?.createdAt || "",
+    viewer: undefined,
+    labels: postRecord?.labels || undefined,
+    threadgate: undefined,
+  }), [
+    aturi,
+    postRecord,
+    profileRecord,
+    hydratedEmbed,
+    repliesCount,
+    repostsCount,
+    likesCount,
+    resolved,
+  ]);
+
+  const [feedviewpostreplyhandle, setFeedviewpostreplyhandle] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if(!feedviewpost) return;
+    let cancelled = false;
+
+    const run = async () => {
+      const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent?.uri;
+      const feedviewpostreplydid = thereply ? new AtUri(thereply).host : undefined;
+
+      if (feedviewpostreplydid) {
+        const opi = await cachedResolveIdentity({
+          didOrHandle: feedviewpostreplydid,
+          get,
+          set,
+        });
+
+        if (!cancelled) {
+          setFeedviewpostreplyhandle(opi?.handle);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fakepost, get, set]);
+
   return (
     <>
       {/* <p>
@@ -484,31 +568,13 @@ export function UniversalPostRendererRawRecordShim({
             });
           }
         }}
-        post={{
-          $type: "app.bsky.feed.defs#postView",
-          uri: aturi,
-          cid: postRecord?.cid || "",
-          author: {
-            did: resolved?.did || "",
-            handle: resolved?.handle || "",
-            displayName: profileRecord?.value?.displayName || "",
-            avatar: getAvatarUrl(profileRecord) || "",
-            viewer: undefined,
-            labels: profileRecord?.labels || undefined,
-            verification: undefined,
-          },
-          record: postRecord?.value || {},
-          embed: hydratedEmbed ?? undefined,
-          replyCount: repliesCount ?? 0,
-          repostCount: repostsCount ?? 0,
-          likeCount: likesCount ?? 0,
-          quoteCount: 0,
-          indexedAt: postRecord?.value?.createdAt || "",
-          viewer: undefined,
-          labels: postRecord?.labels || undefined,
-          threadgate: undefined,
-        }}
+        post={fakepost}
         salt={aturi}
+        bottomReplyLine={bottomReplyLine}
+        topReplyLine={topReplyLine}
+        bottomBorder={bottomBorder}
+        //extraOptionalItemInfo={{reply: postRecord?.value?.reply as AppBskyFeedDefs.ReplyRef, post: fakepost}}
+        feedviewpostreplyhandle={feedviewpostreplyhandle}
       />
     </>
   );
@@ -1071,6 +1137,7 @@ import {
   AppBskyFeedDefs,
   AppBskyFeedPost,
   AppBskyGraphDefs,
+  AtUri,
   //AppBskyLabelerDefs,
   //AtUri,
   //ComAtprotoRepoStrongRef,
@@ -1171,6 +1238,7 @@ function UniversalPostRenderer({
   topReplyLine,
   salt,
   bottomBorder = true,
+  feedviewpostreplyhandle,
 }: {
   post: PostView;
   // optional for now because i havent ported every use to this yet
@@ -1187,6 +1255,7 @@ function UniversalPostRenderer({
   topReplyLine?: boolean;
   salt: string;
   bottomBorder?: boolean;
+  feedviewpostreplyhandle?: string;
 }) {
   const navigate = useNavigate();
   const [hasRetweeted, setHasRetweeted] = useState<Boolean>(
@@ -1319,6 +1388,7 @@ function UniversalPostRenderer({
             //opacity: 0.5,
             // no flex here
           }}
+          className="bg-gray-500 dark:bg-gray-400"
         />
       )}
       <div
@@ -1375,8 +1445,10 @@ function UniversalPostRenderer({
                 //background: theme.textSecondary,
                 opacity: 0.5,
                 // no flex here
+                //color: "Red",
+                //zIndex: 99
               }}
-              className="text-gray-500 dark:text-gray-400"
+              className="bg-gray-500 dark:bg-gray-400"
             />
           )}
           {/* <div
@@ -1482,7 +1554,7 @@ function UniversalPostRenderer({
             </div>
           </div>
           {/* reply indicator */}
-          {false && isReply && (
+          {!!feedviewpostreplyhandle && (
             <div
               style={{
                 display: "flex",
@@ -1494,12 +1566,12 @@ function UniversalPostRenderer({
                 gap: 4,
                 alignItems: "center",
                 //marginLeft: 36,
-                height: !(expanded || isQuote) && isReply ? "1rem" : 0,
-                opacity: !(expanded || isQuote) && isReply ? 1 : 0,
+                height: !(expanded || isQuote) && !!feedviewpostreplyhandle ? "1rem" : 0,
+                opacity: !(expanded || isQuote) && !!feedviewpostreplyhandle ? 1 : 0,
               }}
               className="text-gray-500 dark:text-gray-400"
             >
-              <MdiReply /> Reply to some other post lmao
+              <MdiReply /> Reply to {feedviewpostreplyhandle}
             </div>
           )}
           <div

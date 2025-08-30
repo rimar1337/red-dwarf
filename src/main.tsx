@@ -31,9 +31,9 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     // double queries annoys me
-    //<StrictMode>
-    <RouterProvider router={router} />,
-    //</StrictMode>,
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>
   );
 }
 

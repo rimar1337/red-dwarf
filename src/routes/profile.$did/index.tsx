@@ -404,6 +404,7 @@ function ProfileComponent() {
                 <UniversalPostRendererATURILoader
                   key={post.uri}
                   atUri={post.uri}
+                  feedviewpost={true}
                 />
               );
             })}

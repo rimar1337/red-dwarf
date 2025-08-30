@@ -176,9 +176,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <img src="/redstar.png" alt="Red Dwarf Logo" className="w-8 h-8" />
             <span className="font-extrabold text-2xl tracking-tight text-gray-900 dark:text-gray-100">
               Red Dwarf{" "}
-              <span className="text-gray-500 dark:text-gray-400 text-sm">
+              {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
                 lite
-              </span>
+              </span> */}
             </span>
           </div>
           <Link
@@ -277,6 +277,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </button>
           <div className="flex-1"></div>
           <a
+            href="https://tangled.sh/@whey.party/red-dwarf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 text-xs text-gray-400 dark:text-gray-500 text-center hover:underline"
+          >
+            git repo
+          </a>
+          <a
             href="https://whey.party/"
             target="_blank"
             rel="noopener noreferrer"
@@ -339,10 +347,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1"></div>
           <p className="text-xs text-gray-400 dark:text-gray-500 text-justify mx-4 mb-4">
-            Red Dwarf lite is a bluesky client that uses Constellation and
-            direct PDS queries. Red Dwarf (without the lite) would be a
-            self-hosted bluesky "instance". Stay tuned for the "without the
-            lite" version.
+            Red Dwarf is a bluesky client that uses Constellation and
+            direct PDS queries. Skylite would be a
+            self-hosted bluesky "instance". Stay tuned for the release of Skylite.
           </p>
         </aside>
       </div>
