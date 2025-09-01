@@ -546,6 +546,8 @@ export function useInfiniteQueryFeedSkeleton(options: {
     queryFn,
     initialPageParam: undefined as never,
     getNextPageParam: (lastPage) => lastPage.cursor as null | undefined,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
     enabled: !!options.feedUri && (options.isAuthed ? !!options.agent && !!options.pdsUrl && !!options.feedServiceDid : true),
   });
 }
