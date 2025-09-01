@@ -2,6 +2,13 @@ import * as React from "react";
 import { usePersistentStore } from "~/providers/PersistentStoreProvider";
 import { useNavigate } from "@tanstack/react-router";
 import { type SVGProps } from "react";
+import { useHydratedEmbed } from "~/utils/useHydrated";
+import {
+  useQueryPost,
+  useQueryIdentity,
+  useQueryProfile,
+  useQueryConstellation,
+} from "~/utils/useQuery";
 
 function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
   return obj as $Typed<T>;
@@ -16,102 +23,102 @@ export interface UniversalPostRendererATURILoaderProps {
   detailed?: boolean;
   bottomReplyLine?: boolean;
   topReplyLine?: boolean;
-  bottomBorder?:boolean;
-  feedviewpost?:boolean;
+  bottomBorder?: boolean;
+  feedviewpost?: boolean;
 }
 
-export async function cachedGetRecord({
-  atUri,
-  cacheTimeout = CACHE_TIMEOUT,
-  get,
-  set,
-}: {
-  atUri: string;
-  //resolved: { pdsUrl: string; did: string } | null | undefined;
-  cacheTimeout?: number;
-  get: (key: string) => any;
-  set: (key: string, value: string) => void;
-}): Promise<any> {
-  const cacheKey = `record:${atUri}`;
-  const cached = get(cacheKey);
-  const now = Date.now();
-  if (
-    cached &&
-    cached.value &&
-    cached.time &&
-    now - cached.time < cacheTimeout
-  ) {
-    try {
-      return JSON.parse(cached.value);
-    } catch {
-      // fall through to fetch
-    }
-  }
-  const parsed = parseAtUri(atUri);
-  if (!parsed) return null;
-  const resolved = await cachedResolveIdentity({
-    didOrHandle: parsed.did,
-    get,
-    set,
-  });
-  if (!resolved?.pdsUrl || !resolved?.did)
-    throw new Error("Missing resolved PDS info");
+// export async function cachedGetRecord({
+//   atUri,
+//   cacheTimeout = CACHE_TIMEOUT,
+//   get,
+//   set,
+// }: {
+//   atUri: string;
+//   //resolved: { pdsUrl: string; did: string } | null | undefined;
+//   cacheTimeout?: number;
+//   get: (key: string) => any;
+//   set: (key: string, value: string) => void;
+// }): Promise<any> {
+//   const cacheKey = `record:${atUri}`;
+//   const cached = get(cacheKey);
+//   const now = Date.now();
+//   if (
+//     cached &&
+//     cached.value &&
+//     cached.time &&
+//     now - cached.time < cacheTimeout
+//   ) {
+//     try {
+//       return JSON.parse(cached.value);
+//     } catch {
+//       // fall through to fetch
+//     }
+//   }
+//   const parsed = parseAtUri(atUri);
+//   if (!parsed) return null;
+//   const resolved = await cachedResolveIdentity({
+//     didOrHandle: parsed.did,
+//     get,
+//     set,
+//   });
+//   if (!resolved?.pdsUrl || !resolved?.did)
+//     throw new Error("Missing resolved PDS info");
 
-  if (!parsed) throw new Error("Invalid atUri");
-  const { collection, rkey } = parsed;
-  const url = `${
-    resolved.pdsUrl
-  }/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(
-    resolved.did,
-  )}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(
-    rkey,
-  )}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch base record");
-  const data = await res.json();
-  set(cacheKey, JSON.stringify(data));
-  return data;
-}
+//   if (!parsed) throw new Error("Invalid atUri");
+//   const { collection, rkey } = parsed;
+//   const url = `${
+//     resolved.pdsUrl
+//   }/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(
+//     resolved.did,
+//   )}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(
+//     rkey,
+//   )}`;
+//   const res = await fetch(url);
+//   if (!res.ok) throw new Error("Failed to fetch base record");
+//   const data = await res.json();
+//   set(cacheKey, JSON.stringify(data));
+//   return data;
+// }
 
-export async function cachedResolveIdentity({
-  didOrHandle,
-  cacheTimeout = HANDLE_DID_CACHE_TIMEOUT,
-  get,
-  set,
-}: {
-  didOrHandle: string;
-  cacheTimeout?: number;
-  get: (key: string) => any;
-  set: (key: string, value: string) => void;
-}): Promise<any> {
-  const isDidInput = didOrHandle.startsWith("did:");
-  const cacheKey = `handleDid:${didOrHandle}`;
-  const now = Date.now();
-  const cached = get(cacheKey);
-  if (
-    cached &&
-    cached.value &&
-    cached.time &&
-    now - cached.time < cacheTimeout
-  ) {
-    try {
-      return JSON.parse(cached.value);
-    } catch {}
-  }
-  const url = `https://free-fly-24.deno.dev/?${
-    isDidInput
-      ? `did=${encodeURIComponent(didOrHandle)}`
-      : `handle=${encodeURIComponent(didOrHandle)}`
-  }`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to resolve handle/did");
-  const data = await res.json();
-  set(cacheKey, JSON.stringify(data));
-  if (!isDidInput && data.did) {
-    set(`handleDid:${data.did}`, JSON.stringify(data));
-  }
-  return data;
-}
+// export async function cachedResolveIdentity({
+//   didOrHandle,
+//   cacheTimeout = HANDLE_DID_CACHE_TIMEOUT,
+//   get,
+//   set,
+// }: {
+//   didOrHandle: string;
+//   cacheTimeout?: number;
+//   get: (key: string) => any;
+//   set: (key: string, value: string) => void;
+// }): Promise<any> {
+//   const isDidInput = didOrHandle.startsWith("did:");
+//   const cacheKey = `handleDid:${didOrHandle}`;
+//   const now = Date.now();
+//   const cached = get(cacheKey);
+//   if (
+//     cached &&
+//     cached.value &&
+//     cached.time &&
+//     now - cached.time < cacheTimeout
+//   ) {
+//     try {
+//       return JSON.parse(cached.value);
+//     } catch {}
+//   }
+//   const url = `https://free-fly-24.deno.dev/?${
+//     isDidInput
+//       ? `did=${encodeURIComponent(didOrHandle)}`
+//       : `handle=${encodeURIComponent(didOrHandle)}`
+//   }`;
+//   const res = await fetch(url);
+//   if (!res.ok) throw new Error("Failed to resolve handle/did");
+//   const data = await res.json();
+//   set(cacheKey, JSON.stringify(data));
+//   if (!isDidInput && data.did) {
+//     set(`handleDid:${data.did}`, JSON.stringify(data));
+//   }
+//   return data;
+// }
 
 export function UniversalPostRendererATURILoader({
   atUri,
@@ -119,17 +126,17 @@ export function UniversalPostRendererATURILoader({
   detailed = false,
   bottomReplyLine,
   topReplyLine,
-  bottomBorder= true,
+  bottomBorder = true,
   feedviewpost = false,
 }: UniversalPostRendererATURILoaderProps) {
   console.log("atUri", atUri);
-  const { get, set } = usePersistentStore();
-  const [record, setRecord] = React.useState<any>(null);
-  const [links, setLinks] = React.useState<any>(null);
+  //const { get, set } = usePersistentStore();
+  //const [record, setRecord] = React.useState<any>(null);
+  //const [links, setLinks] = React.useState<any>(null);
   //const [error, setError] = React.useState<string | null>(null);
   //const [cacheTime, setCacheTime] = React.useState<number | null>(null);
-  const [resolved, setResolved] = React.useState<any>(null); // { did, pdsUrl, bskyPds, handle }
-  const [opProfile, setOpProfile] = React.useState<any>(null);
+  //const [resolved, setResolved] = React.useState<any>(null); // { did, pdsUrl, bskyPds, handle }
+  //const [opProfile, setOpProfile] = React.useState<any>(null);
   // const [opProfileCacheTime, setOpProfileCacheTime] = React.useState<
   //   number | null
   // >(null);
@@ -141,177 +148,195 @@ export function UniversalPostRendererATURILoader({
   console.log("did", did);
   console.log("rkey", rkey);
 
-  React.useEffect(() => {
-    const checkCache = async () => {
-      const postUri = atUri;
-      const cacheKey = `record:${postUri}`;
-      const cached = await get(cacheKey);
-      const now = Date.now();
-      console.log(
-        "UniversalPostRenderer checking cache for",
-        cacheKey,
-        "cached:",
-        !!cached,
-      );
-      if (
-        cached &&
-        cached.value &&
-        cached.time &&
-        now - cached.time < CACHE_TIMEOUT
-      ) {
-        try {
-          console.log("UniversalPostRenderer found cached data for", cacheKey);
-          setRecord(JSON.parse(cached.value));
-        } catch {
-          setRecord(null);
-        }
-      }
-    };
-    checkCache();
-  }, [atUri, get]);
+  // React.useEffect(() => {
+  //   const checkCache = async () => {
+  //     const postUri = atUri;
+  //     const cacheKey = `record:${postUri}`;
+  //     const cached = await get(cacheKey);
+  //     const now = Date.now();
+  //     console.log(
+  //       "UniversalPostRenderer checking cache for",
+  //       cacheKey,
+  //       "cached:",
+  //       !!cached,
+  //     );
+  //     if (
+  //       cached &&
+  //       cached.value &&
+  //       cached.time &&
+  //       now - cached.time < CACHE_TIMEOUT
+  //     ) {
+  //       try {
+  //         console.log("UniversalPostRenderer found cached data for", cacheKey);
+  //         setRecord(JSON.parse(cached.value));
+  //       } catch {
+  //         setRecord(null);
+  //       }
+  //     }
+  //   };
+  //   checkCache();
+  // }, [atUri, get]);
 
-  React.useEffect(() => {
-    if (!did || record) return;
-    (async () => {
-      try {
-        const resolvedData = await cachedResolveIdentity({
-          didOrHandle: did,
-          get,
-          set,
-        });
-        setResolved(resolvedData);
-      } catch (e: any) {
-        //setError("Failed to resolve handle/did: " + e?.message);
-      }
-    })();
-  }, [did, get, set, record]);
+  const {
+    data: postQuery,
+    isLoading: isPostLoading,
+    isError: isPostError,
+  } = useQueryPost(atUri);
+  //const record = postQuery?.value;
 
-  React.useEffect(() => {
-    if (!resolved || !resolved.pdsUrl || !resolved.did || !rkey || record)
-      return;
-    let ignore = false;
-    (async () => {
-      try {
-        const data = await cachedGetRecord({
-          atUri,
-          get,
-          set,
-        });
-        if (!ignore) setRecord(data);
-      } catch (e: any) {
-        //if (!ignore) setError("Failed to fetch base record: " + e?.message);
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [resolved, rkey, atUri, record]);
+  // React.useEffect(() => {
+  //   if (!did || record) return;
+  //   (async () => {
+  //     try {
+  //       const resolvedData = await cachedResolveIdentity({
+  //         didOrHandle: did,
+  //         get,
+  //         set,
+  //       });
+  //       setResolved(resolvedData);
+  //     } catch (e: any) {
+  //       //setError("Failed to resolve handle/did: " + e?.message);
+  //     }
+  //   })();
+  // }, [did, get, set, record]);
 
-  React.useEffect(() => {
-    if (!resolved || !resolved.did || !rkey) return;
-    const fetchLinks = async () => {
-      const postUri = atUri;
-      const cacheKey = `constellation:${postUri}`;
-      const cached = await get(cacheKey);
-      const now = Date.now();
-      if (
-        cached &&
-        cached.value &&
-        cached.time &&
-        now - cached.time < CACHE_TIMEOUT
-      ) {
-        try {
-          const data = JSON.parse(cached.value);
-          setLinks(data);
-          if (onConstellation) onConstellation(data);
-        } catch {
-          setLinks(null);
-        }
-        //setCacheTime(cached.time);
-        return;
-      }
-      try {
-        const url = `https://constellation.microcosm.blue/links/all?target=${encodeURIComponent(
-          atUri,
-        )}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch constellation links");
-        const data = await res.json();
-        setLinks(data);
-        //setCacheTime(now);
-        set(cacheKey, JSON.stringify(data));
-        if (onConstellation) onConstellation(data);
-      } catch (e: any) {
-        //setError("Failed to fetch constellation links: " + e?.message);
-      }
-    };
-    fetchLinks();
-  }, [resolved, rkey, get, set, atUri, onConstellation]);
+  const { data: resolved } = useQueryIdentity(did || "");
 
-  React.useEffect(() => {
-    if (!record || !resolved || !resolved.did) return;
-    const fetchOpProfile = async () => {
-      const opDid = resolved.did;
-      const postUri = atUri;
-      const cacheKey = `profile:${postUri}`;
-      const cached = await get(cacheKey);
-      const now = Date.now();
-      if (
-        cached &&
-        cached.value &&
-        cached.time &&
-        now - cached.time < CACHE_TIMEOUT
-      ) {
-        try {
-          setOpProfile(JSON.parse(cached.value));
-        } catch {
-          setOpProfile(null);
-        }
-        //setOpProfileCacheTime(cached.time);
-        return;
-      }
-      try {
-        let opResolvedRaw = await get(`handleDid:${opDid}`);
-        let opResolved: any = null;
-        if (
-          opResolvedRaw &&
-          opResolvedRaw.value &&
-          opResolvedRaw.time &&
-          now - opResolvedRaw.time < HANDLE_DID_CACHE_TIMEOUT
-        ) {
-          try {
-            opResolved = JSON.parse(opResolvedRaw.value);
-          } catch {
-            opResolved = null;
-          }
-        } else {
-          const url = `https://free-fly-24.deno.dev/?did=${encodeURIComponent(
-            opDid,
-          )}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error("Failed to resolve OP did");
-          opResolved = await res.json();
-          set(`handleDid:${opDid}`, JSON.stringify(opResolved));
-        }
-        if (!opResolved || !opResolved.pdsUrl)
-          throw new Error("OP did resolution failed or missing pdsUrl");
-        const profileUrl = `${
-          opResolved.pdsUrl
-        }/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(
-          opDid,
-        )}&collection=app.bsky.actor.profile&rkey=self`;
-        const profileRes = await fetch(profileUrl);
-        if (!profileRes.ok) throw new Error("Failed to fetch OP profile");
-        const profileData = await profileRes.json();
-        setOpProfile(profileData);
-        //setOpProfileCacheTime(now);
-        set(cacheKey, JSON.stringify(profileData));
-      } catch (e: any) {
-        //setError("Failed to fetch OP profile: " + e?.message);
-      }
-    };
-    fetchOpProfile();
-  }, [record, get, set, rkey, resolved, atUri]);
+  // React.useEffect(() => {
+  //   if (!resolved || !resolved.pdsUrl || !resolved.did || !rkey || record)
+  //     return;
+  //   let ignore = false;
+  //   (async () => {
+  //     try {
+  //       const data = await cachedGetRecord({
+  //         atUri,
+  //         get,
+  //         set,
+  //       });
+  //       if (!ignore) setRecord(data);
+  //     } catch (e: any) {
+  //       //if (!ignore) setError("Failed to fetch base record: " + e?.message);
+  //     }
+  //   })();
+  //   return () => {
+  //     ignore = true;
+  //   };
+  // }, [resolved, rkey, atUri, record]);
+
+  // React.useEffect(() => {
+  //   if (!resolved || !resolved.did || !rkey) return;
+  //   const fetchLinks = async () => {
+  //     const postUri = atUri;
+  //     const cacheKey = `constellation:${postUri}`;
+  //     const cached = await get(cacheKey);
+  //     const now = Date.now();
+  //     if (
+  //       cached &&
+  //       cached.value &&
+  //       cached.time &&
+  //       now - cached.time < CACHE_TIMEOUT
+  //     ) {
+  //       try {
+  //         const data = JSON.parse(cached.value);
+  //         setLinks(data);
+  //         if (onConstellation) onConstellation(data);
+  //       } catch {
+  //         setLinks(null);
+  //       }
+  //       //setCacheTime(cached.time);
+  //       return;
+  //     }
+  //     try {
+  //       const url = `https://constellation.microcosm.blue/links/all?target=${encodeURIComponent(
+  //         atUri,
+  //       )}`;
+  //       const res = await fetch(url);
+  //       if (!res.ok) throw new Error("Failed to fetch constellation links");
+  //       const data = await res.json();
+  //       setLinks(data);
+  //       //setCacheTime(now);
+  //       set(cacheKey, JSON.stringify(data));
+  //       if (onConstellation) onConstellation(data);
+  //     } catch (e: any) {
+  //       //setError("Failed to fetch constellation links: " + e?.message);
+  //     }
+  //   };
+  //   fetchLinks();
+  // }, [resolved, rkey, get, set, atUri, onConstellation]);
+
+  const { data: links } = useQueryConstellation({
+    method: "/links/all",
+    target: atUri,
+  });
+
+  // React.useEffect(() => {
+  //   if (!record || !resolved || !resolved.did) return;
+  //   const fetchOpProfile = async () => {
+  //     const opDid = resolved.did;
+  //     const postUri = atUri;
+  //     const cacheKey = `profile:${postUri}`;
+  //     const cached = await get(cacheKey);
+  //     const now = Date.now();
+  //     if (
+  //       cached &&
+  //       cached.value &&
+  //       cached.time &&
+  //       now - cached.time < CACHE_TIMEOUT
+  //     ) {
+  //       try {
+  //         setOpProfile(JSON.parse(cached.value));
+  //       } catch {
+  //         setOpProfile(null);
+  //       }
+  //       //setOpProfileCacheTime(cached.time);
+  //       return;
+  //     }
+  //     try {
+  //       let opResolvedRaw = await get(`handleDid:${opDid}`);
+  //       let opResolved: any = null;
+  //       if (
+  //         opResolvedRaw &&
+  //         opResolvedRaw.value &&
+  //         opResolvedRaw.time &&
+  //         now - opResolvedRaw.time < HANDLE_DID_CACHE_TIMEOUT
+  //       ) {
+  //         try {
+  //           opResolved = JSON.parse(opResolvedRaw.value);
+  //         } catch {
+  //           opResolved = null;
+  //         }
+  //       } else {
+  //         const url = `https://free-fly-24.deno.dev/?did=${encodeURIComponent(
+  //           opDid,
+  //         )}`;
+  //         const res = await fetch(url);
+  //         if (!res.ok) throw new Error("Failed to resolve OP did");
+  //         opResolved = await res.json();
+  //         set(`handleDid:${opDid}`, JSON.stringify(opResolved));
+  //       }
+  //       if (!opResolved || !opResolved.pdsUrl)
+  //         throw new Error("OP did resolution failed or missing pdsUrl");
+  //       const profileUrl = `${
+  //         opResolved.pdsUrl
+  //       }/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(
+  //         opDid,
+  //       )}&collection=app.bsky.actor.profile&rkey=self`;
+  //       const profileRes = await fetch(profileUrl);
+  //       if (!profileRes.ok) throw new Error("Failed to fetch OP profile");
+  //       const profileData = await profileRes.json();
+  //       setOpProfile(profileData);
+  //       //setOpProfileCacheTime(now);
+  //       set(cacheKey, JSON.stringify(profileData));
+  //     } catch (e: any) {
+  //       //setError("Failed to fetch OP profile: " + e?.message);
+  //     }
+  //   };
+  //   fetchOpProfile();
+  // }, [record, get, set, rkey, resolved, atUri]);
+
+  const { data: opProfile } = useQueryProfile(
+    resolved ? `at://${resolved?.did}/app.bsky.actor.profile/self` : undefined
+  );
 
   // const displayName =
   //   opProfile?.value?.displayName || resolved?.handle || resolved?.did;
@@ -332,18 +357,18 @@ export function UniversalPostRendererATURILoader({
     setLikes(
       links
         ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
-        : null,
+        : null
     );
     setReposts(
       links
         ? links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records || 0
-        : null,
+        : null
     );
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
             ?.records || 0
-        : null,
+        : null
     );
   }, [links]);
 
@@ -360,7 +385,7 @@ export function UniversalPostRendererATURILoader({
   return (
     <UniversalPostRendererRawRecordShim
       detailed={detailed}
-      postRecord={record}
+      postRecord={postQuery}
       profileRecord={opProfile}
       aturi={atUri}
       resolved={resolved}
@@ -386,8 +411,8 @@ export function UniversalPostRendererRawRecordShim({
   detailed = false,
   bottomReplyLine = false,
   topReplyLine = false,
-  bottomBorder= true,
-  feedviewpost= false,
+  bottomBorder = true,
+  feedviewpost = false,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -402,146 +427,162 @@ export function UniversalPostRendererRawRecordShim({
   bottomBorder?: boolean;
   feedviewpost?: boolean;
 }) {
+  console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
 
-  const { get, set } = usePersistentStore();
+  //const { get, set } = usePersistentStore();
   function getAvatarUrl(opProfile: any) {
     const link = opProfile?.value?.avatar?.ref?.["$link"];
     if (!link) return null;
     return `https://cdn.bsky.app/img/avatar/plain/${resolved?.did}/${link}@jpeg`;
   }
 
-  const [hydratedEmbed, setHydratedEmbed] = useState<any>(undefined);
+  // const [hydratedEmbed, setHydratedEmbed] = useState<any>(undefined);
 
-  useEffect(() => {
-    const run = async () => {
-      if (!postRecord?.value?.embed) return;
-      const embed = postRecord?.value?.embed;
-      if (!embed || !embed.$type) {
-        setHydratedEmbed(undefined);
-        return;
-      }
+  // useEffect(() => {
+  //   const run = async () => {
+  //     if (!postRecord?.value?.embed) return;
+  //     const embed = postRecord?.value?.embed;
+  //     if (!embed || !embed.$type) {
+  //       setHydratedEmbed(undefined);
+  //       return;
+  //     }
 
-      try {
-        let result: any;
+  //     try {
+  //       let result: any;
 
-        if (embed?.$type === "app.bsky.embed.recordWithMedia") {
-          const mediaEmbed = embed.media;
+  //       if (embed?.$type === "app.bsky.embed.recordWithMedia") {
+  //         const mediaEmbed = embed.media;
 
-          let hydratedMedia;
-          if (mediaEmbed?.$type === "app.bsky.embed.images") {
-            hydratedMedia = hydrateEmbedImages(mediaEmbed, resolved?.did);
-          } else if (mediaEmbed?.$type === "app.bsky.embed.external") {
-            hydratedMedia = hydrateEmbedExternal(mediaEmbed, resolved?.did);
-          } else if (mediaEmbed?.$type === "app.bsky.embed.video") {
-            hydratedMedia = hydrateEmbedVideo(mediaEmbed, resolved?.did);
-          } else {
-            throw new Error("idiot");
-          }
-          if (!hydratedMedia) throw new Error("idiot");
+  //         let hydratedMedia;
+  //         if (mediaEmbed?.$type === "app.bsky.embed.images") {
+  //           hydratedMedia = hydrateEmbedImages(mediaEmbed, resolved?.did);
+  //         } else if (mediaEmbed?.$type === "app.bsky.embed.external") {
+  //           hydratedMedia = hydrateEmbedExternal(mediaEmbed, resolved?.did);
+  //         } else if (mediaEmbed?.$type === "app.bsky.embed.video") {
+  //           hydratedMedia = hydrateEmbedVideo(mediaEmbed, resolved?.did);
+  //         } else {
+  //           throw new Error("idiot");
+  //         }
+  //         if (!hydratedMedia) throw new Error("idiot");
 
-          // hydrate the outer recordWithMedia now using the hydrated media
-          result = await hydrateEmbedRecordWithMedia(
-            embed,
-            resolved?.did,
-            hydratedMedia,
-            get,
-            set,
-          );
-        } else {
-          const hydrated =
-            embed?.$type === "app.bsky.embed.images"
-              ? hydrateEmbedImages(embed, resolved?.did)
-              : embed?.$type === "app.bsky.embed.external"
-                ? hydrateEmbedExternal(embed, resolved?.did)
-                : embed?.$type === "app.bsky.embed.video"
-                  ? hydrateEmbedVideo(embed, resolved?.did)
-                  : embed?.$type === "app.bsky.embed.record"
-                    ? hydrateEmbedRecord(embed, resolved?.did, get, set)
-                    : undefined;
+  //         // hydrate the outer recordWithMedia now using the hydrated media
+  //         result = await hydrateEmbedRecordWithMedia(
+  //           embed,
+  //           resolved?.did,
+  //           hydratedMedia,
+  //           get,
+  //           set,
+  //         );
+  //       } else {
+  //         const hydrated =
+  //           embed?.$type === "app.bsky.embed.images"
+  //             ? hydrateEmbedImages(embed, resolved?.did)
+  //             : embed?.$type === "app.bsky.embed.external"
+  //               ? hydrateEmbedExternal(embed, resolved?.did)
+  //               : embed?.$type === "app.bsky.embed.video"
+  //                 ? hydrateEmbedVideo(embed, resolved?.did)
+  //                 : embed?.$type === "app.bsky.embed.record"
+  //                   ? hydrateEmbedRecord(embed, resolved?.did, get, set)
+  //                   : undefined;
 
-          result = hydrated instanceof Promise ? await hydrated : hydrated;
-        }
+  //         result = hydrated instanceof Promise ? await hydrated : hydrated;
+  //       }
 
-        console.log(
-          String(result) + " hydrateEmbedRecordWithMedia hey hyeh ye",
-        );
-        setHydratedEmbed(result);
-      } catch (e) {
-        console.error("Error hydrating embed", e);
-        setHydratedEmbed(undefined);
-      }
-    };
+  //       console.log(
+  //         String(result) + " hydrateEmbedRecordWithMedia hey hyeh ye",
+  //       );
+  //       setHydratedEmbed(result);
+  //     } catch (e) {
+  //       console.error("Error hydrating embed", e);
+  //       setHydratedEmbed(undefined);
+  //     }
+  //   };
 
-    run();
-  }, [postRecord, resolved?.did]);
+  //   run();
+  // }, [postRecord, resolved?.did]);
+
+  const {
+    data: hydratedEmbed,
+    isLoading: isEmbedLoading,
+    error: embedError,
+  } = useHydratedEmbed(postRecord?.value?.embed, resolved?.did);
 
   const parsedaturi = parseAtUri(aturi);
 
-  const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(() => ({
-    $type: "app.bsky.feed.defs#postView",
-    uri: aturi,
-    cid: postRecord?.cid || "",
-    author: {
-      did: resolved?.did || "",
-      handle: resolved?.handle || "",
-      displayName: profileRecord?.value?.displayName || "",
-      avatar: getAvatarUrl(profileRecord) || "",
+  const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(
+    () => ({
+      $type: "app.bsky.feed.defs#postView",
+      uri: aturi,
+      cid: postRecord?.cid || "",
+      author: {
+        did: resolved?.did || "",
+        handle: resolved?.handle || "",
+        displayName: profileRecord?.value?.displayName || "",
+        avatar: getAvatarUrl(profileRecord) || "",
+        viewer: undefined,
+        labels: profileRecord?.labels || undefined,
+        verification: undefined,
+      },
+      record: postRecord?.value || {},
+      embed: hydratedEmbed ?? undefined,
+      replyCount: repliesCount ?? 0,
+      repostCount: repostsCount ?? 0,
+      likeCount: likesCount ?? 0,
+      quoteCount: 0,
+      indexedAt: postRecord?.value?.createdAt || "",
       viewer: undefined,
-      labels: profileRecord?.labels || undefined,
-      verification: undefined,
-    },
-    record: postRecord?.value || {},
-    embed: hydratedEmbed ?? undefined,
-    replyCount: repliesCount ?? 0,
-    repostCount: repostsCount ?? 0,
-    likeCount: likesCount ?? 0,
-    quoteCount: 0,
-    indexedAt: postRecord?.value?.createdAt || "",
-    viewer: undefined,
-    labels: postRecord?.labels || undefined,
-    threadgate: undefined,
-  }), [
-    aturi,
-    postRecord,
-    profileRecord,
-    hydratedEmbed,
-    repliesCount,
-    repostsCount,
-    likesCount,
-    resolved,
-  ]);
+      labels: postRecord?.labels || undefined,
+      threadgate: undefined,
+    }),
+    [
+      aturi,
+      postRecord,
+      profileRecord,
+      hydratedEmbed,
+      repliesCount,
+      repostsCount,
+      likesCount,
+      resolved,
+    ]
+  );
 
-  const [feedviewpostreplyhandle, setFeedviewpostreplyhandle] = useState<string | undefined>(undefined);
+  //const [feedviewpostreplyhandle, setFeedviewpostreplyhandle] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    if(!feedviewpost) return;
-    let cancelled = false;
+  // useEffect(() => {
+  //   if(!feedviewpost) return;
+  //   let cancelled = false;
 
-    const run = async () => {
-      const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent?.uri;
-      const feedviewpostreplydid = thereply ? new AtUri(thereply).host : undefined;
+  //   const run = async () => {
+  //     const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent?.uri;
+  //     const feedviewpostreplydid = thereply ? new AtUri(thereply).host : undefined;
 
-      if (feedviewpostreplydid) {
-        const opi = await cachedResolveIdentity({
-          didOrHandle: feedviewpostreplydid,
-          get,
-          set,
-        });
+  //     if (feedviewpostreplydid) {
+  //       const opi = await cachedResolveIdentity({
+  //         didOrHandle: feedviewpostreplydid,
+  //         get,
+  //         set,
+  //       });
 
-        if (!cancelled) {
-          setFeedviewpostreplyhandle(opi?.handle);
-        }
-      }
-    };
+  //       if (!cancelled) {
+  //         setFeedviewpostreplyhandle(opi?.handle);
+  //       }
+  //     }
+  //   };
 
-    run();
+  //   run();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [fakepost, get, set]);
-
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [fakepost, get, set]);
+  const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent
+    ?.uri;
+  const feedviewpostreplydid = thereply ? new AtUri(thereply).host : undefined;
+  const replyhookvalue = useQueryIdentity(
+    feedviewpost ? feedviewpostreplydid : undefined
+  );
+  const feedviewpostreplyhandle = replyhookvalue?.data?.handle;
   return (
     <>
       {/* <p>
@@ -580,269 +621,8 @@ export function UniversalPostRendererRawRecordShim({
   );
 }
 
-function hydrateEmbedImages(
-  embed: any,
-  did: string,
-): $Typed<AppBskyEmbedImages.View> | undefined {
-  if (!embed || embed.$type !== "app.bsky.embed.images") return undefined;
-  if (!Array.isArray(embed.images)) return undefined;
-  return asTyped({
-    $type: "app.bsky.embed.images#view" as const, // <-- literal type
-    images: embed.images
-      .map((img: any) => {
-        const link = img?.image?.ref?.["$link"];
-        if (!link) return null;
-        return {
-          thumb: `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${link}@jpeg`,
-          fullsize: `https://cdn.bsky.app/img/feed_fullsize/plain/${did}/${link}@jpeg`,
-          alt: img.alt || "",
-          aspectRatio: img.aspectRatio,
-        };
-      })
-      .filter(Boolean),
-  });
-}
-
-function hydrateEmbedExternal(
-  /*{embed, did} : {*/ embed: any,
-  did: string, //}
-): $Typed<AppBskyEmbedExternal.View> | undefined {
-  if (!embed || embed.$type !== "app.bsky.embed.external") return undefined;
-  if (!embed.external) return undefined;
-  return asTyped({
-    $type: "app.bsky.embed.external#view" as const,
-    external: {
-      uri: embed.external.uri,
-      title: embed.external.title,
-      description: embed.external.description,
-      thumb: embed?.external?.thumb?.ref?.$link
-        ? `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${embed.external.thumb.ref.$link}@jpeg`
-        : undefined,
-    },
-  });
-}
-
-function hydrateEmbedVideo(
-  embed: any,
-  did: string,
-): $Typed<AppBskyEmbedVideo.View> | undefined {
-  if (!embed || embed.$type !== "app.bsky.embed.video") return undefined;
-  if (!embed.video || !embed.video.ref?.$link) return undefined;
-
-  const videoLink = embed.video.ref.$link;
-
-  return asTyped({
-    $type: "app.bsky.embed.video#view" as const,
-    playlist: `https://video.bsky.app/watch/${did}/${videoLink}/playlist.m3u8`,
-    thumbnail: `https://video.bsky.app/watch/${did}/${videoLink}/thumbnail.jpg`,
-    aspectRatio: embed.aspectRatio,
-    cid: videoLink,
-  });
-}
-async function hydrateEmbedRecordWithMedia(
-  embed: any,
-  did: string,
-  mediaHydratedEmbed:
-    | $Typed<AppBskyEmbedImages.View>
-    | $Typed<AppBskyEmbedVideo.View>
-    | $Typed<AppBskyEmbedExternal.View>
-    | { $type: string },
-  get: (key: string) => any,
-  set: (key: string, value: string) => void,
-): Promise<$Typed<AppBskyEmbedRecordWithMedia.View> | undefined> {
-  //return({"hello": "wow"} as any)
-  console.log("hydrateEmbedRecordWithMedia called!!");
-  if (!embed || embed.$type !== "app.bsky.embed.recordWithMedia")
-    return undefined;
-  console.log("hydrateEmbedRecordWithMedia 1!!");
-  async function deferredrecordget(): Promise<
-    $Typed<AppBskyEmbedRecord.ViewRecord>
-  > {
-    console.log("hydrateEmbedRecordWithMedia 3!!");
-    const quoterr = await cachedGetRecord({
-      atUri: embed.record.record.uri,
-      get,
-      set,
-    });
-    async function defferedQuotedRecordget(): Promise<{
-      [_ in string]: unknown;
-    }> {
-      console.log("hydrateEmbedRecordWithMedia 4!!");
-      return quoterr.value;
-    }
-    async function defferedOPRecordget(): Promise<
-      $Typed<AppBskyActorDefs.ProfileViewBasic>
-    > {
-      const parseduri = parseAtUri(embed.record.record.uri);
-      if (!parseduri) throw new Error("invalid uri");
-      console.log("deep- hydrateEmbedRecordWithMedia " + parseduri.did);
-      const didwhat = parseduri?.did;
-      console.log("hydrateEmbedRecordWithMedia 4.97!!");
-      const opr = await cachedGetRecord({
-        atUri: `at://${didwhat}/app.bsky.actor.profile/self`,
-        get,
-        set,
-      });
-      console.log("hydrateEmbedRecordWithMedia 4.98!! opr:" + opr);
-      const opi = await cachedResolveIdentity({
-        didOrHandle: didwhat,
-        get,
-        set,
-      });
-      console.log("hydrateEmbedRecordWithMedia 4.99!!");
-      console.log("hydrateEmbedRecordWithMedia 5!!");
-      const thedid = didwhat;
-      console.log("hydrateEmbedRecordWithMedia 5.01!! " + thedid);
-      const thehandle = opi?.handle || "";
-      console.log("hydrateEmbedRecordWithMedia 5.02!! " + thehandle);
-      const thedisplayname = (opr.value?.displayName ?? opi?.handle) || "";
-      console.log("hydrateEmbedRecordWithMedia 5.03!! " + thedisplayname);
-      const theavatar = opr.value?.avatar?.ref?.$link
-        ? `https://cdn.bsky.app/img/avatar/plain/${didwhat}/${opr.value?.avatar?.ref?.$link}@jpeg`
-        : undefined;
-      console.log("hydrateEmbedRecordWithMedia 5.04!! " + theavatar);
-      console.log("hydrateEmbedRecordWithMedia 5.05!!");
-      const thecreatedat = opr.value?.createdAt ?? undefined;
-      console.log("hydrateEmbedRecordWithMedia 5.06!! " + thecreatedat);
-      console.log("hydrateEmbedRecordWithMedia 5.07!!");
-      console.log("hydrateEmbedRecordWithMedia 5.08!!");
-      const crying = {
-        $type: "app.bsky.actor.defs#profileViewBasic" as const,
-        did: thedid,
-        handle: thehandle,
-        displayName: thedisplayname,
-        avatar: theavatar,
-        associated: {
-          chat: {
-            allowIncoming: "all",
-          },
-        },
-        labels: [],
-        createdAt: thecreatedat,
-      };
-      return asTyped(crying);
-    }
-
-    const record = await defferedQuotedRecordget();
-    const OP = await defferedOPRecordget();
-
-    console.log("hydrateEmbedRecordWithMedia victory-lap 6!!");
-    return asTyped({
-      $type: "app.bsky.embed.record#viewRecord" as const,
-      uri: embed.record.record.uri,
-      cid: embed.record.record.cid,
-      indexedAt: String(record.createdAt || "") || "",
-      author: OP,
-      value: record,
-    });
-  }
-  console.log("hydrateEmbedRecordWithMedia 2!!");
-
-  const recordion = await deferredrecordget();
-  console.log("hydrateEmbedRecordWithMedia victory-lap 7!!");
-
-  const final = asTyped({
-    $type: "app.bsky.embed.recordWithMedia#view" as const,
-    record: {
-      //$type: "app.bsky.embed.record#view" as const,
-      record: recordion,
-    },
-    media: mediaHydratedEmbed,
-    // media: asTyped({
-    //   $type: "app.bsky.embed.images" as const,
-    //   images: embed.media.images
-    //     ? embed.media.images
-    //         .map((img: any) => {
-    //           const link = img?.image?.ref?.["$link"];
-    //           if (!link) return null;
-    //           return {
-    //             thumb: `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${link}@jpeg`,
-    //             fullsize: `https://cdn.bsky.app/img/feed_fullsize/plain/${did}/${link}@jpeg`,
-    //             alt: img.alt || "",
-    //             aspectRatio: img.aspectRatio,
-    //           };
-    //         })
-    //         .filter(Boolean)
-    //     : undefined,
-    // }),
-  });
-  console.log("hydrateEmbedRecordWithMedia final " + final);
-  return final;
-}
-
-async function hydrateEmbedRecord(
-  embed: any,
-  did: string,
-  get: (key: string) => any,
-  set: (key: string, value: string) => void,
-): Promise<$Typed<AppBskyEmbedRecord.View> | undefined> {
-  if (!embed || embed.$type !== "app.bsky.embed.record") return undefined;
-
-  const recordRef = embed.record?.record?.uri
-    ? embed.record.record
-    : embed.record;
-
-  const quoted = await cachedGetRecord({
-    atUri: recordRef.uri,
-    get,
-    set,
-  });
-
-  const parseduri = parseAtUri(recordRef.uri);
-  if (!parseduri) throw new Error("invalid uri");
-  const didwhat = parseduri.did;
-
-  const opr = await cachedGetRecord({
-    atUri: `at://${didwhat}/app.bsky.actor.profile/self`,
-    get,
-    set,
-  });
-  const opi = await cachedResolveIdentity({
-    didOrHandle: didwhat,
-    get,
-    set,
-  });
-
-  const author = {
-    $type: "app.bsky.actor.defs#profileViewBasic" as const,
-    did: didwhat,
-    handle: opi?.handle || "",
-    displayName: (opr.value?.displayName ?? opi?.handle) || "",
-    avatar: opr.value?.avatar?.ref?.$link
-      ? `https://cdn.bsky.app/img/avatar/plain/${didwhat}/${opr.value?.avatar?.ref?.$link}@jpeg`
-      : undefined,
-    associated: {
-      chat: {
-        allowIncoming: "all",
-      },
-    },
-    labels: [],
-    createdAt: opr.value?.createdAt ?? undefined,
-  };
-
-  const viewRecord: $Typed<AppBskyEmbedRecord.ViewRecord> = asTyped({
-    $type: "app.bsky.embed.record#viewRecord" as const,
-    uri: recordRef.uri,
-    cid: recordRef.cid,
-    indexedAt: String(quoted.value.createdAt || "") || "",
-    author,
-    value: quoted.value,
-    replyCount: quoted.value.replyCount,
-    repostCount: quoted.value.repostCount,
-    likeCount: quoted.value.likeCount,
-    quoteCount: quoted.value.quoteCount,
-    labels: quoted.value.labels,
-    embeds: quoted.value.embed ? [quoted.value.embed] : undefined,
-  });
-
-  return asTyped({
-    $type: "app.bsky.embed.record#view" as const,
-    record: viewRecord,
-  });
-}
-
 export function parseAtUri(
-  atUri: string,
+  atUri: string
 ): { did: string; collection: string; rkey: string } | null {
   const PREFIX = "at://";
   if (!atUri.startsWith(PREFIX)) {
@@ -1128,6 +908,7 @@ import defaultpfp from "~/../public/favicon.png";
 //import Masonry from "@mui/lab/Masonry";
 import {
   AppBskyActorDefs,
+  AppBskyActorProfile,
   AppBskyEmbedDefs,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
@@ -1256,7 +1037,7 @@ function randomString(length = 8) {
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return Array.from(
     { length },
-    () => chars[Math.floor(Math.random() * chars.length)],
+    () => chars[Math.floor(Math.random() * chars.length)]
   ).join("");
 }
 
@@ -1276,6 +1057,7 @@ function UniversalPostRenderer({
   salt,
   bottomBorder = true,
   feedviewpostreplyhandle,
+  depth = 0,
 }: {
   post: PostView;
   // optional for now because i havent ported every use to this yet
@@ -1293,18 +1075,19 @@ function UniversalPostRenderer({
   salt: string;
   bottomBorder?: boolean;
   feedviewpostreplyhandle?: string;
+  depth?: number;
 }) {
   const navigate = useNavigate();
   const [hasRetweeted, setHasRetweeted] = useState<Boolean>(
-    post.viewer?.repost ? true : false,
+    post.viewer?.repost ? true : false
   );
   const [hasLiked, setHasLiked] = useState<Boolean>(
-    post.viewer?.like ? true : false,
+    post.viewer?.like ? true : false
   );
   const { agent } = useAuth();
   const [likeUri, setLikeUri] = useState<string | undefined>(post.viewer?.like);
   const [retweetUri, setRetweetUri] = useState<string | undefined>(
-    post.viewer?.repost,
+    post.viewer?.repost
   );
 
   const likeOrUnlikePost = async () => {
@@ -1387,7 +1170,7 @@ function UniversalPostRenderer({
         //boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         position: "relative",
         // dont cursor: "pointer",
-        borderBottomWidth: bottomBorder ? isQuote ? 0 : 1 : 0,
+        borderBottomWidth: bottomBorder ? (isQuote ? 0 : 1) : 0,
       }}
       className="border-gray-300 dark:border-gray-600"
     >
@@ -1603,8 +1386,12 @@ function UniversalPostRenderer({
                 gap: 4,
                 alignItems: "center",
                 //marginLeft: 36,
-                height: !(expanded || isQuote) && !!feedviewpostreplyhandle ? "1rem" : 0,
-                opacity: !(expanded || isQuote) && !!feedviewpostreplyhandle ? 1 : 0,
+                height:
+                  !(expanded || isQuote) && !!feedviewpostreplyhandle
+                    ? "1rem"
+                    : 0,
+                opacity:
+                  !(expanded || isQuote) && !!feedviewpostreplyhandle ? 1 : 0,
               }}
               className="text-gray-500 dark:text-gray-400"
             >
@@ -1614,7 +1401,7 @@ function UniversalPostRenderer({
           <div
             style={{
               fontSize: 16,
-              marginBottom: (!post.embed && !expanded) ? 0 : 8,
+              marginBottom: !post.embed /*|| depth > 0*/ ? 0 : 8,
               whiteSpace: "pre-wrap",
               textAlign: "left",
               overflowWrap: "anywhere",
@@ -1623,13 +1410,14 @@ function UniversalPostRenderer({
             }}
             className="text-gray-900 dark:text-gray-100"
           >
-            {renderTextWithFacets(
-              (post.record as { text?: string }).text ?? "",
-              (post.record.facets as Facet[]) ?? [],
-            )}
+            {renderTextWithFacets({
+              text: (post.record as { text?: string }).text ?? "",
+              facets: (post.record.facets as Facet[]) ?? [],
+              navigate: navigate
+            })}
             {}
           </div>
-          {post.embed ? (
+          {post.embed && depth < 1 ? (
             <PostEmbeds
               embed={post.embed}
               //moderation={moderation}
@@ -1638,7 +1426,14 @@ function UniversalPostRenderer({
               navigate={navigate}
             />
           ) : null}
-          <div style={{ paddingTop: post.embed ? 4 : 0 }}>
+          {post.embed && depth > 0 && (
+            <>
+              <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400">
+                (there is an embed here thats too deep to render)
+              </div>
+            </>
+          )}
+          <div style={{ paddingTop: post.embed && depth < 1 ? 4 : 0 }}>
             <>
               {expanded && (
                 <div
@@ -1713,7 +1508,7 @@ function UniversalPostRenderer({
                             "/profile/" +
                             post.author.handle +
                             "/post/" +
-                            post.uri.split("/").pop(),
+                            post.uri.split("/").pop()
                         );
                       } catch {}
                     }}
@@ -1899,6 +1694,7 @@ function PostEmbeds({
                 });
               }
             }}
+            depth={1}
           />
         </div>
         {/* <QuotePostRenderer
@@ -2015,6 +1811,7 @@ function PostEmbeds({
                 });
               }
             }}
+            depth={1}
           />
         </div>
       );
@@ -2042,7 +1839,6 @@ function PostEmbeds({
       src: img.fullsize,
       alt: img.alt,
     }));
-
 
     if (images.length > 0) {
       // const items = embed.images.map(img => ({
@@ -2074,14 +1870,14 @@ function PostEmbeds({
               }}
               className="border border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-900"
             >
-            {lightboxIndex !== null && (
-              <Lightbox
-                images={lightboxImages}
-                index={lightboxIndex}
-                onClose={() => setLightboxIndex(null)}
-                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
-              />
-            )}
+              {lightboxIndex !== null && (
+                <Lightbox
+                  images={lightboxImages}
+                  index={lightboxIndex}
+                  onClose={() => setLightboxIndex(null)}
+                  onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+                />
+              )}
               <img
                 src={image.fullsize}
                 alt={image.alt}
@@ -2090,7 +1886,10 @@ function PostEmbeds({
                   height: "100%",
                   objectFit: "contain", // letterbox or scale to fit
                 }}
-                onClick={(e) => {e.stopPropagation();setLightboxIndex(0)}}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex(0);
+                }}
               />
             </div>
           </div>
@@ -2133,7 +1932,10 @@ function PostEmbeds({
                     objectFit: "cover",
                     borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0",
                   }}
-                  onClick={(e) => {e.stopPropagation();setLightboxIndex(i)}}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex(i);
+                  }}
                 />
               </div>
             ))}
@@ -2178,7 +1980,10 @@ function PostEmbeds({
                   objectFit: "cover",
                   borderRadius: "12px 0 0 12px",
                 }}
-                onClick={(e) => {e.stopPropagation();setLightboxIndex(0)}}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex(0);
+                }}
               />
             </div>
             {/* Right: two stacked 2:1 */}
@@ -2208,7 +2013,10 @@ function PostEmbeds({
                       objectFit: "cover",
                       borderRadius: i === 1 ? "0 12px 0 0" : "0 0 12px 0",
                     }}
-                    onClick={(e) => {e.stopPropagation();setLightboxIndex(i+1)}}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxIndex(i + 1);
+                    }}
                   />
                 </div>
               ))}
@@ -2269,7 +2077,10 @@ function PostEmbeds({
                             ? "0 0 0 12px"
                             : "0 0 12px 0",
                   }}
-                  onClick={(e) => {e.stopPropagation();setLightboxIndex(i)}}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex(i);
+                  }}
                 />
               </div>
             ))}
@@ -2331,20 +2142,28 @@ function PostEmbeds({
 }
 
 import { createPortal } from "react-dom";
+import type { Record } from "@atproto/api/dist/client/types/app/bsky/actor/profile";
 type LightboxProps = {
   images: { src: string; alt?: string }[];
   index: number;
   onClose: () => void;
   onNavigate?: (newIndex: number) => void;
 };
-export function Lightbox({ images, index, onClose, onNavigate }: LightboxProps) {
+export function Lightbox({
+  images,
+  index,
+  onClose,
+  onNavigate,
+}: LightboxProps) {
   const image = images[index];
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight" && onNavigate) onNavigate((index + 1) % images.length);
-      if (e.key === "ArrowLeft" && onNavigate) onNavigate((index - 1 + images.length) % images.length);
+      if (e.key === "ArrowRight" && onNavigate)
+        onNavigate((index + 1) % images.length);
+      if (e.key === "ArrowLeft" && onNavigate)
+        onNavigate((index - 1 + images.length) % images.length);
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -2353,7 +2172,10 @@ export function Lightbox({ images, index, onClose, onNavigate }: LightboxProps) 
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-      onClick={(e)=>{e.stopPropagation();onClose()}}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <img
         src={image.src}
@@ -2371,7 +2193,20 @@ export function Lightbox({ images, index, onClose, onNavigate }: LightboxProps) 
             }}
             className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width={28} height={28} viewBox="0 0 24 24"><g fill="none" fillRule="evenodd"><path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path><path fill="currentColor" d="M8.293 12.707a1 1 0 0 1 0-1.414l5.657-5.657a1 1 0 1 1 1.414 1.414L10.414 12l4.95 4.95a1 1 0 0 1-1.414 1.414z"></path></g></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width={28}
+              height={28}
+              viewBox="0 0 24 24"
+            >
+              <g fill="none" fillRule="evenodd">
+                <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path>
+                <path
+                  fill="currentColor"
+                  d="M8.293 12.707a1 1 0 0 1 0-1.414l5.657-5.657a1 1 0 1 1 1.414 1.414L10.414 12l4.95 4.95a1 1 0 0 1-1.414 1.414z"
+                ></path>
+              </g>
+            </svg>
           </button>
           <button
             onClick={(e) => {
@@ -2380,7 +2215,20 @@ export function Lightbox({ images, index, onClose, onNavigate }: LightboxProps) 
             }}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width={28} height={28} viewBox="0 0 24 24"><g fill="none" fillRule="evenodd"><path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path><path fill="currentColor" d="M15.707 11.293a1 1 0 0 1 0 1.414l-5.657 5.657a1 1 0 1 1-1.414-1.414l4.95-4.95l-4.95-4.95a1 1 0 0 1 1.414-1.414z"></path></g></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width={28}
+              height={28}
+              viewBox="0 0 24 24"
+            >
+              <g fill="none" fillRule="evenodd">
+                <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path>
+                <path
+                  fill="currentColor"
+                  d="M15.707 11.293a1 1 0 0 1 0 1.414l-5.657 5.657a1 1 0 1 1-1.414-1.414l4.95-4.95l-4.95-4.95a1 1 0 0 1 1.414-1.414z"
+                ></path>
+              </g>
+            </svg>
           </button>
         </>
       )}
@@ -2428,7 +2276,7 @@ function getByteToCharMap(text: string): number[] {
 function facetByteRangeToCharRange(
   byteStart: number,
   byteEnd: number,
-  byteToCharMap: number[],
+  byteToCharMap: number[]
 ): [number, number] {
   return [
     byteToCharMap[byteStart] ?? 0,
@@ -2448,14 +2296,22 @@ function extractFacetRanges(text: string, facets: Facet[]): FacetRange[] {
     const [start, end] = facetByteRangeToCharRange(
       f.index.byteStart,
       f.index.byteEnd,
-      map,
+      map
     );
     return { start, end, feature: f.features[0] };
   });
 }
-function renderTextWithFacets(text: string, facets: Facet[]) {
+function renderTextWithFacets({
+  text,
+  facets,
+  navigate,
+}: {
+  text: string;
+  facets: Facet[];
+  navigate: ({}: any) => void;
+}) {
   const ranges = extractFacetRanges(text, facets).sort(
-    (a: any, b: any) => a.start - b.start,
+    (a: any, b: any) => a.start - b.start
   );
 
   const result: React.ReactNode[] = [];
@@ -2487,7 +2343,7 @@ function renderTextWithFacets(text: string, facets: Facet[]) {
           }}
         >
           {fragment}
-        </a>,
+        </a>
       );
     } else if (
       feature.$type === "app.bsky.richtext.facet#mention" &&
@@ -2498,12 +2354,18 @@ function renderTextWithFacets(text: string, facets: Facet[]) {
         <span
           key={start}
           style={{ color: "rgb(29, 122, 242)" }}
+          className=" cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
+            navigate({
+              to: "/profile/$did",
+              // @ts-ignore
+              params: { did: feature.did},
+            });
           }}
         >
           {fragment}
-        </span>,
+        </span>
       );
     } else if (feature.$type === "app.bsky.richtext.facet#tag") {
       result.push(
@@ -2515,7 +2377,7 @@ function renderTextWithFacets(text: string, facets: Facet[]) {
           }}
         >
           {fragment}
-        </span>,
+        </span>
       );
     } else {
       result.push(<span key={start}>{fragment}</span>);
@@ -2708,7 +2570,7 @@ const SmartHLSPlayer = ({
       {
         root: null,
         threshold: 0.25,
-      },
+      }
     );
 
     if (containerRef.current) {

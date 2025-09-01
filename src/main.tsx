@@ -7,11 +7,13 @@ import { routeTree } from "./routeTree.gen";
 
 import "~/styles/app.css";
 import reportWebVitals from "./reportWebVitals.ts";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+const queryClient = new QueryClient();
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  context: {},
+  context: { queryClient },
   defaultPreload: "intent",
   scrollRestoration: true,
   defaultStructuralSharing: true,
@@ -32,7 +34,9 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     // double queries annoys me
     <StrictMode>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </StrictMode>
   );
 }

@@ -1,13 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CACHE_TIMEOUT,
-  cachedGetRecord,
-  cachedResolveIdentity,
+  //cachedGetRecord,
+  //cachedResolveIdentity,
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import * as React from "react";
 import { useAuth } from "~/providers/PassAuthProvider";
-import { usePersistentStore } from "~/providers/PersistentStoreProvider";
+//import { usePersistentStore } from "~/providers/PersistentStoreProvider";
+import {
+  useQueryIdentity,
+  useQueryPost,
+  useQueryFeedSkeleton,
+  useQueryPreferences,
+  useQueryArbitrary
+} from "~/utils/useQuery";
+import { InfiniteCustomFeed } from "~/components/InfiniteCustomFeed";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -22,49 +30,64 @@ function Home() {
     loading: loadering,
     authed,
   } = useAuth();
-  const { get, set } = usePersistentStore();
-  const [feed, setFeed] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  //const { get, set } = usePersistentStore();
+  // const [feed, setFeed] = React.useState<any[]>([]);
+  // const [loading, setLoading] = React.useState(true);
+  // const [error, setError] = React.useState<string | null>(null);
 
-  const [prefs, setPrefs] = React.useState<any>({});
-  React.useEffect(() => {
-    if (!loadering && authed && agent && agent.did) {
-      const run = async () => {
-        try {
-          if (!agent.did) return;
-          const prefs = await cachedGetPrefs({
-            did: agent.did,
-            agent,
-            get,
-            set,
-          });
+  // const [prefs, setPrefs] = React.useState<any>({});
+  // React.useEffect(() => {
+  //   if (!loadering && authed && agent && agent.did) {
+  //     const run = async () => {
+  //       try {
+  //         if (!agent.did) return;
+  //         const prefs = await cachedGetPrefs({
+  //           did: agent.did,
+  //           agent,
+  //           get,
+  //           set,
+  //         });
 
-          console.log("alistoffeeds", prefs);
-          setPrefs(prefs || {});
-        } catch (err) {
-          console.error("alistoffeeds Fetch error in preferences effect:", err);
-        }
-      };
+  //         console.log("alistoffeeds", prefs);
+  //         setPrefs(prefs || {});
+  //       } catch (err) {
+  //         console.error("alistoffeeds Fetch error in preferences effect:", err);
+  //       }
+  //     };
 
-      run();
-    }
-  }, [loadering, authed, agent]);
+  //     run();
+  //   }
+  // }, [loadering, authed, agent]);
 
-  const savedFeedsPref = React.useMemo(() => {
-    if (!prefs?.preferences) return null;
-    return prefs.preferences.find(
-      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
+  // const savedFeedsPref = React.useMemo(() => {
+  //   if (!prefs?.preferences) return null;
+  //   return prefs.preferences.find(
+  //     (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
+  //   );
+  // }, [prefs]);
+
+  // const savedFeeds = savedFeedsPref?.items || [];
+    
+  const identityresultmaybe = useQueryIdentity(agent?.did);
+  const identity = identityresultmaybe?.data
+
+  const prefsresultmaybe = useQueryPreferences({agent: agent ?? undefined, pdsUrl: identity?.pds});
+  const prefs = prefsresultmaybe?.data
+  
+  const savedFeeds = React.useMemo(() => {
+    const savedFeedsPref = prefs?.preferences?.find(
+      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2"
     );
+    return savedFeedsPref?.items || [];
   }, [prefs]);
 
-  const savedFeeds = savedFeedsPref?.items || [];
+
 
   const [selectedFeed, setSelectedFeed] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const fallbackFeed =
-      "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/wh-hot";
+      "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
     if (authed) {
       if (savedFeeds.length > 0) {
         setSelectedFeed((prev) =>
@@ -80,88 +103,109 @@ function Home() {
     }
   }, [savedFeeds, authed]);
 
-  React.useEffect(() => {
-    if (loadering || !selectedFeed) return;
+  // React.useEffect(() => {
+  //   if (loadering || !selectedFeed) return;
 
-    let ignore = false;
+  //   let ignore = false;
 
-    const run = async () => {
-      setLoading(true);
-      setError(null);
+  //   const run = async () => {
+  //     setLoading(true);
+  //     setError(null);
 
-      try {
-        if (authed && agent) {
-          if (!agent.did) return;
+  //     try {
+  //       if (authed && agent) {
+  //         if (!agent.did) return;
 
-          const pdsurl = await cachedResolveIdentity({
-            didOrHandle: agent.did,
-            get,
-            set,
-          });
+  //         const pdsurl = await cachedResolveIdentity({
+  //           didOrHandle: agent.did,
+  //           get,
+  //           set,
+  //         });
 
-          const fetchstringcomplex = `${pdsurl.pdsUrl}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${selectedFeed}`;
-          console.log("fetching feed authed: " + fetchstringcomplex);
+  //         const fetchstringcomplex = `${pdsurl.pdsUrl}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${selectedFeed}`;
+  //         console.log("fetching feed authed: " + fetchstringcomplex);
 
-          const feeddef = await cachedGetRecord({
-            atUri: selectedFeed,
-            get,
-            set,
-          });
+  //         const feeddef = await cachedGetRecord({
+  //           atUri: selectedFeed,
+  //           get,
+  //           set,
+  //         });
 
-          const feedservicedid = feeddef.value.did;
+  //         const feedservicedid = feeddef.value.did;
 
-          const res = await agent.fetchHandler(fetchstringcomplex, {
-            method: "GET",
-            headers: {
-              "atproto-proxy": `${feedservicedid}#bsky_fg`,
-              "Content-Type": "application/json",
-            },
-          });
+  //         const res = await agent.fetchHandler(fetchstringcomplex, {
+  //           method: "GET",
+  //           headers: {
+  //             "atproto-proxy": `${feedservicedid}#bsky_fg`,
+  //             "Content-Type": "application/json",
+  //           },
+  //         });
 
-          if (!res.ok) throw new Error("Failed to fetch feed");
-          const data = await res.json();
+  //         if (!res.ok) throw new Error("Failed to fetch feed");
+  //         const data = await res.json();
 
-          if (!ignore) setFeed(data.feed || []);
-        } else {
-          console.log("falling back");
-          // always use fallback feed for not logged in
-          const fallbackFeed =
-            "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
-          // const feeddef = await cachedGetRecord({
-          //   atUri: fallbackFeed,
-          //   get,
-          //   set,
-          // });
+  //         if (!ignore) setFeed(data.feed || []);
+  //       } else {
+  //         console.log("falling back");
+  //         // always use fallback feed for not logged in
+  //         const fallbackFeed =
+  //           "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
+  //         // const feeddef = await cachedGetRecord({
+  //         //   atUri: fallbackFeed,
+  //         //   get,
+  //         //   set,
+  //         // });
 
-          //const feedservicedid = "did:web:discover.bsky.app" //feeddef.did;
-          const fetchstringsimple = `https://discover.bsky.app/xrpc/app.bsky.feed.getFeedSkeleton?feed=${fallbackFeed}`;
-          console.log("fetching feed unauthed: " + fetchstringsimple);
+  //         //const feedservicedid = "did:web:discover.bsky.app" //feeddef.did;
+  //         const fetchstringsimple = `https://discover.bsky.app/xrpc/app.bsky.feed.getFeedSkeleton?feed=${fallbackFeed}`;
+  //         console.log("fetching feed unauthed: " + fetchstringsimple);
 
-          const res = await fetch(fetchstringsimple);
-          if (!res.ok) throw new Error("Failed to fetch feed");
-          const data = await res.json();
+  //         const res = await fetch(fetchstringsimple);
+  //         if (!res.ok) throw new Error("Failed to fetch feed");
+  //         const data = await res.json();
 
-          if (!ignore) setFeed(data.feed || []);
-        }
-      } catch (e) {
-        if (!ignore) {
-          if (e instanceof Error) {
-            setError(e.message);
-          } else {
-            setError("Unknown error");
-          }
-        }
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    };
+  //         if (!ignore) setFeed(data.feed || []);
+  //       }
+  //     } catch (e) {
+  //       if (!ignore) {
+  //         if (e instanceof Error) {
+  //           setError(e.message);
+  //         } else {
+  //           setError("Unknown error");
+  //         }
+  //       }
+  //     } finally {
+  //       if (!ignore) setLoading(false);
+  //     }
+  //   };
 
-    run();
+  //   run();
 
-    return () => {
-      ignore = true;
-    };
-  }, [authed, agent, loadering, selectedFeed, get, set]);
+  //   return () => {
+  //     ignore = true;
+  //   };
+  // }, [authed, agent, loadering, selectedFeed, get, set]);
+  
+
+  const feedGengetrecordquery = useQueryArbitrary(selectedFeed??undefined);
+  const feedServiceDid = (feedGengetrecordquery?.data?.value as any)?.did;
+
+  // const {
+  //   data: feedData,
+  //   isLoading: isFeedLoading,
+  //   error: feedError,
+  // } = useQueryFeedSkeleton({
+  //   feedUri: selectedFeed!,
+  //   agent: agent ?? undefined,
+  //   isAuthed: authed ?? false,
+  //   pdsUrl: identity?.pds,
+  //   feedServiceDid: feedServiceDid,
+  // });
+
+  // const feed = feedData?.feed || [];
+
+  const isReadyForAuthedFeed = authed && agent && identity?.pds && feedServiceDid;
+  const isReadyForUnauthedFeed = !authed && selectedFeed;
 
   return (
     <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
@@ -175,7 +219,7 @@ function Home() {
                 key={item.value || idx}
                 className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${
                   isActive
-                    ? "bg-gray-600 text-white"
+                    ? "bg-gray-500 text-white"
                     : item.pinned
                       ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
                       : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
@@ -196,17 +240,31 @@ function Home() {
           <span className="text-xl font-bold ml-2">Home</span>
         )}
       </div>
-      {loading && <div className="p-4 text-gray-500">Loading...</div>}
-      {error && <div className="p-4 text-red-500">{error}</div>}
-      {!loading && !error && feed.length === 0 && (
+      {/* {isFeedLoading && <div className="p-4 text-gray-500">Loading...</div>}
+      {feedError && <div className="p-4 text-red-500">{feedError.message}</div>}
+      {!isFeedLoading && !feedError && feed.length === 0 && (
         <div className="p-4 text-gray-500">No posts found.</div>
-      )}
-      {feed.map((item, i) => (
+      )} */}
+      {/* {feed.map((item, i) => (
         <UniversalPostRendererATURILoader
           key={item.post || i}
           atUri={item.post}
         />
-      ))}
+      ))} */}
+
+      {(authed && (!identity?.pds || !feedServiceDid)) && (
+        <div className="p-4 text-center text-gray-500">Preparing your feed...</div>
+      )}
+
+      {(isReadyForAuthedFeed || isReadyForUnauthedFeed) ? (
+          <InfiniteCustomFeed 
+            feedUri={selectedFeed!} 
+            pdsUrl={identity?.pds}
+            feedServiceDid={feedServiceDid}
+          />
+      ) : (
+          <div className="p-4 text-center text-gray-500">Select a feed to get started.</div>
+      )}
     </div>
   );
 }
@@ -249,65 +307,65 @@ export async function cachedResolveDIDWEBDOC({
   return data;
 }
 
-export async function cachedGetPrefs({
-  did,
-  agent,
-  get,
-  set,
-  cacheTimeout = CACHE_TIMEOUT,
-}: {
-  did: string;
-  agent: any; // or type properly if available
-  get: (key: string) => any;
-  set: (key: string, value: string) => void;
-  cacheTimeout?: number;
-}): Promise<any> {
-  const cacheKey = `prefs:${did}`;
-  const cached = get(cacheKey);
-  const now = Date.now();
+// export async function cachedGetPrefs({
+//   did,
+//   agent,
+//   get,
+//   set,
+//   cacheTimeout = CACHE_TIMEOUT,
+// }: {
+//   did: string;
+//   agent: any; // or type properly if available
+//   get: (key: string) => any;
+//   set: (key: string, value: string) => void;
+//   cacheTimeout?: number;
+// }): Promise<any> {
+//   const cacheKey = `prefs:${did}`;
+//   const cached = get(cacheKey);
+//   const now = Date.now();
 
-  if (
-    cached &&
-    cached.value &&
-    cached.time &&
-    now - cached.time < cacheTimeout
-  ) {
-    try {
-      return JSON.parse(cached.value);
-    } catch {
-      // fall through to fetch
-    }
-  }
+//   if (
+//     cached &&
+//     cached.value &&
+//     cached.time &&
+//     now - cached.time < cacheTimeout
+//   ) {
+//     try {
+//       return JSON.parse(cached.value);
+//     } catch {
+//       // fall through to fetch
+//     }
+//   }
 
-  const resolved = await cachedResolveIdentity({
-    didOrHandle: did,
-    get,
-    set,
-  });
+//   const resolved = await cachedResolveIdentity({
+//     didOrHandle: did,
+//     get,
+//     set,
+//   });
 
-  if (!resolved?.pdsUrl) throw new Error("Missing resolved PDS info");
+//   if (!resolved?.pdsUrl) throw new Error("Missing resolved PDS info");
 
-  const fetchUrl = `${resolved.pdsUrl}/xrpc/app.bsky.actor.getPreferences`;
+//   const fetchUrl = `${resolved.pdsUrl}/xrpc/app.bsky.actor.getPreferences`;
 
-  const res = await agent.fetchHandler(fetchUrl, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+//   const res = await agent.fetchHandler(fetchUrl, {
+//     method: "GET",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//   });
 
-  if (!res.ok) throw new Error(`Failed to fetch preferences: ${res.status}`);
+//   if (!res.ok) throw new Error(`Failed to fetch preferences: ${res.status}`);
 
-  const text = await res.text();
+//   const text = await res.text();
 
-  let data: any;
-  try {
-    data = JSON.parse(text);
-  } catch (err) {
-    console.error("Failed to parse preferences JSON:", err);
-    throw err;
-  }
+//   let data: any;
+//   try {
+//     data = JSON.parse(text);
+//   } catch (err) {
+//     console.error("Failed to parse preferences JSON:", err);
+//     throw err;
+//   }
 
-  set(cacheKey, JSON.stringify(data));
-  return data;
-}
+//   set(cacheKey, JSON.stringify(data));
+//   return data;
+// }
