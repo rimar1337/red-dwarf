@@ -11,6 +11,7 @@ import {
   Scripts,
   createRootRoute,
   useLocation,
+  useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import * as React from "react";
@@ -61,13 +62,13 @@ export const Route = createRootRoute({
       { rel: "icon", href: "/favicon.ico" },
     ],
   }),
-  errorComponent: (props) => {
-    return (
-      <RootDocument>
-        <DefaultCatchBoundary {...props} />
-      </RootDocument>
-    );
-  },
+  errorComponent: import.meta.env.DEV
+    ? undefined
+    : (props) => (
+        <RootDocument>
+          <DefaultCatchBoundary {...props} />
+        </RootDocument>
+      ),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
 });
@@ -86,10 +87,11 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { agent, authed } = useAuth();
   const isHome = location.pathname === "/";
   const isNotifications = location.pathname.startsWith("/notifications");
-  const isProfile = location.pathname.startsWith("/profile/");
+  const isProfile = agent && ((location.pathname === (`/profile/${agent.assertDid}`)) || (location.pathname === (`/profile/${encodeURIComponent(agent.assertDid)}`)));
 
   const [postOpen, setPostOpen] = useState(false);
   const [postText, setPostText] = useState("");
@@ -242,7 +244,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
             onClick={() => {
               if (authed && agent && agent.assertDid) {
-                window.location.href = `/profile/${agent.assertDid}`;
+                //window.location.href = `/profile/${agent.assertDid}`;
+                navigate({
+                  to: "/profile/$did",
+                  params: { did: agent.assertDid },
+                })
               }
             }}
             type="button"
@@ -347,9 +353,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1"></div>
           <p className="text-xs text-gray-400 dark:text-gray-500 text-justify mx-4 mb-4">
-            Red Dwarf is a bluesky client that uses Constellation and
-            direct PDS queries. Skylite would be a
-            self-hosted bluesky "instance". Stay tuned for the release of Skylite.
+            Red Dwarf is a bluesky client that uses Constellation and direct PDS
+            queries. Skylite would be a self-hosted bluesky "instance". Stay
+            tuned for the release of Skylite.
           </p>
         </aside>
       </div>
@@ -409,7 +415,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
             onClick={() => {
               if (authed && agent && agent.assertDid) {
-                window.location.href = `/profile/${agent.assertDid}`;
+                //window.location.href = `/profile/${agent.assertDid}`;
+                navigate({
+                  to: "/profile/$did",
+                  params: { did: agent.assertDid },
+                })
               }
             }}
             type="button"
