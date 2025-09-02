@@ -33,6 +33,8 @@ export function InfiniteCustomFeed({
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    refetch,
+    isRefetching,
   } = useInfiniteQueryFeedSkeleton({
     feedUri: feedUri,
     agent: agent ?? undefined,
@@ -40,6 +42,10 @@ export function InfiniteCustomFeed({
     pdsUrl: pdsUrl,
     feedServiceDid: feedServiceDid,
   });
+
+  const handleRefresh = () => {
+    refetch();
+  };
 
   //const { ref, inView } = useInView();
 
@@ -99,7 +105,36 @@ export function InfiniteCustomFeed({
           Load More Posts
         </button>
       )}
-      {!hasNextPage && <div className="p-4 text-center text-gray-500">End of feed.</div>}
+      {!hasNextPage && (
+        <div className="p-4 text-center text-gray-500">End of feed.</div>
+      )}
+      <button
+        onClick={handleRefresh}
+        disabled={isRefetching}
+        className="sticky lg:bottom-6 bottom-24 ml-4 w-[42px] h-[42px] z-10 bg-gray-500 hover:bg-gray-600 text-gray-50 p-[9px] rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-110 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        aria-label="Refresh feed"
+      >
+        {isRefetching ? <RefreshIcon className="h-6 w-6 animate-spin" /> : <RefreshIcon className="h-6 w-6" />}
+      </button>
     </>
   );
 }
+
+const RefreshIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    //width={360}
+    //height={360}
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"
+    ></path>
+  </svg>
+);

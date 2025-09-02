@@ -7,9 +7,29 @@ import { routeTree } from "./routeTree.gen";
 
 import "~/styles/app.css";
 import reportWebVitals from "./reportWebVitals.ts";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, } from "@tanstack/react-query";
+import {
+  persistQueryClient,
+} from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
-const queryClient = new QueryClient();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days
+    },
+  },
+});
+const localStoragePersister = createSyncStoragePersister({
+  storage: window.localStorage,
+});
+
+persistQueryClient({
+  queryClient,
+  persister: localStoragePersister,
+})
+
 // Create a new router instance
 const router = createRouter({
   routeTree,
@@ -33,11 +53,11 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     // double queries annoys me
-    <StrictMode>
+    // <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
-    </StrictMode>
+    // </StrictMode>
   );
 }
 

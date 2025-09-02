@@ -10,6 +10,7 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  createRootRouteWithContext,
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
@@ -23,8 +24,11 @@ import { seo } from "~/utils/seo";
 import { AuthProvider, useAuth } from "~/providers/PassAuthProvider";
 import { PersistentStoreProvider } from "~/providers/PersistentStoreProvider";
 import type AtpAgent from "@atproto/api";
+import type { QueryClient } from "@tanstack/react-query";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   head: () => ({
     meta: [
       {

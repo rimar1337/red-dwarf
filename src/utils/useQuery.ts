@@ -234,6 +234,9 @@ export function constructConstellationQuery(query?:{
         return undefined;
       }
     },
+    // enforce short lifespan
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000,
   });
 }
 export function useQueryConstellation(query: {
@@ -399,7 +402,7 @@ export function useQueryPreferences(options: {
 
 export function constructArbitraryQuery(uri?: string) {
   return queryOptions({
-    queryKey: ["post", uri],
+    queryKey: ["arbitrary", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
       const res = await fetch(

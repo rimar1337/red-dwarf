@@ -13,14 +13,89 @@ import {
   useQueryPost,
   useQueryFeedSkeleton,
   useQueryPreferences,
-  useQueryArbitrary
+  useQueryArbitrary,
+  constructInfiniteFeedSkeletonQuery,
+  constructArbitraryQuery,
+  constructIdentityQuery,
+  constructPostQuery,
 } from "~/utils/useQuery";
 import { InfiniteCustomFeed } from "~/components/InfiniteCustomFeed";
+import { useAtom, useSetAtom } from "jotai";
+import {
+  selectedFeedUriAtom,
+  store,
+  agentAtom,
+  authedAtom,
+  feedScrollPositionsAtom,
+} from "~/utils/atoms";
+import { useEffect, useLayoutEffect } from "react";
 
 export const Route = createFileRoute("/")({
-  component: Home,
-});
+  loader: async ({ context }) => {
+    const { queryClient } = context;
+    const atomauth = store.get(authedAtom);
+    const atomagent = store.get(agentAtom);
 
+    let identitypds: string | undefined;
+    const initialselectedfeed = store.get(selectedFeedUriAtom);
+    if (atomagent && atomauth && atomagent?.did) {
+      const identityopts = constructIdentityQuery(atomagent.did);
+      const identityresultmaybe =
+        await queryClient.ensureQueryData(identityopts);
+      identitypds = identityresultmaybe?.pds;
+    }
+
+    const arbitraryopts = constructArbitraryQuery(
+      initialselectedfeed ??
+        "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
+    );
+    const feedGengetrecordquery =
+      await queryClient.ensureQueryData(arbitraryopts);
+    const feedServiceDid = (feedGengetrecordquery?.value as any)?.did;
+    //queryClient.ensureInfiniteQueryData()
+
+    const { queryKey, queryFn } = constructInfiniteFeedSkeletonQuery({
+      feedUri:
+        initialselectedfeed ??
+        "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot",
+      agent: atomagent ?? undefined,
+      isAuthed: atomauth ?? false,
+      pdsUrl: identitypds,
+      feedServiceDid: feedServiceDid,
+    });
+
+    const res = await queryClient.ensureInfiniteQueryData({
+      queryKey,
+      queryFn,
+      initialPageParam: undefined as never,
+      getNextPageParam: (lastPage: any) => lastPage.cursor as null | undefined,
+      staleTime: Infinity,
+      //refetchOnWindowFocus: false,
+      //enabled: true,
+    });
+    await Promise.all(
+      res.pages.map(async (page) => {
+        await Promise.all(
+          page.feed.map(async (feedviewpost) => {
+            if (!feedviewpost.post) return;
+            console.log("preloading: ", feedviewpost.post);
+            const opts = constructPostQuery(feedviewpost.post);
+            try {
+              await queryClient.ensureQueryData(opts);
+            } catch (e) {
+              console.log(" failed:", e);
+            }
+          })
+        );
+      })
+    );
+  },
+  component: Home,
+  pendingComponent: PendingHome,
+});
+function PendingHome() {
+  return <div>loading... (prefetching your timeline)</div>;
+}
 function Home() {
   const {
     agent,
@@ -30,6 +105,22 @@ function Home() {
     loading: loadering,
     authed,
   } = useAuth();
+
+  useEffect(() => {
+    if (agent?.did) {
+      store.set(authedAtom, true);
+    } else {
+      store.set(authedAtom, false);
+    }
+  }, [loginStatus, agent, authed]);
+  useEffect(() => {
+    if (agent) {
+      store.set(agentAtom, agent);
+    } else {
+      store.set(agentAtom, null);
+    }
+  }, [loginStatus, agent, authed]);
+
   //const { get, set } = usePersistentStore();
   // const [feed, setFeed] = React.useState<any[]>([]);
   // const [loading, setLoading] = React.useState(true);
@@ -67,13 +158,16 @@ function Home() {
   // }, [prefs]);
 
   // const savedFeeds = savedFeedsPref?.items || [];
-    
-  const identityresultmaybe = useQueryIdentity(agent?.did);
-  const identity = identityresultmaybe?.data
 
-  const prefsresultmaybe = useQueryPreferences({agent: agent ?? undefined, pdsUrl: identity?.pds});
-  const prefs = prefsresultmaybe?.data
-  
+  const identityresultmaybe = useQueryIdentity(agent?.did);
+  const identity = identityresultmaybe?.data;
+
+  const prefsresultmaybe = useQueryPreferences({
+    agent: agent ?? undefined,
+    pdsUrl: identity?.pds,
+  });
+  const prefs = prefsresultmaybe?.data;
+
   const savedFeeds = React.useMemo(() => {
     const savedFeedsPref = prefs?.preferences?.find(
       (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2"
@@ -81,27 +175,39 @@ function Home() {
     return savedFeedsPref?.items || [];
   }, [prefs]);
 
+  const [persistentSelectedFeed, setPersistentSelectedFeed] =
+    useAtom(selectedFeedUriAtom); // React.useState<string | null>(null);
+  const [unauthedSelectedFeed, setUnauthedSelectedFeed] = React.useState(
+    persistentSelectedFeed
+  ); // React.useState<string | null>(null);
+  const selectedFeed = agent?.did
+    ? persistentSelectedFeed
+    : unauthedSelectedFeed;
+  const setSelectedFeed = agent?.did
+    ? setPersistentSelectedFeed
+    : setUnauthedSelectedFeed;
 
-
-  const [selectedFeed, setSelectedFeed] = React.useState<string | null>(null);
-
+  console.log("my selectedFeed is: ", selectedFeed);
   React.useEffect(() => {
     const fallbackFeed =
       "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
     if (authed) {
+      if (selectedFeed) return;
       if (savedFeeds.length > 0) {
         setSelectedFeed((prev) =>
           prev && savedFeeds.some((f: any) => f.value === prev)
             ? prev
-            : savedFeeds[0].value,
+            : savedFeeds[0].value
         );
       } else {
+        if (selectedFeed) return;
         setSelectedFeed(fallbackFeed);
       }
     } else {
+      if (selectedFeed) return;
       setSelectedFeed(fallbackFeed);
     }
-  }, [savedFeeds, authed]);
+  }, [savedFeeds, authed, setSelectedFeed]);
 
   // React.useEffect(() => {
   //   if (loadering || !selectedFeed) return;
@@ -185,9 +291,59 @@ function Home() {
   //     ignore = true;
   //   };
   // }, [authed, agent, loadering, selectedFeed, get, set]);
-  
 
-  const feedGengetrecordquery = useQueryArbitrary(selectedFeed??undefined);
+  const [scrollPositions, setScrollPositions] = useAtom(
+    feedScrollPositionsAtom
+  );
+
+  const scrollRef = React.useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const onScroll = () => {
+      //if (!selectedFeed) return;
+      scrollRef.current[selectedFeed ?? "null"] = window.scrollY;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [selectedFeed]);
+  const [donerestored, setdonerestored] = React.useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (!donerestored) return;
+      console.log("FEEDSCROLLSHIT saving at uhhh: ", scrollRef.current);
+      //if (!selectedFeed) return;
+      setScrollPositions((prev) => ({
+        ...prev,
+        [selectedFeed ?? "null"]:
+          scrollRef.current[selectedFeed ?? "null"] ?? 0,
+      }));
+    };
+  }, [selectedFeed, setScrollPositions, donerestored]);
+
+  const [restoringScrollPosition, setRestoringScrollPosition] =
+    React.useState(false);
+
+  useLayoutEffect(() => {
+    setRestoringScrollPosition(true);
+    const savedPosition = scrollPositions[selectedFeed ?? "null"] ?? 0;
+
+    let raf = requestAnimationFrame(() => {
+      // setRestoringScrollPosition(true);
+      // raf = requestAnimationFrame(() => {
+      //   window.scrollTo({ top: savedPosition, behavior: "instant" });
+      //   setRestoringScrollPosition(false);
+      //   setdonerestored(true);
+      // });
+      window.scrollTo({ top: savedPosition, behavior: "instant" });
+      setRestoringScrollPosition(false);
+      setdonerestored(true);
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [selectedFeed, scrollPositions]);
+
+  const feedGengetrecordquery = useQueryArbitrary(selectedFeed ?? undefined);
   const feedServiceDid = (feedGengetrecordquery?.data?.value as any)?.did;
 
   // const {
@@ -204,11 +360,12 @@ function Home() {
 
   // const feed = feedData?.feed || [];
 
-  const isReadyForAuthedFeed = authed && agent && identity?.pds && feedServiceDid;
+  const isReadyForAuthedFeed =
+    authed && agent && identity?.pds && feedServiceDid;
   const isReadyForUnauthedFeed = !authed && selectedFeed;
 
   return (
-    <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
+    <div className="relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
       <div className="flex items-center gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin">
         {savedFeeds.length > 0 ? (
           savedFeeds.map((item: any, idx: number) => {
@@ -252,18 +409,27 @@ function Home() {
         />
       ))} */}
 
-      {(authed && (!identity?.pds || !feedServiceDid)) && (
-        <div className="p-4 text-center text-gray-500">Preparing your feed...</div>
+      {authed && (!identity?.pds || !feedServiceDid) && (
+        <div className="p-4 text-center text-gray-500">
+          Preparing your feed...
+        </div>
       )}
 
-      {(isReadyForAuthedFeed || isReadyForUnauthedFeed) ? (
-          <InfiniteCustomFeed 
-            feedUri={selectedFeed!} 
-            pdsUrl={identity?.pds}
-            feedServiceDid={feedServiceDid}
-          />
+      {isReadyForAuthedFeed || isReadyForUnauthedFeed ? (
+        <InfiniteCustomFeed
+          feedUri={selectedFeed!}
+          pdsUrl={identity?.pds}
+          feedServiceDid={feedServiceDid}
+        />
       ) : (
-          <div className="p-4 text-center text-gray-500">Select a feed to get started.</div>
+        <div className="p-4 text-center text-gray-500">
+          Select a feed to get started.
+        </div>
+      )}
+      {false && restoringScrollPosition && (
+        <div className="fixed top-1/2 left-1/2 right-1/2">
+          restoringScrollPosition
+        </div>
       )}
     </div>
   );
@@ -295,7 +461,7 @@ export async function cachedResolveDIDWEBDOC({
     } catch {}
   }
   const url = `https://free-fly-24.deno.dev/resolve-did-web?did=${encodeURIComponent(
-    didweb,
+    didweb
   )}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to resolve didwebdoc");
