@@ -6,7 +6,7 @@ interface LoginProps {
 }
 
 export default function Login({ compact = false }: LoginProps) {
-  const { loginStatus, login, logout, loading, authed } = useAuth();
+  const { loginStatus, login, logout, loading, authed, agent } = useAuth();
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [serviceURL, setServiceURL] = useState("bsky.social");
@@ -112,12 +112,13 @@ export default function Login({ compact = false }: LoginProps) {
     <div className="p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4">
       {authed ? (
         <div className="flex flex-col items-center justify-center text-center">
-          <p className="text-lg font-semibold mb-6 text-gray-800 dark:text-gray-100">
+          <p className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">
             You are logged in!
           </p>
+          <ProfileThing />
           <button
             onClick={logout}
-            className="bg-gray-600 hover:bg-gray-700 text-white rounded px-6 py-2 font-semibold text-base transition-colors"
+            className="bg-gray-600 mt-2 hover:bg-gray-700 text-white rounded px-6 py-2 font-semibold text-base transition-colors"
           >
             Log out
           </button>
@@ -193,6 +194,7 @@ export const ProfileThing = () => {
   };
 
   if (!authed) {
+    return
     return (
       <div className="inline-block">
         <span className="text-gray-100 text-base font-medium px-1.5">
@@ -218,7 +220,7 @@ export const ProfileThing = () => {
         alt="avatar"
         className="w-[30px] h-[30px] rounded-full object-cover"
       />
-      <div>
+      <div className="flex flex-col items-start">
         <div className="text-gray-100 text-xs">{response?.displayName}</div>
         <div className="text-gray-100 text-xs">@{response?.handle}</div>
       </div>
