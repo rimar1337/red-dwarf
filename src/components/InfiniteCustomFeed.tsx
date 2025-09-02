@@ -2,7 +2,11 @@ import * as React from "react";
 //import { useInView } from "react-intersection-observer";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/PassAuthProvider";
-import { useQueryArbitrary, useQueryIdentity, useInfiniteQueryFeedSkeleton } from "~/utils/useQuery";
+import {
+  useQueryArbitrary,
+  useQueryIdentity,
+  useInfiniteQueryFeedSkeleton,
+} from "~/utils/useQuery";
 
 interface InfiniteCustomFeedProps {
   feedUri: string;
@@ -10,9 +14,13 @@ interface InfiniteCustomFeedProps {
   feedServiceDid?: string;
 }
 
-export function InfiniteCustomFeed({ feedUri, pdsUrl, feedServiceDid }: InfiniteCustomFeedProps) {
+export function InfiniteCustomFeed({
+  feedUri,
+  pdsUrl,
+  feedServiceDid,
+}: InfiniteCustomFeedProps) {
   const { agent, authed } = useAuth();
-  
+
   // const identityresultmaybe = useQueryIdentity(agent?.did);
   // const identity = identityresultmaybe?.data;
   // const feedGenGetRecordQuery = useQueryArbitrary(feedUri);
@@ -46,21 +54,37 @@ export function InfiniteCustomFeed({ feedUri, pdsUrl, feedServiceDid }: Infinite
   }
 
   if (isError) {
-    return <div className="p-4 text-center text-red-500">Error: {error.message}</div>;
+    return (
+      <div className="p-4 text-center text-red-500">Error: {error.message}</div>
+    );
   }
 
-  const allPosts = data?.pages.flatMap((page) => {if (page) return page.feed}) ?? [];
+  const allPosts =
+    data?.pages.flatMap((page) => {
+      if (page) return page.feed;
+    }) ?? [];
 
   if (!allPosts || typeof allPosts !== "object" || allPosts.length === 0) {
-    return <div className="p-4 text-center text-gray-500">No posts in this feed.</div>;
+    return (
+      <div className="p-4 text-center text-gray-500">
+        No posts in this feed.
+      </div>
+    );
   }
 
   return (
     <>
       {allPosts.map((item, i) => {
-        if (item) return (
-        <UniversalPostRendererATURILoader key={item.post || i} atUri={item.post} />
-      )})}
+        if (item)
+          return (
+            <UniversalPostRendererATURILoader
+              key={item.post || i}
+              atUri={item.post}
+              feedviewpost={true}
+              repostedby={!!item.reason?.$type && (item.reason as any)?.repost}
+            />
+          );
+      })}
       {/* allPosts?: {allPosts ? "true" : "false"}
       hasNextPage?: {hasNextPage ? "true" : "false"}
       isFetchingNextPage?: {isFetchingNextPage ? "true" : "false"} */}

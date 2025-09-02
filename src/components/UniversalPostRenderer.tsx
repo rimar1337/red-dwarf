@@ -25,6 +25,7 @@ export interface UniversalPostRendererATURILoaderProps {
   topReplyLine?: boolean;
   bottomBorder?: boolean;
   feedviewpost?: boolean;
+  repostedby?: string;
 }
 
 // export async function cachedGetRecord({
@@ -128,6 +129,7 @@ export function UniversalPostRendererATURILoader({
   topReplyLine,
   bottomBorder = true,
   feedviewpost = false,
+  repostedby,
 }: UniversalPostRendererATURILoaderProps) {
   console.log("atUri", atUri);
   //const { get, set } = usePersistentStore();
@@ -381,6 +383,10 @@ export function UniversalPostRendererATURILoader({
   //     });
   //   }
   // };
+  if (!postQuery?.value) {
+    // deleted post more often than a non-resolvable post
+    return (<></>)
+  }
 
   return (
     <UniversalPostRendererRawRecordShim
@@ -396,6 +402,7 @@ export function UniversalPostRendererATURILoader({
       topReplyLine={topReplyLine}
       bottomBorder={bottomBorder}
       feedviewpost={feedviewpost}
+      repostedby={repostedby}
     />
   );
 }
@@ -413,6 +420,7 @@ export function UniversalPostRendererRawRecordShim({
   topReplyLine = false,
   bottomBorder = true,
   feedviewpost = false,
+  repostedby,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -426,6 +434,7 @@ export function UniversalPostRendererRawRecordShim({
   topReplyLine?: boolean;
   bottomBorder?: boolean;
   feedviewpost?: boolean;
+  repostedby?: string;
 }) {
   console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
@@ -583,6 +592,13 @@ export function UniversalPostRendererRawRecordShim({
     feedviewpost ? feedviewpostreplydid : undefined
   );
   const feedviewpostreplyhandle = replyhookvalue?.data?.handle;
+
+
+  const aturirepostbydid = repostedby ? new AtUri(repostedby).host : undefined
+  const repostedbyhookvalue = useQueryIdentity(
+    repostedby ? aturirepostbydid : undefined
+  );
+  const feedviewpostrepostedbyhandle = repostedbyhookvalue?.data?.handle;
   return (
     <>
       {/* <p>
@@ -616,6 +632,7 @@ export function UniversalPostRendererRawRecordShim({
         bottomBorder={bottomBorder}
         //extraOptionalItemInfo={{reply: postRecord?.value?.reply as AppBskyFeedDefs.ReplyRef, post: fakepost}}
         feedviewpostreplyhandle={feedviewpostreplyhandle}
+        repostedby={feedviewpostrepostedbyhandle}
       />
     </>
   );
@@ -1058,6 +1075,7 @@ function UniversalPostRenderer({
   bottomBorder = true,
   feedviewpostreplyhandle,
   depth = 0,
+  repostedby,
 }: {
   post: PostView;
   // optional for now because i havent ported every use to this yet
@@ -1076,6 +1094,7 @@ function UniversalPostRenderer({
   bottomBorder?: boolean;
   feedviewpostreplyhandle?: string;
   depth?: number;
+  repostedby?: string;
 }) {
   const navigate = useNavigate();
   const [hasRetweeted, setHasRetweeted] = useState<Boolean>(
@@ -1124,7 +1143,7 @@ function UniversalPostRenderer({
     }
   };
 
-  const isRepost = extraOptionalItemInfo
+  const isRepost = repostedby ? repostedby : extraOptionalItemInfo
     ? AppBskyFeedDefs.isReasonRepost(extraOptionalItemInfo.reason)
       ? extraOptionalItemInfo.reason?.by.displayName
       : undefined
@@ -1190,7 +1209,7 @@ function UniversalPostRenderer({
           }}
           className="text-gray-500 dark:text-gray-400"
         >
-          <MdiRepost /> Reposted by {isRepost}{" "}
+          <MdiRepost /> Reposted by @{isRepost}{" "}
         </div>
       )}
       {!isQuote && (
@@ -1292,7 +1311,7 @@ function UniversalPostRenderer({
               maxWidth: `calc(100% - ${!expanded ? (isQuote ? 26 : 0) : 54}px)`,
               width: `calc(100% - ${!expanded ? (isQuote ? 26 : 0) : 54}px)`,
               marginLeft: !expanded ? (isQuote ? 26 : 0) : 54,
-              marginBottom: !expanded ? 4 : 0,
+              marginBottom: !expanded ? 4 : 6,
             }}
           >
             <div
@@ -1308,7 +1327,7 @@ function UniversalPostRenderer({
                 gap: expanded ? 0 : 6,
                 alignItems: expanded ? "flex-start" : "center",
                 flexDirection: expanded ? "column" : "row",
-                height: expanded ? 48 : "1rem",
+                height: expanded ? 42 : "1rem",
               }}
             >
               <span
@@ -1395,7 +1414,7 @@ function UniversalPostRenderer({
               }}
               className="text-gray-500 dark:text-gray-400"
             >
-              <MdiReply /> Reply to {feedviewpostreplyhandle}
+              <MdiReply /> Reply to @{feedviewpostreplyhandle}
             </div>
           )}
           <div
@@ -1428,7 +1447,7 @@ function UniversalPostRenderer({
           ) : null}
           {post.embed && depth > 0 && (
             <>
-              <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400">
+              <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400 text-[14px]">
                 (there is an embed here thats too deep to render)
               </div>
             </>
