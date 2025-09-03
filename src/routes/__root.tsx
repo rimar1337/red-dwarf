@@ -95,7 +95,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const { agent, authed } = useAuth();
   const isHome = location.pathname === "/";
   const isNotifications = location.pathname.startsWith("/notifications");
-  const isProfile = agent && ((location.pathname === (`/profile/${agent.assertDid}`)) || (location.pathname === (`/profile/${encodeURIComponent(agent.assertDid)}`)));
+  const isProfile = agent && ((location.pathname === (`/profile/${agent?.did}`)) || (location.pathname === (`/profile/${encodeURIComponent(agent?.did??"")}`)));
 
   const [postOpen, setPostOpen] = useState(false);
   const [postText, setPostText] = useState("");
