@@ -16,7 +16,7 @@ export const feedScrollPositionsAtom = atomWithStorage<Record<string, number>>(
   {}
 );
 
-export const likedPostsAtom = atomWithStorage<Record<string, boolean>>(
+export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   'likedPosts',
   {}
 );

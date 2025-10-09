@@ -3,6 +3,8 @@ import { usePersistentStore } from "~/providers/PersistentStoreProvider";
 import { useNavigate } from "@tanstack/react-router";
 import { type SVGProps } from "react";
 import { useHydratedEmbed } from "~/utils/useHydrated";
+import { useAtom } from 'jotai';
+import { likedPostsAtom } from "~/utils/atoms";
 import {
   useQueryPost,
   useQueryIdentity,
@@ -1097,11 +1099,12 @@ function UniversalPostRenderer({
   repostedby?: string;
 }) {
   const navigate = useNavigate();
+  const [likedPosts, setLikedPosts] = useAtom(likedPostsAtom);
   const [hasRetweeted, setHasRetweeted] = useState<Boolean>(
     post.viewer?.repost ? true : false
   );
   const [hasLiked, setHasLiked] = useState<Boolean>(
-    post.viewer?.like ? true : false
+    (post.uri in likedPosts) || post.viewer?.like ? true : false
   );
   const { agent } = useAuth();
   const [likeUri, setLikeUri] = useState<string | undefined>(post.viewer?.like);
@@ -1110,20 +1113,28 @@ function UniversalPostRenderer({
   );
 
   const likeOrUnlikePost = async () => {
+    const newLikedPosts = { ...likedPosts };
     if (!agent) {
       console.error("Agent is null or undefined");
       return;
     }
     if (hasLiked) {
+      if (post.uri in likedPosts) {
+        const likeUri = likedPosts[post.uri];
+        setLikeUri(likeUri);
+      }
       if (likeUri) {
         await agent.deleteLike(likeUri);
         setHasLiked(false);
+        delete newLikedPosts[post.uri];
       }
     } else {
       const { uri } = await agent.like(post.uri, post.cid);
       setLikeUri(uri);
       setHasLiked(true);
+      newLikedPosts[post.uri] = uri;
     }
+    setLikedPosts(newLikedPosts)
   };
 
   const repostOrUnrepostPost = async () => {
