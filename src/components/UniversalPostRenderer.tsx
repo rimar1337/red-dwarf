@@ -2297,7 +2297,7 @@ function getByteToCharMap(text: string): number[] {
     for (let i = 0; i < bytes.length; i++) {
       map[byteIndex++] = charIndex;
     }
-    charIndex++;
+    charIndex+=char.length;
   }
 
   return map;
