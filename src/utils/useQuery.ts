@@ -187,11 +187,13 @@ export function constructConstellationQuery(query?:{
     | "/links/distinct-dids"
     | "/links/count"
     | "/links/count/distinct-dids"
-    | "/links/all",
+    | "/links/all"
+    | "undefined",
   target: string,
   collection?: string,
   path?: string,
-  cursor?: string
+  cursor?: string,
+  dids?: string[]
 }
 ) {
   // : QueryOptions<
@@ -203,16 +205,17 @@ export function constructConstellationQuery(query?:{
   //   Error
   // >
   return queryOptions({
-    queryKey: ["post", query?.method, query?.target, query?.collection, query?.path, query?.cursor] as const,
+    queryKey: ["constellation", query?.method, query?.target, query?.collection, query?.path, query?.cursor, query?.dids] as const,
     queryFn: async () => {
-      if (!query) return undefined as undefined
+      if (!query || query.method === "undefined") return undefined as undefined
       const method = query.method
       const target = query.target
       const collection = query?.collection
       const path = query?.path
       const cursor = query.cursor
+      const dids = query?.dids
       const res = await fetch(
-        `https://constellation.microcosm.blue${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`
+        `https://constellation.microcosm.blue${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`
       );
       if (!res.ok) throw new Error("Failed to fetch post");
       try {
@@ -235,8 +238,8 @@ export function constructConstellationQuery(query?:{
       }
     },
     // enforce short lifespan
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 5 * 60 * 1000,
+    staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
+    gcTime: /*0//*/5 * 60 * 1000,
   });
 }
 export function useQueryConstellation(query: {
@@ -245,6 +248,7 @@ export function useQueryConstellation(query: {
   collection: string;
   path: string;
   cursor?: string;
+  dids?: string[];
 }): UseQueryResult<linksRecordsResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/distinct-dids";
@@ -272,17 +276,23 @@ export function useQueryConstellation(query: {
   target: string;
 }): UseQueryResult<linksAllResponse, Error>;
 export function useQueryConstellation(): undefined;
+export function useQueryConstellation(query: {
+  method: "undefined";
+  target: string;
+}): undefined;
 export function useQueryConstellation(query?: {
   method:
     | "/links"
     | "/links/distinct-dids"
     | "/links/count"
     | "/links/count/distinct-dids"
-    | "/links/all";
+    | "/links/all"
+    | "undefined";
   target: string;
   collection?: string;
   path?: string;
   cursor?: string;
+  dids?: string[];
 }):
   | UseQueryResult<
       | linksRecordsResponse
@@ -304,7 +314,7 @@ type linksRecord = {
   collection: string;
   rkey: string;
 };
-type linksRecordsResponse = {
+export type linksRecordsResponse = {
   total: string;
   linking_records: linksRecord[];
   cursor?: string;

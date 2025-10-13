@@ -154,7 +154,19 @@ const TabButton = ({ label, active, onClick }: { label: string; active: boolean;
 const OAuthForm = () => {
   const { loginWithOAuth } = useAuth();
   const [handle, setHandle] = useState("");
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (handle.trim()) loginWithOAuth(handle); };
+
+  useEffect(() => {
+    const lastHandle = localStorage.getItem("lastHandle");
+    if (lastHandle) setHandle(lastHandle);
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (handle.trim()) {
+      localStorage.setItem("lastHandle", handle);
+      loginWithOAuth(handle);
+    }
+  };
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <p className="text-xs text-gray-500 dark:text-gray-400">Sign in with AT. Your password is never shared.</p>
@@ -171,10 +183,16 @@ const PasswordForm = () => {
   const [serviceURL, setServiceURL] = useState("bsky.social");
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const lastHandle = localStorage.getItem("lastHandle");
+    if (lastHandle) setUser(lastHandle);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
+      localStorage.setItem("lastHandle", user);
       await loginWithPassword(user, password, `https://${serviceURL}`);
     } catch (err) {
       setError("Login failed. Check your handle and App Password.");

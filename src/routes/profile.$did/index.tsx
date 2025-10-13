@@ -7,21 +7,33 @@ import {
   useQueryIdentity,
   useQueryProfile,
   useInfiniteQueryAuthorFeed,
+  useQueryConstellation,
+  type linksRecordsResponse,
 } from "~/utils/useQuery";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { AtUri } from "@atproto/api";
+import { TID } from "@atproto/common-web";
+import { toggleFollow, useGetFollowState } from "~/utils/followState";
 
 export const Route = createFileRoute("/profile/$did/")({
   component: ProfileComponent,
 });
 
 function ProfileComponent() {
+  // booo bad this is not always the did it might be a handle, use identity.did instead
   const { did } = Route.useParams();
   const queryClient = useQueryClient();
-
+  const { agent } = useAuth();
   const {
     data: identity,
     isLoading: isIdentityLoading,
     error: identityError,
   } = useQueryIdentity(did);
+
+  const followRecords = useGetFollowState({
+    target: identity?.did || did,
+    user: agent?.did,
+  });
 
   const resolvedDid = did.startsWith("did:") ? did : identity?.did;
   const resolvedHandle = did.startsWith("did:") ? identity?.handle : did;
@@ -141,14 +153,37 @@ function ProfileComponent() {
             also delay the backfill to be on demand because it would be pretty intense
             also save it persistently
           */}
-          {true ? (
+          {identity?.did !== agent?.did ? (
             <>
-              <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
-                Follow
-              </button>
-              <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
-                Unfollow
-              </button>
+              {!(followRecords?.length && followRecords?.length > 0) ? (
+                <button
+                  onClick={() =>
+                    toggleFollow({
+                      agent: agent || undefined,
+                      targetDid: identity?.did,
+                      followRecords: followRecords,
+                      queryClient: queryClient,
+                    })
+                  }
+                  className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]"
+                >
+                  Follow
+                </button>
+              ) : (
+                <button
+                  onClick={() =>
+                    toggleFollow({
+                      agent: agent || undefined,
+                      targetDid: identity?.did,
+                      followRecords: followRecords,
+                      queryClient: queryClient,
+                    })
+                  }
+                  className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]"
+                >
+                  Unfollow
+                </button>
+              )}
             </>
           ) : (
             <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
