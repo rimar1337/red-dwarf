@@ -114,7 +114,7 @@ function ProfileComponent() {
       </div>
 
       {/* Profile Header */}
-      <div className="w-full max-w-2xl mx-auto shadow-lg rounded-b-lg overflow-hidden relative bg-gray-200 dark:bg-gray-900">
+      <div className="w-full max-w-2xl mx-auto overflow-hidden relative bg-gray-100 dark:bg-gray-900">
         {/* Banner */}
         <div
           className="w-full h-40 bg-gray-300 dark:bg-gray-700"
@@ -143,19 +143,19 @@ function ProfileComponent() {
           */}
           {true ? (
             <>
-              <button className="rounded-full bg-gray-600 px-3 py-2 text-[14px]">
+              <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
                 Follow
               </button>
-              <button className="rounded-full bg-gray-600 px-3 py-2 text-[14px]">
+              <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
                 Unfollow
               </button>
             </>
           ) : (
-            <button className="rounded-full bg-gray-600 px-3 py-2 text-[14px]">
+            <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
               Edit Profile
             </button>
           )}
-          <button className="rounded-full bg-gray-600 px-3 py-2 text-[14px]">
+          <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
             ... {/* todo: icon */}
           </button>
         </div>

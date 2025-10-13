@@ -143,7 +143,7 @@ const TabButton = ({ label, active, onClick }: { label: string; active: boolean;
     onClick={onClick}
     className={`px-4 py-2 text-sm font-medium transition-colors ${
       active
-        ? "text-gray-200 border-b-2 border-gray-500"
+        ? "text-gray-600 dark:text-gray-200 border-b-2 border-gray-500"
         : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
     }`}
   >
@@ -211,8 +211,8 @@ export const ProfileThing = ({ agent, large = false }: { agent: Agent | null; la
 
     if (!profile) {
         return ( // Skeleton loader
-          <div className={`flex items-center gap-2.5 animate-pulse ${large ? 'mb-2' : ''}`}>
-            <div className={`rounded-full bg-gray-300 dark:bg-gray-700 ${large ? 'w-12 h-12' : 'w-[30px] h-[30px]'}`} />
+          <div className={`flex items-center gap-2.5 animate-pulse ${large ? 'mb-1' : ''}`}>
+            <div className={`rounded-full bg-gray-300 dark:bg-gray-700 ${large ? 'w-10 h-10' : 'w-[30px] h-[30px]'}`} />
             <div className="flex flex-col gap-2">
               <div className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? 'h-4 w-28' : 'h-3 w-20'}`} />
               <div className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? 'h-4 w-20' : 'h-3 w-16'}`} />
@@ -222,10 +222,10 @@ export const ProfileThing = ({ agent, large = false }: { agent: Agent | null; la
       }
     
       return (
-        <div className={`flex flex-row items-center gap-2.5 ${large ? 'mb-2' : ''}`}>
-          <img src={profile?.avatar} alt="avatar" className={`object-cover rounded-full ${large ? 'w-12 h-12' : 'w-[30px] h-[30px]'}`} />
+        <div className={`flex flex-row items-center gap-2.5 ${large ? 'mb-1' : ''}`}>
+          <img src={profile?.avatar} alt="avatar" className={`object-cover rounded-full ${large ? 'w-10 h-10' : 'w-[30px] h-[30px]'}`} />
           <div className="flex flex-col items-start text-left">
-            <div className={`font-medium ${large ? 'text-gray-800 dark:text-gray-100 text-lg' : 'text-gray-800 dark:text-gray-100 text-sm'}`}>{profile?.displayName}</div>
+            <div className={`font-medium ${large ? 'text-gray-800 dark:text-gray-100 text-md' : 'text-gray-800 dark:text-gray-100 text-sm'}`}>{profile?.displayName}</div>
             <div className={` ${large ? 'text-gray-500 dark:text-gray-400 text-sm' : 'text-gray-500 dark:text-gray-400 text-xs'}`}>@{profile?.handle}</div>
           </div>
         </div>
