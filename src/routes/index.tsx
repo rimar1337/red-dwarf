@@ -6,7 +6,7 @@ import {
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import * as React from "react";
-import { useAuth } from "~/providers/PassAuthProvider";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 //import { usePersistentStore } from "~/providers/PersistentStoreProvider";
 import {
   useQueryIdentity,
@@ -99,12 +99,13 @@ function PendingHome() {
 function Home() {
   const {
     agent,
-    loginStatus,
-    login,
+    status,
+    authMethod,
+    loginWithPassword,
+    loginWithOAuth,
     logout,
-    loading: loadering,
-    authed,
   } = useAuth();
+  const authed = !!agent?.did;
 
   useEffect(() => {
     if (agent?.did) {
@@ -112,14 +113,15 @@ function Home() {
     } else {
       store.set(authedAtom, false);
     }
-  }, [loginStatus, agent, authed]);
+  }, [status, agent, authed]);
   useEffect(() => {
     if (agent) {
+      // is it just me or is the type really weird here it should be Agent not AtpAgent
       store.set(agentAtom, agent);
     } else {
       store.set(agentAtom, null);
     }
-  }, [loginStatus, agent, authed]);
+  }, [status, agent, authed]);
 
   //const { get, set } = usePersistentStore();
   // const [feed, setFeed] = React.useState<any[]>([]);

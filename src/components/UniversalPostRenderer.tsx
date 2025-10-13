@@ -954,7 +954,7 @@ import type {
 } from "@atproto/api/dist/client/types/app/bsky/feed/defs";
 import { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
-import { useAuth } from "~/providers/PassAuthProvider";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
 // import type {
 //   ViewRecord,

@@ -332,7 +332,7 @@ type linksAllResponse = {
 
 export function constructFeedSkeletonQuery(options?: {
   feedUri: string;
-  agent?: ATPAPI.AtpAgent;
+  agent?: ATPAPI.Agent;
   isAuthed: boolean;
   pdsUrl?: string;
   feedServiceDid?: string;
@@ -372,7 +372,7 @@ export function constructFeedSkeletonQuery(options?: {
 
 export function useQueryFeedSkeleton(options?: {
   feedUri: string;
-  agent?: ATPAPI.AtpAgent;
+  agent?: ATPAPI.Agent;
   isAuthed: boolean;
   pdsUrl?: string;
   feedServiceDid?: string;
@@ -380,7 +380,7 @@ export function useQueryFeedSkeleton(options?: {
   return useQuery(constructFeedSkeletonQuery(options));
 }
 
-export function constructPreferencesQuery(agent?: ATPAPI.AtpAgent | undefined, pdsUrl?: string | undefined) {
+export function constructPreferencesQuery(agent?: ATPAPI.Agent | undefined, pdsUrl?: string | undefined) {
   return queryOptions({
     queryKey: ['preferences', agent?.did],
     queryFn: async () => {
@@ -393,7 +393,7 @@ export function constructPreferencesQuery(agent?: ATPAPI.AtpAgent | undefined, p
   });
 }
 export function useQueryPreferences(options: {
-  agent?: ATPAPI.AtpAgent | undefined, pdsUrl?: string | undefined
+  agent?: ATPAPI.Agent | undefined, pdsUrl?: string | undefined
 }) {
   return useQuery(constructPreferencesQuery(options.agent, options.pdsUrl));
 }
@@ -498,7 +498,7 @@ type FeedSkeletonPage = ATPAPI.AppBskyFeedGetFeedSkeleton.OutputSchema;
 
 export function constructInfiniteFeedSkeletonQuery(options: {
   feedUri: string;
-  agent?: ATPAPI.AtpAgent;
+  agent?: ATPAPI.Agent;
   isAuthed: boolean;
   pdsUrl?: string;
   feedServiceDid?: string;
@@ -537,7 +537,7 @@ export function constructInfiniteFeedSkeletonQuery(options: {
 
 export function useInfiniteQueryFeedSkeleton(options: {
   feedUri: string;
-  agent?: ATPAPI.AtpAgent;
+  agent?: ATPAPI.Agent;
   isAuthed: boolean;
   pdsUrl?: string;
   feedServiceDid?: string;

@@ -1,4 +1,4 @@
-import type AtpAgent from "@atproto/api";
+import type Agent from "@atproto/api";
 import { atom, createStore } from "jotai";
 import { atomWithStorage } from 'jotai/utils';
 
@@ -21,5 +21,5 @@ export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   {}
 );
 
-export const agentAtom = atom<AtpAgent|null>(null);
+export const agentAtom = atom<Agent|null>(null);
 export const authedAtom = atom<boolean>(false);

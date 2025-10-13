@@ -1,229 +1,233 @@
+// src/components/Login.tsx
 import React, { useEffect, useState, useRef } from "react";
-import { useAuth } from "~/providers/PassAuthProvider";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { Agent } from "@atproto/api";
 
-interface LoginProps {
-  compact?: boolean;
-}
+// --- 1. The Main Component (Orchestrator with `compact` prop) ---
+export default function Login({ compact = false }: { compact?: boolean }) {
+  const { status, agent, logout } = useAuth();
 
-export default function Login({ compact = false }: LoginProps) {
-  const { loginStatus, login, logout, loading, authed, agent } = useAuth();
-  const [user, setUser] = useState("");
-  const [password, setPassword] = useState("");
-  const [serviceURL, setServiceURL] = useState("bsky.social");
-  const [showLoginForm, setShowLoginForm] = useState(false);
-  const formRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (formRef.current && !formRef.current.contains(event.target as Node)) {
-        setShowLoginForm(false);
-      }
-    }
-
-    if (showLoginForm) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showLoginForm]);
-
-  if (loading) {
+  // Loading state can be styled differently based on the prop
+  if (status === "loading") {
     return (
-      <div className="flex items-center justify-center p-6 text-gray-500 dark:text-gray-400">
-        Loading...
+      <div
+        className={
+          compact
+            ? "flex items-center justify-center p-1"
+            : "p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4 flex justify-center items-center h-[280px]"
+        }
+      >
+        <span
+          className={`border-t-transparent rounded-full animate-spin ${
+            compact
+              ? "w-5 h-5 border-2 border-gray-400"
+              : "w-8 h-8 border-4 border-gray-400"
+          }`}
+        />
       </div>
     );
   }
 
-  if (compact) {
-    if (authed) {
+  // --- LOGGED IN STATE ---
+  if (status === "signedIn") {
+    // Large view
+    if (!compact) {
       return (
+        <div className="p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4">
+          <div className="flex flex-col items-center justify-center text-center">
+            <p className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              You are logged in!
+            </p>
+            <ProfileThing agent={agent} large />
+            <button
+              onClick={logout}
+              className="bg-gray-600 mt-4 hover:bg-gray-700 text-white rounded px-6 py-2 font-semibold text-base transition-colors"
+            >
+              Log out
+            </button>
+          </div>
+        </div>
+      );
+    }
+    // Compact view
+    return (
+      <div className="flex items-center gap-4">
+        <ProfileThing agent={agent} />
         <button
           onClick={logout}
           className="text-sm bg-gray-600 hover:bg-gray-700 text-white rounded px-3 py-1 font-medium transition-colors"
         >
           Log out
         </button>
-      );
-    } else {
-      return (
-        <div className="relative" ref={formRef}>
-          <button
-            onClick={() => setShowLoginForm(!showLoginForm)}
-            className="text-sm bg-gray-600 hover:bg-gray-700 text-white rounded px-3 py-1 font-medium transition-colors"
-          >
-            Log in
-          </button>
-          {showLoginForm && (
-            <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  login(user, password, `https://${serviceURL}`);
-                  setShowLoginForm(false);
-                }}
-                className="flex flex-col gap-3"
-              >
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  sorry for the temporary login,
-                  <br />
-                  oauth will come soon enough i swear
-                </p>
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoComplete="username"
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoComplete="current-password"
-                />
-                <input
-                  type="text"
-                  placeholder="bsky.social"
-                  value={serviceURL}
-                  onChange={(e) => setServiceURL(e.target.value)}
-                  className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 font-medium text-sm transition-colors"
-                >
-                  Log in
-                </button>
-              </form>
-            </div>
-          )}
-        </div>
-      );
-    }
+      </div>
+    );
   }
 
+  // --- LOGGED OUT STATE ---
+  if (!compact) {
+    // Large view renders the form directly in the card
+    return (
+      <div className="p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4">
+        <UnifiedLoginForm />
+      </div>
+    );
+  }
+
+  // Compact view renders a button that toggles the form in a dropdown
+  return <CompactLoginButton />;
+}
+
+// --- 2. The Reusable, Self-Contained Login Form Component ---
+export function UnifiedLoginForm() {
+  const [mode, setMode] = useState<"oauth" | "password">("oauth");
+
   return (
-    <div className="p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4">
-      {authed ? (
-        <div className="flex flex-col items-center justify-center text-center">
-          <p className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">
-            You are logged in!
-          </p>
-          <ProfileThing />
-          <button
-            onClick={logout}
-            className="bg-gray-600 mt-2 hover:bg-gray-700 text-white rounded px-6 py-2 font-semibold text-base transition-colors"
-          >
-            Log out
-          </button>
-        </div>
-      ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            login(user, password, `https://${serviceURL}`);
-          }}
-          className="flex flex-col gap-4"
-        >
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            sorry for the temporary login,
-            <br />
-            oauth will come soon enough i swear
-          </p>
-          <input
-            type="text"
-            placeholder="Username"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-            autoComplete="username"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-            autoComplete="current-password"
-          />
-          <input
-            type="text"
-            placeholder="bsky.social"
-            value={serviceURL}
-            onChange={(e) => setServiceURL(e.target.value)}
-            className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="bg-gray-600 hover:bg-gray-700 text-white rounded px-6 py-2 font-semibold text-base transition-colors mt-2"
-          >
-            Log in
-          </button>
-        </form>
-      )}
+    <div>
+      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+        <TabButton
+          label="OAuth"
+          active={mode === "oauth"}
+          onClick={() => setMode("oauth")}
+        />
+        <TabButton
+          label="Password"
+          active={mode === "password"}
+          onClick={() => setMode("password")}
+        />
+      </div>
+      {mode === "oauth" ? <OAuthForm /> : <PasswordForm />}
     </div>
   );
 }
 
-export const ProfileThing = () => {
-  const { agent, loading, loginStatus, authed } = useAuth();
-  const [response, setResponse] = useState<any>(null);
+// --- 3. Helper components for layouts, forms, and UI ---
+
+// A new component to contain the logic for the compact dropdown
+const CompactLoginButton = () => {
+  const [showForm, setShowForm] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (loginStatus && agent && !loading && authed) {
-      fetchUser();
+    function handleClickOutside(event: MouseEvent) {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        setShowForm(false);
+      }
     }
-    // eslint-disable-next-line
-  }, [loginStatus, agent, loading, authed]);
-
-  const fetchUser = async () => {
-    if (!agent) {
-      console.error("Agent is null or undefined");
-      return;
+    if (showForm) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    const res = await agent.app.bsky.actor.getProfile({
-      actor: agent.assertDid,
-    });
-    setResponse(res.data);
-  };
-
-  if (!authed) {
-    return
-    return (
-      <div className="inline-block">
-        <span className="text-gray-100 text-base font-medium px-1.5">
-          Login
-        </span>
-      </div>
-    );
-  }
-
-  if (!response) {
-    return (
-      <div className="flex flex-col items-start gap-1.5">
-        <span className="w-5 h-5 border-2 border-gray-200 dark:border-gray-600 border-t-transparent rounded-full animate-spin inline-block" />
-        <span className="text-gray-100">Loading... </span>
-      </div>
-    );
-  }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showForm]);
 
   return (
-    <div className="flex flex-row items-start gap-1.5">
-      <img
-        src={response?.avatar}
-        alt="avatar"
-        className="w-[30px] h-[30px] rounded-full object-cover"
-      />
-      <div className="flex flex-col items-start">
-        <div className="text-gray-100 text-xs">{response?.displayName}</div>
-        <div className="text-gray-100 text-xs">@{response?.handle}</div>
-      </div>
+    <div className="relative" ref={formRef}>
+      <button
+        onClick={() => setShowForm(!showForm)}
+        className="text-sm bg-gray-600 hover:bg-gray-700 text-white rounded px-3 py-1 font-medium transition-colors"
+      >
+        Log in
+      </button>
+      {showForm && (
+        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
+          <UnifiedLoginForm />
+        </div>
+      )}
     </div>
   );
+};
+
+const TabButton = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void; }) => (
+  <button
+    onClick={onClick}
+    className={`px-4 py-2 text-sm font-medium transition-colors ${
+      active
+        ? "text-gray-200 border-b-2 border-gray-500"
+        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const OAuthForm = () => {
+  const { loginWithOAuth } = useAuth();
+  const [handle, setHandle] = useState("");
+  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (handle.trim()) loginWithOAuth(handle); };
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <p className="text-xs text-gray-500 dark:text-gray-400">Sign in with AT. Your password is never shared.</p>
+      <input type="text" placeholder="handle.bsky.social" value={handle} onChange={(e) => setHandle(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" />
+      <button type="submit" className="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 font-medium text-sm transition-colors">Log in</button>
+    </form>
+  );
+};
+
+const PasswordForm = () => {
+  const { loginWithPassword } = useAuth();
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
+  const [serviceURL, setServiceURL] = useState("bsky.social");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await loginWithPassword(user, password, `https://${serviceURL}`);
+    } catch (err) {
+      setError("Login failed. Check your handle and App Password.");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <p className="text-xs text-red-500 dark:text-red-400">Warning: Less secure. Use an App Password.</p>
+      <input type="text" placeholder="handle.bsky.social" value={user} onChange={(e) => setUser(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" autoComplete="username" />
+      <input type="password" placeholder="App Password" value={password} onChange={(e) => setPassword(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" autoComplete="current-password" />
+      <input type="text" placeholder="PDS (e.g., bsky.social)" value={serviceURL} onChange={(e) => setServiceURL(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" />
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <button type="submit" className="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 font-medium text-sm transition-colors">Log in</button>
+    </form>
+  );
+};
+
+// --- Profile Component (now supports a `large` prop for styling) ---
+export const ProfileThing = ({ agent, large = false }: { agent: Agent | null; large?: boolean }) => {
+    const [profile, setProfile] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const did = (agent as any)?.session?.did ?? (agent as any)?.assertDid;
+            if (!did) return;
+            try {
+                const res = await agent!.getProfile({ actor: did });
+                setProfile(res.data);
+            } catch (e) { console.error("Failed to fetch profile", e); }
+        };
+        if (agent) fetchUser();
+    }, [agent]);
+
+    if (!profile) {
+        return ( // Skeleton loader
+          <div className={`flex items-center gap-2.5 animate-pulse ${large ? 'mb-2' : ''}`}>
+            <div className={`rounded-full bg-gray-300 dark:bg-gray-700 ${large ? 'w-12 h-12' : 'w-[30px] h-[30px]'}`} />
+            <div className="flex flex-col gap-2">
+              <div className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? 'h-4 w-28' : 'h-3 w-20'}`} />
+              <div className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? 'h-4 w-20' : 'h-3 w-16'}`} />
+            </div>
+          </div>
+        );
+      }
+    
+      return (
+        <div className={`flex flex-row items-center gap-2.5 ${large ? 'mb-2' : ''}`}>
+          <img src={profile?.avatar} alt="avatar" className={`object-cover rounded-full ${large ? 'w-12 h-12' : 'w-[30px] h-[30px]'}`} />
+          <div className="flex flex-col items-start text-left">
+            <div className={`font-medium ${large ? 'text-gray-800 dark:text-gray-100 text-lg' : 'text-gray-800 dark:text-gray-100 text-sm'}`}>{profile?.displayName}</div>
+            <div className={` ${large ? 'text-gray-500 dark:text-gray-400 text-sm' : 'text-gray-500 dark:text-gray-400 text-xs'}`}>@{profile?.handle}</div>
+          </div>
+        </div>
+      );
 };

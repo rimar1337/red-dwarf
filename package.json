@@ -3,14 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3000",
-    "start": "vite --port 3000",
+    "dev": "vite --port 3768",
+    "start": "vite --port 3768",
     "build": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
     "@atproto/api": "^0.16.6",
+    "@atproto/oauth-client-browser": "^0.3.33",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/query-sync-storage-persister": "^5.85.6",
     "@tanstack/react-devtools": "^0.2.2",

@@ -15,6 +15,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as FeedsRouteImport } from './routes/feeds'
 import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CallbackIndexRouteImport } from './routes/callback/index'
 import { Route as PathlessLayoutNestedLayoutRouteImport } from './routes/_pathlessLayout/_nested-layout'
 import { Route as ProfileDidIndexRouteImport } from './routes/profile.$did/index'
 import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
@@ -48,6 +49,11 @@ const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallbackIndexRoute = CallbackIndexRouteImport.update({
+  id: '/callback/',
+  path: '/callback/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PathlessLayoutNestedLayoutRoute =
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/callback': typeof CallbackIndexRoute
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did': typeof ProfileDidIndexRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/callback': typeof CallbackIndexRoute
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did': typeof ProfileDidIndexRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/_pathlessLayout/_nested-layout': typeof PathlessLayoutNestedLayoutRouteWithChildren
+  '/callback/': typeof CallbackIndexRoute
   '/_pathlessLayout/_nested-layout/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/_pathlessLayout/_nested-layout/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did/': typeof ProfileDidIndexRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/settings'
+    | '/callback'
     | '/route-a'
     | '/route-b'
     | '/profile/$did'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/settings'
+    | '/callback'
     | '/route-a'
     | '/route-b'
     | '/profile/$did'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/_pathlessLayout/_nested-layout'
+    | '/callback/'
     | '/_pathlessLayout/_nested-layout/route-a'
     | '/_pathlessLayout/_nested-layout/route-b'
     | '/profile/$did/'
@@ -159,6 +171,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  CallbackIndexRoute: typeof CallbackIndexRoute
   ProfileDidIndexRoute: typeof ProfileDidIndexRoute
   ProfileDidPostRkeyRoute: typeof ProfileDidPostRkeyRoute
 }
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/callback/': {
+      id: '/callback/'
+      path: '/callback'
+      fullPath: '/callback'
+      preLoaderRoute: typeof CallbackIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_pathlessLayout/_nested-layout': {
@@ -282,6 +302,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  CallbackIndexRoute: CallbackIndexRoute,
   ProfileDidIndexRoute: ProfileDidIndexRoute,
   ProfileDidPostRkeyRoute: ProfileDidPostRkeyRoute,
 }

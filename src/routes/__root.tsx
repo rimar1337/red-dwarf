@@ -21,9 +21,9 @@ import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import appCss from "~/styles/app.css?url";
 import { seo } from "~/utils/seo";
-import { AuthProvider, useAuth } from "~/providers/PassAuthProvider";
+import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
 import { PersistentStoreProvider } from "~/providers/PersistentStoreProvider";
-import type AtpAgent from "@atproto/api";
+import type Agent from "@atproto/api";
 import type { QueryClient } from "@tanstack/react-query";
 
 export const Route = createRootRouteWithContext<{
@@ -44,7 +44,6 @@ export const Route = createRootRouteWithContext<{
       }),
     ],
     links: [
-      { rel: "stylesheet", href: appCss },
       {
         rel: "apple-touch-icon",
         sizes: "180x180",
@@ -79,20 +78,21 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   return (
-    <AuthProvider>
+    <UnifiedAuthProvider>
       <PersistentStoreProvider>
         <RootDocument>
           <Outlet />
         </RootDocument>
       </PersistentStoreProvider>
-    </AuthProvider>
+    </UnifiedAuthProvider>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { agent, authed } = useAuth();
+  const { agent } = useAuth();
+  const authed = !!agent?.did;
   const isHome = location.pathname === "/";
   const isNotifications = location.pathname.startsWith("/notifications");
   const isProfile = agent && ((location.pathname === (`/profile/${agent?.did}`)) || (location.pathname === (`/profile/${encodeURIComponent(agent?.did??"")}`)));

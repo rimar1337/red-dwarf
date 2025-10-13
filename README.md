@@ -5,6 +5,16 @@ Red Dwarf is a Bluesky client that does not use any AppView servers, instead it 
 
 huge thanks to [Microcosm](https://microcosm.blue/) for making this possible
 
+## running dev and build
+in the `vite.config.ts` file you should change these values
+```ts
+const PROD_URL = "https://reddwarf.whey.party"
+const DEV_URL = "https://local3768forumtest.whey.party"
+```
+the PROD_URL is what will compile your oauth client metadata so it is very important to change that. same for DEV_URL if you are using a tunnel for dev work
+
+run dev with `npm run dev` (port 3768) and build with `npm run build` (the output is the `dist` folder)
+
 ## useQuery
 Red Dwarf has been upgraded from its original bespoke caching system to Tanstack Query (react query). this migration was done to achieve a more robust and maintainable approach to data fetching and caching and state synchronization. ive seen serious performance gains from this switch! 
 
@@ -22,8 +32,14 @@ the beating heart of Red Dwarf, the backlink index that provides contextual info
 ### Slingshot
 though Red Dwarf was made before Microcosm [Slingshot](https://slingshot.microcosm.blue) existed, it now uses Slingshot to reduce load from each respective PDS server. Slignshot
 
-## PassAuthProvider
-a really bad app-password auth provider, inherited from TestFront and used in all my projects from TestFront to ForumTest (im very good at naming things). in ForumTest, its been superseded by the [OAuthProvider](https://tangled.sh/@whey.party/forumtest/blob/main/src/providers/OAuthProvider.tsx). i havent backported it here and maybe soon, although oauth makes it slightly more annoying to do development because it requires a tunnel so maybe someday if i managed to merge the password and oauth logins to provide both options
+## UnifiedAuthProvider
+a merged auth provider with oauth and password based login. oauth makes it slightly more annoying to do development because it requires a tunnel, so so the password auth option is still here if you do prefer password login for whatever reason.
+
+### Pass Auth
+a really bad app-password auth provider, inherited from TestFront and used in all my projects from TestFront to ForumTest (im very good at naming things). 
+
+### OAuth
+taken from ForumTest [OAuthProvider](https://tangled.sh/@whey.party/forumtest/blob/main/src/providers/OAuthProvider.tsx)
 
 ## Custom Feeds
 they work, but i havent implemented a simple way of viewing arbitraty feeds. currently it either loads discover (logged out) or your saved feeds (logged in) and its not a technical limitation i just havent implemented it yet

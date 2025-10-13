@@ -1,7 +1,7 @@
 import * as React from "react";
 //import { useInView } from "react-intersection-observer";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
-import { useAuth } from "~/providers/PassAuthProvider";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
   useQueryArbitrary,
   useQueryIdentity,
@@ -19,7 +19,8 @@ export function InfiniteCustomFeed({
   pdsUrl,
   feedServiceDid,
 }: InfiniteCustomFeedProps) {
-  const { agent, authed } = useAuth();
+  const { agent } = useAuth();
+  const authed = !!agent?.did;
 
   // const identityresultmaybe = useQueryIdentity(agent?.did);
   // const identity = identityresultmaybe?.data;
