@@ -1,6 +1,10 @@
-import { defineConfig } from "vite";
-import viteReact from "@vitejs/plugin-react";
+import { resolve } from "node:path";
+
 import tailwindcss from "@tailwindcss/vite";
+import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
 import { generateMetadataPlugin } from "./oauthdev.mts";
 
 const PROD_URL = "https://reddwarf.whey.party"
@@ -10,9 +14,6 @@ function shp(url: string): string {
   return url.replace(/^https?:\/\//, '');
 }
 
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
-import { resolve } from "node:path";
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -21,7 +22,11 @@ export default defineConfig({
       dev: DEV_URL,
     }),
     TanStackRouterVite({ autoCodeSplitting: true }),
-    viteReact(),
+    viteReact({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
     tailwindcss(),
   ],
   // test: {

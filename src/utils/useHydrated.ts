@@ -1,18 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
 import {
+  type $Typed,
+  AppBskyActorDefs,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
   AppBskyEmbedRecordWithMedia,
   AppBskyEmbedVideo,
-  AppBskyActorDefs,
   AppBskyFeedPost,
   AtUri,
-  type $Typed,
 } from "@atproto/api";
-import * as ATPAPI from "@atproto/api"
+import { useEffect, useMemo,useState } from "react";
 
-import { useQueryPost, useQueryProfile, useQueryIdentity } from "./useQuery";
+import { useQueryIdentity,useQueryPost, useQueryProfile } from "./useQuery";
 
 type QueryResultData<T extends (...args: any) => any> = ReturnType<T> extends
   | { data: infer D }

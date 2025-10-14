@@ -1,20 +1,21 @@
 // src/providers/UnifiedAuthProvider.tsx
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useCallback,
-} from "react";
 // Import both Agent and the (soon to be deprecated) AtpAgent
 import { Agent, AtpAgent, type AtpSessionData } from "@atproto/api";
-import { oauthClient } from "../utils/oauthClient"; // Adjust path if needed
 import {
   type OAuthSession,
   TokenInvalidError,
   TokenRefreshError,
   TokenRevokedError,
 } from "@atproto/oauth-client-browser";
+import React, {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
+import { oauthClient } from "../utils/oauthClient"; // Adjust path if needed
 
 // Define the unified status and authentication method
 type AuthStatus = "loading" | "signedIn" | "signedOut";
@@ -52,7 +53,7 @@ export const UnifiedAuthProvider = ({
     try {
       const oauthResult = await oauthClient.init();
       if (oauthResult) {
-        console.log("OAuth session restored.");
+        // /*mass comment*/ console.log("OAuth session restored.");
         const apiAgent = new Agent(oauthResult.session); // Standard Agent
         setAgent(apiAgent);
         setOauthSession(oauthResult.session);
@@ -70,13 +71,13 @@ export const UnifiedAuthProvider = ({
       const sessionString = localStorage.getItem("sess");
 
       if (service && sessionString) {
-        console.log("Resuming password-based session using AtpAgent...");
+        // /*mass comment*/ console.log("Resuming password-based session using AtpAgent...");
         // Use the original, working AtpAgent logic
         const apiAgent = new AtpAgent({ service });
         const session: AtpSessionData = JSON.parse(sessionString);
         await apiAgent.resumeSession(session);
 
-        console.log("Password-based session resumed successfully.");
+        // /*mass comment*/ console.log("Password-based session resumed successfully.");
         setAgent(apiAgent); // This works because AtpAgent is a subclass of Agent
         setAuthMethod("password");
         setStatus("signedIn");
@@ -89,7 +90,7 @@ export const UnifiedAuthProvider = ({
     }
 
     // --- 3. If neither worked, user is signed out ---
-    console.log("No active session found.");
+    // /*mass comment*/ console.log("No active session found.");
     setStatus("signedOut");
     setAgent(null);
     setAuthMethod(null);
@@ -139,7 +140,7 @@ export const UnifiedAuthProvider = ({
         setAgent(apiAgent); // Store the AtpAgent instance in our state
         setAuthMethod("password");
         setStatus("signedIn");
-        console.log("Successfully logged in with password.");
+        // /*mass comment*/ console.log("Successfully logged in with password.");
       } else {
         throw new Error("Session data not persisted after login.");
       }
@@ -168,13 +169,13 @@ export const UnifiedAuthProvider = ({
     try {
       if (authMethod === "oauth" && oauthSession) {
         await oauthClient.revoke(oauthSession.sub);
-        console.log("OAuth session revoked.");
+        // /*mass comment*/ console.log("OAuth session revoked.");
       } else if (authMethod === "password") {
         localStorage.removeItem("service");
         localStorage.removeItem("sess");
         // AtpAgent has its own logout methods
         await (agent as AtpAgent).com.atproto.server.deleteSession();
-        console.log("Password-based session deleted.");
+        // /*mass comment*/ console.log("Password-based session deleted.");
       }
     } catch (e) {
       console.error("Logout failed:", e);
@@ -187,7 +188,7 @@ export const UnifiedAuthProvider = ({
   }, [status, authMethod, agent, oauthSession]);
 
   return (
-    <AuthContext.Provider
+    <AuthContext
       value={{
         agent,
         status,
@@ -198,8 +199,8 @@ export const UnifiedAuthProvider = ({
       }}
     >
       {children}
-    </AuthContext.Provider>
+    </AuthContext>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => use(AuthContext);

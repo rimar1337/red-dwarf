@@ -1,15 +1,15 @@
-import * as React from "react";
-import { usePersistentStore } from "~/providers/PersistentStoreProvider";
 import { useNavigate } from "@tanstack/react-router";
-import { type SVGProps } from "react";
-import { useHydratedEmbed } from "~/utils/useHydrated";
 import { useAtom } from 'jotai';
+import * as React from "react";
+import { type SVGProps } from "react";
+
 import { likedPostsAtom } from "~/utils/atoms";
+import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
-  useQueryPost,
-  useQueryIdentity,
-  useQueryProfile,
   useQueryConstellation,
+  useQueryIdentity,
+  useQueryPost,
+  useQueryProfile,
 } from "~/utils/useQuery";
 
 function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
@@ -133,7 +133,7 @@ export function UniversalPostRendererATURILoader({
   feedviewpost = false,
   repostedby,
 }: UniversalPostRendererATURILoaderProps) {
-  console.log("atUri", atUri);
+  // /*mass comment*/ console.log("atUri", atUri);
   //const { get, set } = usePersistentStore();
   //const [record, setRecord] = React.useState<any>(null);
   //const [links, setLinks] = React.useState<any>(null);
@@ -149,8 +149,8 @@ export function UniversalPostRendererATURILoader({
   const parsed = React.useMemo(() => parseAtUri(atUri), [atUri]);
   const did = parsed?.did;
   const rkey = parsed?.rkey;
-  console.log("did", did);
-  console.log("rkey", rkey);
+  // /*mass comment*/ console.log("did", did);
+  // /*mass comment*/ console.log("rkey", rkey);
 
   // React.useEffect(() => {
   //   const checkCache = async () => {
@@ -158,7 +158,7 @@ export function UniversalPostRendererATURILoader({
   //     const cacheKey = `record:${postUri}`;
   //     const cached = await get(cacheKey);
   //     const now = Date.now();
-  //     console.log(
+  //     // /*mass comment*/ console.log(
   //       "UniversalPostRenderer checking cache for",
   //       cacheKey,
   //       "cached:",
@@ -171,7 +171,7 @@ export function UniversalPostRendererATURILoader({
   //       now - cached.time < CACHE_TIMEOUT
   //     ) {
   //       try {
-  //         console.log("UniversalPostRenderer found cached data for", cacheKey);
+  //         // /*mass comment*/ console.log("UniversalPostRenderer found cached data for", cacheKey);
   //         setRecord(JSON.parse(cached.value));
   //       } catch {
   //         setRecord(null);
@@ -357,7 +357,7 @@ export function UniversalPostRendererATURILoader({
   const [replies, setReplies] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    console.log(JSON.stringify(links, null, 2));
+    // /*mass comment*/ console.log(JSON.stringify(links, null, 2));
     setLikes(
       links
         ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
@@ -438,7 +438,7 @@ export function UniversalPostRendererRawRecordShim({
   feedviewpost?: boolean;
   repostedby?: string;
 }) {
-  console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
+  // /*mass comment*/ console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
 
   //const { get, set } = usePersistentStore();
@@ -500,7 +500,7 @@ export function UniversalPostRendererRawRecordShim({
   //         result = hydrated instanceof Promise ? await hydrated : hydrated;
   //       }
 
-  //       console.log(
+  //       // /*mass comment*/ console.log(
   //         String(result) + " hydrateEmbedRecordWithMedia hey hyeh ye",
   //       );
   //       setHydratedEmbed(result);
@@ -922,12 +922,9 @@ export function MdiPlayCircle(props: SVGProps<SVGSVGElement>) {
 }
 
 /* what imported from testfront */
-import defaultpfp from "~/../public/favicon.png";
-
 //import Masonry from "@mui/lab/Masonry";
 import {
-  AppBskyActorDefs,
-  AppBskyActorProfile,
+  type $Typed,
   AppBskyEmbedDefs,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
@@ -938,12 +935,11 @@ import {
   AppBskyFeedPost,
   AppBskyGraphDefs,
   AtUri,
+  type Facet,
   //AppBskyLabelerDefs,
   //AtUri,
   //ComAtprotoRepoStrongRef,
   ModerationDecision,
-  type $Typed,
-  type Facet,
 } from "@atproto/api";
 import type {
   //BlockedPost,
@@ -954,6 +950,8 @@ import type {
 } from "@atproto/api/dist/client/types/app/bsky/feed/defs";
 import { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
+
+import defaultpfp from "~/../public/favicon.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
 // import type {
@@ -1100,10 +1098,10 @@ function UniversalPostRenderer({
 }) {
   const navigate = useNavigate();
   const [likedPosts, setLikedPosts] = useAtom(likedPostsAtom);
-  const [hasRetweeted, setHasRetweeted] = useState<Boolean>(
+  const [hasRetweeted, setHasRetweeted] = useState<boolean>(
     post.viewer?.repost ? true : false
   );
-  const [hasLiked, setHasLiked] = useState<Boolean>(
+  const [hasLiked, setHasLiked] = useState<boolean>(
     (post.uri in likedPosts) || post.viewer?.like ? true : false
   );
   const { agent } = useAuth();
@@ -1226,7 +1224,7 @@ function UniversalPostRenderer({
       {!isQuote && (
         <div
           style={{
-            opacity: topReplyLine || (isReply && (true || expanded)) ? 0.5 : 0,
+            opacity: topReplyLine || (isReply /*&& (true || expanded)*/) ? 0.5 : 0,
             position: "absolute",
             top: 0,
             left: 36, // why 36 ???
@@ -1540,7 +1538,9 @@ function UniversalPostRenderer({
                             "/post/" +
                             post.uri.split("/").pop()
                         );
-                      } catch {}
+                      } catch (_e) {
+                        // idk
+                      }
                     }}
                     style={{
                       ...btnstyle,
@@ -1659,7 +1659,7 @@ function PostEmbeds({
   allowNestedQuotes?: boolean;
   viewContext?: PostEmbedViewContext;
   salt: string;
-  navigate: ({}: any) => void;
+  navigate: (_: any) => void;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   if (
@@ -2172,7 +2172,6 @@ function PostEmbeds({
 }
 
 import { createPortal } from "react-dom";
-import type { Record } from "@atproto/api/dist/client/types/app/bsky/actor/profile";
 type LightboxProps = {
   images: { src: string; alt?: string }[];
   index: number;
@@ -2338,7 +2337,7 @@ function renderTextWithFacets({
 }: {
   text: string;
   facets: Facet[];
-  navigate: ({}: any) => void;
+  navigate: (_: any) => void;
 }) {
   const ranges = extractFacetRanges(text, facets).sort(
     (a: any, b: any) => a.start - b.start
@@ -2353,11 +2352,11 @@ function renderTextWithFacets({
     }
 
     const fragment = text.slice(start, end);
-    // @ts-ignore
+    // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
     if (feature.$type === "app.bsky.richtext.facet#link" && feature.uri) {
       result.push(
         <a
-          // @ts-ignore
+          // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
           href={feature.uri}
           key={start}
           className="link"
@@ -2377,7 +2376,7 @@ function renderTextWithFacets({
       );
     } else if (
       feature.$type === "app.bsky.richtext.facet#mention" &&
-      // @ts-ignore
+      // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
       feature.did
     ) {
       result.push(
@@ -2389,7 +2388,7 @@ function renderTextWithFacets({
             e.stopPropagation();
             navigate({
               to: "/profile/$did",
-              // @ts-ignore
+              // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
               params: { did: feature.did},
             });
           }}
@@ -2486,13 +2485,12 @@ function ExternalLinkEmbed({
       rel="noopener noreferrer"
       onClick={(e) => {
         e.stopPropagation();
-        onOpen;
+        if (onOpen) onOpen();
       }}
-      /* @ts-ignore */
+      /* @ts-expect-error css arent typed or something idk fuck you */
       style={linkStyle}
       className="text-gray-500 dark:text-gray-400"
     >
-      {/* @ts-ignore ehiaeih */}
       <div
         style={containerStyle as React.CSSProperties}
         className="border border-gray-200 dark:border-gray-700"
@@ -2533,11 +2531,10 @@ function ExternalLinkEmbed({
             paddingTop: thumb ? 0 : 12,
           }}
         >
-          {/* @ts-ignore */}
+          {/* @ts-expect-error css */}
           <div style={titleStyle} className="text-gray-900 dark:text-gray-100">
             {title}
           </div>
-          {/* @ts-ignore */}
           <div
             style={descriptionStyle as React.CSSProperties}
             className="text-gray-500 dark:text-gray-400"

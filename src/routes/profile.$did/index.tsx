@@ -1,19 +1,15 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
-import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
-import { useQueryClient } from "@tanstack/react-query";
 
+import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { toggleFollow, useGetFollowState } from "~/utils/followState";
 import {
+  useInfiniteQueryAuthorFeed,
   useQueryIdentity,
   useQueryProfile,
-  useInfiniteQueryAuthorFeed,
-  useQueryConstellation,
-  type linksRecordsResponse,
 } from "~/utils/useQuery";
-import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { AtUri } from "@atproto/api";
-import { TID } from "@atproto/common-web";
-import { toggleFollow, useGetFollowState } from "~/utils/followState";
 
 export const Route = createFileRoute("/profile/$did/")({
   component: ProfileComponent,
@@ -114,9 +110,11 @@ function ProfileComponent() {
           className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
           onClick={(e) => {
             e.preventDefault();
-            window.history.length > 1
-              ? window.history.back()
-              : window.location.assign("/");
+            if (window.history.length > 1) {
+              window.history.back()
+            } else {
+              window.location.assign("/");
+            }
           }}
           aria-label="Go back"
         >

@@ -10,7 +10,7 @@ export const Route = createFileRoute("/notifications")({
 });
 
 function NotificationsComponent() {
-  console.log("NotificationsComponent render");
+  // /*mass comment*/ console.log("NotificationsComponent render");
   const { agent, authed, loading: authLoading } = useAuth();
   const { get, set } = usePersistentStore();
   const [did, setDid] = useState<string | null>(null);
@@ -28,7 +28,7 @@ function NotificationsComponent() {
   }, [authed, agent, authLoading]);
 
   async function handleSubmit() {
-    console.log("handleSubmit called");
+    // /*mass comment*/ console.log("handleSubmit called");
     setError(null);
     setResponses([null, null, null]);
     const value = inputRef.current?.value?.trim() || "";

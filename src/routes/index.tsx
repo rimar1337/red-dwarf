@@ -78,12 +78,12 @@ export const Route = createFileRoute("/")({
         await Promise.all(
           page.feed.map(async (feedviewpost) => {
             if (!feedviewpost.post) return;
-            console.log("preloading: ", feedviewpost.post);
+            // /*mass comment*/ console.log("preloading: ", feedviewpost.post);
             const opts = constructPostQuery(feedviewpost.post);
             try {
               await queryClient.ensureQueryData(opts);
             } catch (e) {
-              console.log(" failed:", e);
+              // /*mass comment*/ console.log(" failed:", e);
             }
           })
         );
@@ -141,7 +141,7 @@ function Home() {
   //           set,
   //         });
 
-  //         console.log("alistoffeeds", prefs);
+  //         // /*mass comment*/ console.log("alistoffeeds", prefs);
   //         setPrefs(prefs || {});
   //       } catch (err) {
   //         console.error("alistoffeeds Fetch error in preferences effect:", err);
@@ -189,7 +189,7 @@ function Home() {
     ? setPersistentSelectedFeed
     : setUnauthedSelectedFeed;
 
-  console.log("my selectedFeed is: ", selectedFeed);
+  // /*mass comment*/ console.log("my selectedFeed is: ", selectedFeed);
   React.useEffect(() => {
     const fallbackFeed =
       "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
@@ -231,7 +231,7 @@ function Home() {
   //         });
 
   //         const fetchstringcomplex = `${pdsurl.pdsUrl}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${selectedFeed}`;
-  //         console.log("fetching feed authed: " + fetchstringcomplex);
+  //         // /*mass comment*/ console.log("fetching feed authed: " + fetchstringcomplex);
 
   //         const feeddef = await cachedGetRecord({
   //           atUri: selectedFeed,
@@ -254,7 +254,7 @@ function Home() {
 
   //         if (!ignore) setFeed(data.feed || []);
   //       } else {
-  //         console.log("falling back");
+  //         // /*mass comment*/ console.log("falling back");
   //         // always use fallback feed for not logged in
   //         const fallbackFeed =
   //           "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
@@ -266,7 +266,7 @@ function Home() {
 
   //         //const feedservicedid = "did:web:discover.bsky.app" //feeddef.did;
   //         const fetchstringsimple = `https://discover.bsky.app/xrpc/app.bsky.feed.getFeedSkeleton?feed=${fallbackFeed}`;
-  //         console.log("fetching feed unauthed: " + fetchstringsimple);
+  //         // /*mass comment*/ console.log("fetching feed unauthed: " + fetchstringsimple);
 
   //         const res = await fetch(fetchstringsimple);
   //         if (!res.ok) throw new Error("Failed to fetch feed");
@@ -313,7 +313,7 @@ function Home() {
   useEffect(() => {
     return () => {
       if (!donerestored) return;
-      console.log("FEEDSCROLLSHIT saving at uhhh: ", scrollRef.current);
+      // /*mass comment*/ console.log("FEEDSCROLLSHIT saving at uhhh: ", scrollRef.current);
       //if (!selectedFeed) return;
       setScrollPositions((prev) => ({
         ...prev,

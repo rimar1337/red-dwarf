@@ -42,7 +42,7 @@ export function generateMetadataPlugin({prod, dev}:{prod: string, dev: string}) 
 
       fs.writeFileSync(outputPath, JSON.stringify(metadata, null, 2));
 
-      console.log(`✅ Generated client-metadata.json for ${appOrigin}`);
+      // /*mass comment*/ console.log(`✅ Generated client-metadata.json for ${appOrigin}`);
     },
   };
 }

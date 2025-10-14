@@ -1,12 +1,10 @@
-import {
-  queryOptions,
-  useQuery,
-  useInfiniteQuery,
-  type QueryFunctionContext,
-  type UseQueryResult,
-  type InfiniteData
-} from "@tanstack/react-query";
 import * as ATPAPI from "@atproto/api";
+import {
+  type QueryFunctionContext,
+  queryOptions,
+  useInfiniteQuery,
+  useQuery,
+  type UseQueryResult} from "@tanstack/react-query";
 
 export function constructIdentityQuery(didorhandle?: string) {
   return queryOptions({
@@ -28,6 +26,8 @@ export function constructIdentityQuery(didorhandle?: string) {
         return undefined;
       }
     },
+    staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
+    gcTime: /*0//*/5 * 60 * 1000,
   });
 }
 export function useQueryIdentity(didorhandle: string): UseQueryResult<
@@ -65,17 +65,34 @@ export function constructPostQuery(uri?: string) {
       const res = await fetch(
         `https://slingshot.microcosm.blue/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
-      if (!res.ok) throw new Error("Failed to fetch post");
+      let data: any;
       try {
-        return (await res.json()) as {
+        data = await res.json();
+      } catch {
+        return undefined;
+      }
+      if (res.status === 400) return undefined;
+      if (data?.error === "InvalidRequest" && data.message?.includes("Could not find repo")) {
+        return undefined; // cache “not found”
+      }
+      try {
+        if (!res.ok) throw new Error("Failed to fetch post");
+        return (data) as {
           uri: string;
           cid: string;
-          value: ATPAPI.AppBskyFeedPost.Record;
+          value: any;
         };
       } catch (_e) {
         return undefined;
       }
     },
+    retry: (failureCount, error) => {
+      // dont retry 400 errors
+      if ((error as any)?.message?.includes("400")) return false;
+      return failureCount < 2;
+    },
+    staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
+    gcTime: /*0//*/5 * 60 * 1000,
   });
 }
 export function useQueryPost(uri: string): UseQueryResult<
@@ -111,17 +128,34 @@ export function constructProfileQuery(uri?: string) {
       const res = await fetch(
         `https://slingshot.microcosm.blue/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
-      if (!res.ok) throw new Error("Failed to fetch post");
+      let data: any;
       try {
-        return (await res.json()) as {
+        data = await res.json();
+      } catch {
+        return undefined;
+      }
+      if (res.status === 400) return undefined;
+      if (data?.error === "InvalidRequest" && data.message?.includes("Could not find repo")) {
+        return undefined; // cache “not found”
+      }
+      try {
+        if (!res.ok) throw new Error("Failed to fetch post");
+        return (data) as {
           uri: string;
           cid: string;
-          value: ATPAPI.AppBskyActorProfile.Record;
+          value: any;
         };
       } catch (_e) {
         return undefined;
       }
     },
+    retry: (failureCount, error) => {
+      // dont retry 400 errors
+      if ((error as any)?.message?.includes("400")) return false;
+      return failureCount < 2;
+    },
+    staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
+    gcTime: /*0//*/5 * 60 * 1000,
   });
 }
 export function useQueryProfile(uri: string): UseQueryResult<
@@ -418,9 +452,19 @@ export function constructArbitraryQuery(uri?: string) {
       const res = await fetch(
         `https://slingshot.microcosm.blue/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
-      if (!res.ok) throw new Error("Failed to fetch post");
+      let data: any;
       try {
-        return (await res.json()) as {
+        data = await res.json();
+      } catch {
+        return undefined;
+      }
+      if (res.status === 400) return undefined;
+      if (data?.error === "InvalidRequest" && data.message?.includes("Could not find repo")) {
+        return undefined; // cache “not found”
+      }
+      try {
+        if (!res.ok) throw new Error("Failed to fetch post");
+        return (data) as {
           uri: string;
           cid: string;
           value: any;
@@ -429,6 +473,13 @@ export function constructArbitraryQuery(uri?: string) {
         return undefined;
       }
     },
+    retry: (failureCount, error) => {
+      // dont retry 400 errors
+      if ((error as any)?.message?.includes("400")) return false;
+      return failureCount < 2;
+    },
+    staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
+    gcTime: /*0//*/5 * 60 * 1000,
   });
 }
 export function useQueryArbitrary(uri: string): UseQueryResult<

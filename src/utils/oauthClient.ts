@@ -7,7 +7,7 @@ const handleResolverPDS = 'https://bsky.social';
 
 // This assumes your client-metadata.json is in the /public folder
 // and will be served at the root of your domain.
-import clientMetadata from '../../public/client-metadata.json' assert { type: 'json' };
+import clientMetadata from '../../public/client-metadata.json' with { type: 'json' };
 
 export const oauthClient = new BrowserOAuthClient({
   // The type assertion is needed because the static import isn't strictly typed

@@ -1,15 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import React, { useLayoutEffect } from "react";
-import ShrinkingBox from "~/components/shrinkpadding";
+
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 //import { usePersistentStore } from '~/providers/PersistentStoreProvider';
 import {
+  constructPostQuery,
+  useQueryConstellation,
   useQueryIdentity,
   useQueryPost,
-  useQueryConstellation,
-  constructPostQuery,
-  useQueryArbitrary,
 } from "~/utils/useQuery";
 
 //const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
@@ -297,9 +296,11 @@ function ProfilePostComponent({ did, rkey }: { did: string; rkey: string }) {
           className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
           onClick={(e) => {
             e.preventDefault();
-            window.history.length > 1
-              ? window.history.back()
-              : window.location.assign("/");
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.assign("/");
+            }
           }}
           aria-label="Go back"
         >

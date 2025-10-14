@@ -28,23 +28,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const session = localStorage.getItem("sess");
 
         if (service && session) {
-          console.log("Auto-login service is:", service);
+          // /*mass comment*/ console.log("Auto-login service is:", service);
           const apiAgent = new AtpAgent({ service });
           try {
             if (!apiAgent) {
-              console.log("Agent is null or undefined");
+              // /*mass comment*/ console.log("Agent is null or undefined");
               return;
             }
             let sess: AtpSessionData = JSON.parse(session);
-            console.log("resuming session is:", sess);
+            // /*mass comment*/ console.log("resuming session is:", sess);
             const { data } = await apiAgent.resumeSession(sess);
-            console.log("!!!8!!! agent resume session");
+            // /*mass comment*/ console.log("!!!8!!! agent resume session");
             setAgent(apiAgent);
             setLoginStatus(true);
             setLoading(false);
             setAuthed(true);
           } catch (e) {
-            console.log("Failed to resume session" + e);
+            // /*mass comment*/ console.log("Failed to resume session" + e);
             setLoginStatus(true);
             localStorage.removeItem("sess");
             localStorage.removeItem("service");
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setAuthed(false);
         }
       } catch (e) {
-        console.log("Failed to auto-login:", e);
+        // /*mass comment*/ console.log("Failed to auto-login:", e);
       } finally {
         setLoading(false);
       }
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
       await apiAgent.login({ identifier: user, password });
-      console.log("!!!8!!! agent logged on");
+      // /*mass comment*/ console.log("!!!8!!! agent logged on");
 
       localStorage.setItem("service", service);
       // await AsyncStorage.setItem('user', user);
@@ -118,11 +118,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem("sess");
       }
       await agent.logout();
-      console.log("!!!8!!! agent logout");
+      // /*mass comment*/ console.log("!!!8!!! agent logout");
       setLoginStatus(false);
       setAuthed(undefined);
       await agent.com.atproto.server.deleteSession();
-      console.log("!!!8!!! agent deltesession");
+      // /*mass comment*/ console.log("!!!8!!! agent deltesession");
       //setAgent(null);
       setIncrement(increment + 1);
     } catch (e) {
