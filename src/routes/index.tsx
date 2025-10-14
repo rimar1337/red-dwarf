@@ -1,34 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  CACHE_TIMEOUT,
-  //cachedGetRecord,
-  //cachedResolveIdentity,
-  UniversalPostRendererATURILoader,
-} from "~/components/UniversalPostRenderer";
+import { useAtom } from "jotai";
 import * as React from "react";
-import { useAuth } from "~/providers/UnifiedAuthProvider";
-//import { usePersistentStore } from "~/providers/PersistentStoreProvider";
-import {
-  useQueryIdentity,
-  useQueryPost,
-  useQueryFeedSkeleton,
-  useQueryPreferences,
-  useQueryArbitrary,
-  constructInfiniteFeedSkeletonQuery,
-  constructArbitraryQuery,
-  constructIdentityQuery,
-  constructPostQuery,
-} from "~/utils/useQuery";
+import { useEffect, useLayoutEffect } from "react";
+
 import { InfiniteCustomFeed } from "~/components/InfiniteCustomFeed";
-import { useAtom, useSetAtom } from "jotai";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
-  selectedFeedUriAtom,
-  store,
   agentAtom,
   authedAtom,
   feedScrollPositionsAtom,
+  selectedFeedUriAtom,
+  store,
 } from "~/utils/atoms";
-import { useEffect, useLayoutEffect } from "react";
+//import { usePersistentStore } from "~/providers/PersistentStoreProvider";
+import {
+  constructArbitraryQuery,
+  constructIdentityQuery,
+  constructInfiniteFeedSkeletonQuery,
+  constructPostQuery,
+  useQueryArbitrary,
+  useQueryIdentity,
+  useQueryPreferences,
+} from "~/utils/useQuery";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -116,7 +109,8 @@ function Home() {
   }, [status, agent, authed]);
   useEffect(() => {
     if (agent) {
-      // is it just me or is the type really weird here it should be Agent not AtpAgent
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore is it just me or is the type really weird here it should be Agent not AtpAgent
       store.set(agentAtom, agent);
     } else {
       store.set(agentAtom, null);
@@ -330,7 +324,7 @@ function Home() {
     setRestoringScrollPosition(true);
     const savedPosition = scrollPositions[selectedFeed ?? "null"] ?? 0;
 
-    let raf = requestAnimationFrame(() => {
+    const raf = requestAnimationFrame(() => {
       // setRestoringScrollPosition(true);
       // raf = requestAnimationFrame(() => {
       //   window.scrollTo({ top: savedPosition, behavior: "instant" });
@@ -428,52 +422,53 @@ function Home() {
           Select a feed to get started.
         </div>
       )}
-      {false && restoringScrollPosition && (
+      {/* {false && restoringScrollPosition && (
         <div className="fixed top-1/2 left-1/2 right-1/2">
           restoringScrollPosition
         </div>
-      )}
+      )} */}
     </div>
   );
 }
+// not even used lmaooo
 
-export async function cachedResolveDIDWEBDOC({
-  didweb,
-  cacheTimeout = CACHE_TIMEOUT,
-  get,
-  set,
-}: {
-  didweb: string;
-  cacheTimeout?: number;
-  get: (key: string) => any;
-  set: (key: string, value: string) => void;
-}): Promise<any> {
-  const isDidInput = didweb.startsWith("did:web:");
-  const cacheKey = `didwebdoc:${didweb}`;
-  const now = Date.now();
-  const cached = get(cacheKey);
-  if (
-    cached &&
-    cached.value &&
-    cached.time &&
-    now - cached.time < cacheTimeout
-  ) {
-    try {
-      return JSON.parse(cached.value);
-    } catch {}
-  }
-  const url = `https://free-fly-24.deno.dev/resolve-did-web?did=${encodeURIComponent(
-    didweb
-  )}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to resolve didwebdoc");
-  const data = await res.json();
-  set(cacheKey, JSON.stringify(data));
-  if (!isDidInput && data.did) {
-    set(`didwebdoc:${data.did}`, JSON.stringify(data));
-  }
-  return data;
-}
+// export async function cachedResolveDIDWEBDOC({
+//   didweb,
+//   cacheTimeout = CACHE_TIMEOUT,
+//   get,
+//   set,
+// }: {
+//   didweb: string;
+//   cacheTimeout?: number;
+//   get: (key: string) => any;
+//   set: (key: string, value: string) => void;
+// }): Promise<any> {
+//   const isDidInput = didweb.startsWith("did:web:");
+//   const cacheKey = `didwebdoc:${didweb}`;
+//   const now = Date.now();
+//   const cached = get(cacheKey);
+//   if (
+//     cached &&
+//     cached.value &&
+//     cached.time &&
+//     now - cached.time < cacheTimeout
+//   ) {
+//     try {
+//       return JSON.parse(cached.value);
+//     } catch (_e) {/* whatever*/ }
+//   }
+//   const url = `https://free-fly-24.deno.dev/resolve-did-web?did=${encodeURIComponent(
+//     didweb
+//   )}`;
+//   const res = await fetch(url);
+//   if (!res.ok) throw new Error("Failed to resolve didwebdoc");
+//   const data = await res.json();
+//   set(cacheKey, JSON.stringify(data));
+//   if (!isDidInput && data.did) {
+//     set(`didwebdoc:${data.did}`, JSON.stringify(data));
+//   }
+//   return data;
+// }
 
 // export async function cachedGetPrefs({
 //   did,

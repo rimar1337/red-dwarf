@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useEffect, useState, useRef } from "react";
-import { useAuth } from "~/providers/PassAuthProvider";
-import { usePersistentStore } from "~/providers/PersistentStoreProvider";
+import React, { useEffect, useRef,useState } from "react";
+
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 
 const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
 
@@ -11,8 +11,9 @@ export const Route = createFileRoute("/notifications")({
 
 function NotificationsComponent() {
   // /*mass comment*/ console.log("NotificationsComponent render");
-  const { agent, authed, loading: authLoading } = useAuth();
-  const { get, set } = usePersistentStore();
+  const { agent, status } = useAuth();
+  const authed = !!agent?.did;
+  const authLoading = status === "loading";
   const [did, setDid] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,26 +42,26 @@ function NotificationsComponent() {
     setResolving(true);
     const cacheKey = `handleDid:${value}`;
     const now = Date.now();
-    const cached = await get(cacheKey);
-    if (
-      cached &&
-      cached.value &&
-      cached.time &&
-      now - cached.time < HANDLE_DID_CACHE_TIMEOUT
-    ) {
-      try {
-        const data = JSON.parse(cached.value);
-        setDid(data.did);
-        setResolving(false);
-        return;
-      } catch {}
-    }
+    const cached = undefined // await get(cacheKey);
+    // if (
+    //   cached &&
+    //   cached.value &&
+    //   cached.time &&
+    //   now - cached.time < HANDLE_DID_CACHE_TIMEOUT
+    // ) {
+    //   try {
+    //     const data = JSON.parse(cached.value);
+    //     setDid(data.did);
+    //     setResolving(false);
+    //     return;
+    //   } catch {}
+    // }
     try {
       const url = `https://free-fly-24.deno.dev/?handle=${encodeURIComponent(value)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to resolve handle");
       const data = await res.json();
-      set(cacheKey, JSON.stringify(data));
+      //set(cacheKey, JSON.stringify(data));
       setDid(data.did);
     } catch (e: any) {
       setError("Failed to resolve handle: " + (e?.message || e));
@@ -94,7 +95,7 @@ function NotificationsComponent() {
         } catch (e: any) {
           return { error: e?.message || String(e) };
         }
-      }),
+      })
     )
       .then((results) => {
         if (!ignore) setResponses(results);

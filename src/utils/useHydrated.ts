@@ -9,7 +9,7 @@ import {
   AppBskyFeedPost,
   AtUri,
 } from "@atproto/api";
-import { useEffect, useMemo,useState } from "react";
+import { useMemo } from "react";
 
 import { useQueryIdentity,useQueryPost, useQueryProfile } from "./useQuery";
 
@@ -151,16 +151,11 @@ export function useHydratedEmbed(
   postAuthorDid: string | undefined,
 ) {
   const recordInfo = useMemo(() => {
-    if (
-      AppBskyEmbedRecordWithMedia.isMain(embed)
-    ) {
+    if (AppBskyEmbedRecordWithMedia.isMain(embed)) {
       const recordUri = embed.record.record.uri;
       const quotedAuthorDid = new AtUri(recordUri).hostname;
       return { recordUri, quotedAuthorDid, isRecordType: true };
-    } else 
-    if (
-      AppBskyEmbedRecord.isMain(embed)
-    ) {
+    } else if (AppBskyEmbedRecord.isMain(embed)) {
       const recordUri = embed.record.uri;
       const quotedAuthorDid = new AtUri(recordUri).hostname;
       return { recordUri, quotedAuthorDid, isRecordType: true };
@@ -171,17 +166,14 @@ export function useHydratedEmbed(
       isRecordType: false,
     };
   }, [embed]);
+
   const { isRecordType, recordUri, quotedAuthorDid } = recordInfo;
 
-
   const usequerypostresults = useQueryPost(recordUri);
-  // const {
-  //   data: quotedPost,
-  //   isLoading: isLoadingPost,
-  //   error: postError,
-  // } = usequerypostresults
 
-  const profileUri = quotedAuthorDid ? `at://${quotedAuthorDid}/app.bsky.actor.profile/self` : undefined;
+  const profileUri = quotedAuthorDid
+    ? `at://${quotedAuthorDid}/app.bsky.actor.profile/self`
+    : undefined;
 
   const {
     data: quotedProfile,
@@ -190,38 +182,23 @@ export function useHydratedEmbed(
   } = useQueryProfile(profileUri);
 
   const queryidentityresult = useQueryIdentity(quotedAuthorDid);
-  // const {
-  //   data: quotedIdentity,
-  //   isLoading: isLoadingIdentity,
-  //   error: identityError,
-  // } = queryidentityresult
 
-  const [hydratedEmbed, setHydratedEmbed] = useState<
-    HydratedEmbedView | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (!embed || !postAuthorDid) {
-      setHydratedEmbed(undefined);
-      return;
-    }
+  const hydratedEmbed: HydratedEmbedView | undefined = (() => {
+    if (!embed || !postAuthorDid) return undefined;
 
     if (isRecordType && (!usequerypostresults?.data || !quotedProfile || !queryidentityresult?.data)) {
-      setHydratedEmbed(undefined);
-      return;
+      return undefined;
     }
 
     try {
-      let result: HydratedEmbedView | undefined;
-
       if (AppBskyEmbedImages.isMain(embed)) {
-        result = hydrateEmbedImages(embed, postAuthorDid);
+        return hydrateEmbedImages(embed, postAuthorDid);
       } else if (AppBskyEmbedExternal.isMain(embed)) {
-        result = hydrateEmbedExternal(embed, postAuthorDid);
+        return hydrateEmbedExternal(embed, postAuthorDid);
       } else if (AppBskyEmbedVideo.isMain(embed)) {
-        result = hydrateEmbedVideo(embed, postAuthorDid);
+        return hydrateEmbedVideo(embed, postAuthorDid);
       } else if (AppBskyEmbedRecord.isMain(embed)) {
-        result = hydrateEmbedRecord(
+        return hydrateEmbedRecord(
           embed,
           usequerypostresults?.data,
           quotedProfile,
@@ -243,7 +220,7 @@ export function useHydratedEmbed(
         }
 
         if (hydratedMedia) {
-          result = hydrateEmbedRecordWithMedia(
+          return hydrateEmbedRecordWithMedia(
             embed,
             hydratedMedia,
             usequerypostresults?.data,
@@ -252,23 +229,16 @@ export function useHydratedEmbed(
           );
         }
       }
-      setHydratedEmbed(result);
     } catch (e) {
       console.error("Error hydrating embed", e);
-      setHydratedEmbed(undefined);
+      return undefined;
     }
-  }, [
-    embed,
-    postAuthorDid,
-    isRecordType,
-    usequerypostresults?.data,
-    quotedProfile,
-    queryidentityresult?.data,
-  ]);
+  })();
 
   const isLoading = isRecordType
     ? usequerypostresults?.isLoading || isLoadingProfile || queryidentityresult?.isLoading
     : false;
+
   const error = usequerypostresults?.error || profileError || queryidentityresult?.error;
 
   return { data: hydratedEmbed, isLoading, error };

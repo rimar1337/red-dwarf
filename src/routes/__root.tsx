@@ -3,28 +3,24 @@
 // dont forget to run this
 // npx @tanstack/router-cli generate
 
-import { useState, type SVGProps } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import {
-  HeadContent,
+  createRootRouteWithContext,
   Link,
   Outlet,
   Scripts,
-  createRootRoute,
-  createRootRouteWithContext,
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { type SVGProps,useState } from "react";
 import * as React from "react";
+
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
-import appCss from "~/styles/app.css?url";
-import { seo } from "~/utils/seo";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
-import { PersistentStoreProvider } from "~/providers/PersistentStoreProvider";
-import type Agent from "@atproto/api";
-import type { QueryClient } from "@tanstack/react-query";
+import { seo } from "~/utils/seo";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -79,11 +75,9 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <UnifiedAuthProvider>
-      <PersistentStoreProvider>
-        <RootDocument>
-          <Outlet />
-        </RootDocument>
-      </PersistentStoreProvider>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
     </UnifiedAuthProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useAtom } from 'jotai';
+import { useAtom } from "jotai";
 import * as React from "react";
 import { type SVGProps } from "react";
 
@@ -146,8 +146,9 @@ export function UniversalPostRendererATURILoader({
   // >(null);
   //const router = useRouter();
 
-  const parsed = React.useMemo(() => parseAtUri(atUri), [atUri]);
-  const did = parsed?.did;
+  //const parsed = React.useMemo(() => parseAtUri(atUri), [atUri]);
+  const parsed = new AtUri(atUri);
+  const did = parsed?.host;
   const rkey = parsed?.rkey;
   // /*mass comment*/ console.log("did", did);
   // /*mass comment*/ console.log("rkey", rkey);
@@ -387,7 +388,7 @@ export function UniversalPostRendererATURILoader({
   // };
   if (!postQuery?.value) {
     // deleted post more often than a non-resolvable post
-    return (<></>)
+    return <></>;
   }
 
   return (
@@ -407,6 +408,12 @@ export function UniversalPostRendererATURILoader({
       repostedby={repostedby}
     />
   );
+}
+
+function getAvatarUrl(opProfile: any, did: string) {
+  const link = opProfile?.value?.avatar?.ref?.["$link"];
+  if (!link) return null;
+  return `https://cdn.bsky.app/img/avatar/plain/${did}/${link}@jpeg`;
 }
 
 export function UniversalPostRendererRawRecordShim({
@@ -442,12 +449,6 @@ export function UniversalPostRendererRawRecordShim({
   const navigate = useNavigate();
 
   //const { get, set } = usePersistentStore();
-  function getAvatarUrl(opProfile: any) {
-    const link = opProfile?.value?.avatar?.ref?.["$link"];
-    if (!link) return null;
-    return `https://cdn.bsky.app/img/avatar/plain/${resolved?.did}/${link}@jpeg`;
-  }
-
   // const [hydratedEmbed, setHydratedEmbed] = useState<any>(undefined);
 
   // useEffect(() => {
@@ -519,7 +520,7 @@ export function UniversalPostRendererRawRecordShim({
     error: embedError,
   } = useHydratedEmbed(postRecord?.value?.embed, resolved?.did);
 
-  const parsedaturi = parseAtUri(aturi);
+  const parsedaturi = new AtUri(aturi); //parseAtUri(aturi);
 
   const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(
     () => ({
@@ -530,7 +531,7 @@ export function UniversalPostRendererRawRecordShim({
         did: resolved?.did || "",
         handle: resolved?.handle || "",
         displayName: profileRecord?.value?.displayName || "",
-        avatar: getAvatarUrl(profileRecord) || "",
+        avatar: getAvatarUrl(profileRecord, resolved?.did) || "",
         viewer: undefined,
         labels: profileRecord?.labels || undefined,
         verification: undefined,
@@ -548,13 +549,16 @@ export function UniversalPostRendererRawRecordShim({
     }),
     [
       aturi,
-      postRecord,
+      postRecord?.cid,
+      postRecord?.value,
+      postRecord?.labels,
+      resolved?.did,
+      resolved?.handle,
       profileRecord,
       hydratedEmbed,
       repliesCount,
       repostsCount,
       likesCount,
-      resolved,
     ]
   );
 
@@ -595,8 +599,7 @@ export function UniversalPostRendererRawRecordShim({
   );
   const feedviewpostreplyhandle = replyhookvalue?.data?.handle;
 
-
-  const aturirepostbydid = repostedby ? new AtUri(repostedby).host : undefined
+  const aturirepostbydid = repostedby ? new AtUri(repostedby).host : undefined;
   const repostedbyhookvalue = useQueryIdentity(
     repostedby ? aturirepostbydid : undefined
   );
@@ -612,7 +615,7 @@ export function UniversalPostRendererRawRecordShim({
           parsedaturi &&
           navigate({
             to: "/profile/$did/post/$rkey",
-            params: { did: parsedaturi.did, rkey: parsedaturi.rkey },
+            params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
           })
         }
         // onProfileClick={() => parsedaturi && navigate({to: "/profile/$did",
@@ -623,7 +626,7 @@ export function UniversalPostRendererRawRecordShim({
           if (parsedaturi) {
             navigate({
               to: "/profile/$did",
-              params: { did: parsedaturi.did },
+              params: { did: parsedaturi.host },
             });
           }
         }}
@@ -640,28 +643,28 @@ export function UniversalPostRendererRawRecordShim({
   );
 }
 
-export function parseAtUri(
-  atUri: string
-): { did: string; collection: string; rkey: string } | null {
-  const PREFIX = "at://";
-  if (!atUri.startsWith(PREFIX)) {
-    return null;
-  }
+// export function parseAtUri(
+//   atUri: string
+// ): { did: string; collection: string; rkey: string } | null {
+//   const PREFIX = "at://";
+//   if (!atUri.startsWith(PREFIX)) {
+//     return null;
+//   }
 
-  const parts = atUri.slice(PREFIX.length).split("/");
+//   const parts = atUri.slice(PREFIX.length).split("/");
 
-  if (parts.length !== 3) {
-    return null;
-  }
+//   if (parts.length !== 3) {
+//     return null;
+//   }
 
-  const [did, collection, rkey] = parts;
+//   const [did, collection, rkey] = parts;
 
-  if (!did || !collection || !rkey) {
-    return null;
-  }
+//   if (!did || !collection || !rkey) {
+//     return null;
+//   }
 
-  return { did, collection, rkey };
-}
+//   return { did, collection, rkey };
+// }
 
 export function MdiCommentOutline(props: SVGProps<SVGSVGElement>) {
   return (
@@ -1102,7 +1105,7 @@ function UniversalPostRenderer({
     post.viewer?.repost ? true : false
   );
   const [hasLiked, setHasLiked] = useState<boolean>(
-    (post.uri in likedPosts) || post.viewer?.like ? true : false
+    post.uri in likedPosts || post.viewer?.like ? true : false
   );
   const { agent } = useAuth();
   const [likeUri, setLikeUri] = useState<string | undefined>(post.viewer?.like);
@@ -1132,7 +1135,7 @@ function UniversalPostRenderer({
       setHasLiked(true);
       newLikedPosts[post.uri] = uri;
     }
-    setLikedPosts(newLikedPosts)
+    setLikedPosts(newLikedPosts);
   };
 
   const repostOrUnrepostPost = async () => {
@@ -1152,11 +1155,13 @@ function UniversalPostRenderer({
     }
   };
 
-  const isRepost = repostedby ? repostedby : extraOptionalItemInfo
-    ? AppBskyFeedDefs.isReasonRepost(extraOptionalItemInfo.reason)
-      ? extraOptionalItemInfo.reason?.by.displayName
-      : undefined
-    : undefined;
+  const isRepost = repostedby
+    ? repostedby
+    : extraOptionalItemInfo
+      ? AppBskyFeedDefs.isReasonRepost(extraOptionalItemInfo.reason)
+        ? extraOptionalItemInfo.reason?.by.displayName
+        : undefined
+      : undefined;
   const isReply = extraOptionalItemInfo
     ? extraOptionalItemInfo.reply
     : undefined;
@@ -1224,7 +1229,8 @@ function UniversalPostRenderer({
       {!isQuote && (
         <div
           style={{
-            opacity: topReplyLine || (isReply /*&& (true || expanded)*/) ? 0.5 : 0,
+            opacity:
+              topReplyLine || isReply /*&& (true || expanded)*/ ? 0.5 : 0,
             position: "absolute",
             top: 0,
             left: 36, // why 36 ???
@@ -1441,7 +1447,7 @@ function UniversalPostRenderer({
             {renderTextWithFacets({
               text: (post.record as { text?: string }).text ?? "",
               facets: (post.record.facets as Facet[]) ?? [],
-              navigate: navigate
+              navigate: navigate,
             })}
             {}
           </div>
@@ -1455,6 +1461,9 @@ function UniversalPostRenderer({
             />
           ) : null}
           {post.embed && depth > 0 && (
+            /*  pretty bad hack imo. its trying to sync up with how the embed shim doesnt
+                hydrate embeds this deep but the connection here is implicit
+                todo: idk make this a real part of the embed shim so its not implicit */
             <>
               <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400 text-[14px]">
                 (there is an embed here thats too deep to render)
@@ -1716,11 +1725,11 @@ function PostEmbeds({
             salt={salt}
             onPostClick={(e) => {
               e.stopPropagation();
-              const parsed = parseAtUri(post.uri);
+              const parsed = new AtUri(post.uri); //parseAtUri(post.uri);
               if (parsed) {
                 navigate({
                   to: "/profile/$did/post/$rkey",
-                  params: { did: parsed.did, rkey: parsed.rkey },
+                  params: { did: parsed.host, rkey: parsed.rkey },
                 });
               }
             }}
@@ -1833,11 +1842,11 @@ function PostEmbeds({
             salt={salt}
             onPostClick={(e) => {
               e.stopPropagation();
-              const parsed = parseAtUri(post.uri);
+              const parsed = new AtUri(post.uri); //parseAtUri(post.uri);
               if (parsed) {
                 navigate({
                   to: "/profile/$did/post/$rkey",
-                  params: { did: parsed.did, rkey: parsed.rkey },
+                  params: { did: parsed.host, rkey: parsed.rkey },
                 });
               }
             }}
@@ -2296,7 +2305,7 @@ function getByteToCharMap(text: string): number[] {
     for (let i = 0; i < bytes.length; i++) {
       map[byteIndex++] = charIndex;
     }
-    charIndex+=char.length;
+    charIndex += char.length;
   }
 
   return map;
@@ -2389,7 +2398,7 @@ function renderTextWithFacets({
             navigate({
               to: "/profile/$did",
               // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
-              params: { did: feature.did},
+              params: { did: feature.did },
             });
           }}
         >

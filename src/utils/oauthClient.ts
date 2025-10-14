@@ -1,12 +1,10 @@
-// src/helpers/oauthClient.ts
 import { BrowserOAuthClient, type ClientMetadata } from '@atproto/oauth-client-browser';
 
-// This is your app's PDS for resolving handles if not provided.
-// You might need to host your own or use a public one.
+// i tried making this https://pds-nd.whey.party but cors is annoying as fuck
 const handleResolverPDS = 'https://bsky.social'; 
 
-// This assumes your client-metadata.json is in the /public folder
-// and will be served at the root of your domain.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore this should be fine ? the vite plugin should generate this before errors
 import clientMetadata from '../../public/client-metadata.json' with { type: 'json' };
 
 export const oauthClient = new BrowserOAuthClient({
