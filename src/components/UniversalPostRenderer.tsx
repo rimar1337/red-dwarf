@@ -2,7 +2,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
 import { type SVGProps } from "react";
+import { createPortal } from "react-dom";
 
+import { ProfilePostComponent } from "~/routes/profile.$did/post.$rkey";
 import { likedPostsAtom } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
@@ -28,6 +30,10 @@ export interface UniversalPostRendererATURILoaderProps {
   bottomBorder?: boolean;
   feedviewpost?: boolean;
   repostedby?: string;
+  style?: React.CSSProperties;
+  ref?: React.Ref<HTMLDivElement>;
+  dataIndexPropPass?: number;
+  nopics?: boolean;
 }
 
 // export async function cachedGetRecord({
@@ -132,6 +138,10 @@ export function UniversalPostRendererATURILoader({
   bottomBorder = true,
   feedviewpost = false,
   repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
 }: UniversalPostRendererATURILoaderProps) {
   // /*mass comment*/ console.log("atUri", atUri);
   //const { get, set } = usePersistentStore();
@@ -406,6 +416,10 @@ export function UniversalPostRendererATURILoader({
       bottomBorder={bottomBorder}
       feedviewpost={feedviewpost}
       repostedby={repostedby}
+      style={style}
+      ref={ref}
+      dataIndexPropPass={dataIndexPropPass}
+      nopics={nopics}
     />
   );
 }
@@ -430,6 +444,10 @@ export function UniversalPostRendererRawRecordShim({
   bottomBorder = true,
   feedviewpost = false,
   repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -444,6 +462,10 @@ export function UniversalPostRendererRawRecordShim({
   bottomBorder?: boolean;
   feedviewpost?: boolean;
   repostedby?: string;
+  style?: React.CSSProperties;
+  ref?: React.Ref<HTMLDivElement>;
+  dataIndexPropPass?: number;
+  nopics?: boolean;
 }) {
   // /*mass comment*/ console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
@@ -638,6 +660,10 @@ export function UniversalPostRendererRawRecordShim({
         //extraOptionalItemInfo={{reply: postRecord?.value?.reply as AppBskyFeedDefs.ReplyRef, post: fakepost}}
         feedviewpostreplyhandle={feedviewpostreplyhandle}
         repostedby={feedviewpostrepostedbyhandle}
+        style={style}
+        ref={ref}
+        dataIndexPropPass={dataIndexPropPass}
+        nopics={nopics}
       />
     </>
   );
@@ -1079,6 +1105,10 @@ function UniversalPostRenderer({
   feedviewpostreplyhandle,
   depth = 0,
   repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
 }: {
   post: PostView;
   // optional for now because i havent ported every use to this yet
@@ -1098,7 +1128,12 @@ function UniversalPostRenderer({
   feedviewpostreplyhandle?: string;
   depth?: number;
   repostedby?: string;
+  style?: React.CSSProperties;
+  ref?: React.Ref<HTMLDivElement>;
+  dataIndexPropPass?: number;
+  nopics?: boolean;
 }) {
+  const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
   const [likedPosts, setLikedPosts] = useAtom(likedPostsAtom);
   const [hasRetweeted, setHasRetweeted] = useState<boolean>(
@@ -1171,141 +1206,146 @@ function UniversalPostRenderer({
   /* fuck you */
   const isMainItem = false;
   const setMainItem = (any: any) => {};
+  // eslint-disable-next-line react-hooks/refs
+  console.log("Received ref in UniversalPostRenderer:", ref);
   return (
-    <div
-      key={salt + "-" + (post.uri || emergencySalt)}
-      onClick={
-        isMainItem
-          ? onPostClick
-          : setMainItem
-            ? onPostClick
-              ? (e) => {
-                  setMainItem({ post: post });
-                  onPostClick(e);
-                }
-              : () => {
-                  setMainItem({ post: post });
-                }
-            : undefined
-      }
-      style={{
-        //border: "1px solid #e1e8ed",
-        //borderRadius: 12,
-        opacity: "1 !important",
-        background: "transparent",
-        paddingLeft: isQuote ? 12 : 16,
-        paddingRight: isQuote ? 12 : 16,
-        //paddingTop: 16,
-        paddingTop: isRepost ? 10 : isQuote ? 12 : 16,
-        //paddingBottom: bottomReplyLine ? 0 : 16,
-        paddingBottom: 0,
-        fontFamily: "system-ui, sans-serif",
-        //boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        position: "relative",
-        // dont cursor: "pointer",
-        borderBottomWidth: bottomBorder ? (isQuote ? 0 : 1) : 0,
-      }}
-      className="border-gray-300 dark:border-gray-600"
-    >
-      {isRepost && (
-        <div
-          style={{
-            marginLeft: 36,
-            display: "flex",
-            borderRadius: 12,
-            paddingBottom: "calc(22px - 1rem)",
-            fontSize: 14,
-            maxHeight: "1rem",
-            justifyContent: "flex-start",
-            //color: theme.textSecondary,
-            gap: 4,
-            alignItems: "center",
-          }}
-          className="text-gray-500 dark:text-gray-400"
-        >
-          <MdiRepost /> Reposted by @{isRepost}{" "}
-        </div>
-      )}
-      {!isQuote && (
-        <div
-          style={{
-            opacity:
-              topReplyLine || isReply /*&& (true || expanded)*/ ? 0.5 : 0,
-            position: "absolute",
-            top: 0,
-            left: 36, // why 36 ???
-            //left: 16 + (42 / 2),
-            width: 2,
-            //height: "100%",
-            height: isRepost ? "calc(16px + 1rem - 6px)" : 16 - 6,
-            // background: theme.textSecondary,
-            //opacity: 0.5,
-            // no flex here
-          }}
-          className="bg-gray-500 dark:bg-gray-400"
-        />
-      )}
+    <div ref={ref} style={style} data-index={dataIndexPropPass}>
       <div
+        //ref={ref}
+        key={salt + "-" + (post.uri || emergencySalt)}
+        onClick={
+          isMainItem
+            ? onPostClick
+            : setMainItem
+              ? onPostClick
+                ? (e) => {
+                    setMainItem({ post: post });
+                    onPostClick(e);
+                  }
+                : () => {
+                    setMainItem({ post: post });
+                  }
+              : undefined
+        }
         style={{
-          position: "absolute",
-          //top: isRepost ? "calc(16px + 1rem)" : 16,
-          //left: 16,
-          zIndex: 1,
-          top: isRepost ? "calc(16px + 1rem)" : isQuote ? 12 : 16,
-          left: isQuote ? 12 : 16,
+          //...style,
+          //border: "1px solid #e1e8ed",
+          //borderRadius: 12,
+          opacity: "1 !important",
+          background: "transparent",
+          paddingLeft: isQuote ? 12 : 16,
+          paddingRight: isQuote ? 12 : 16,
+          //paddingTop: 16,
+          paddingTop: isRepost ? 10 : isQuote ? 12 : 16,
+          //paddingBottom: bottomReplyLine ? 0 : 16,
+          paddingBottom: 0,
+          fontFamily: "system-ui, sans-serif",
+          //boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          position: "relative",
+          // dont cursor: "pointer",
+          borderBottomWidth: bottomBorder ? (isQuote ? 0 : 1) : 0,
         }}
-        onClick={onProfileClick}
+        className="border-gray-300 dark:border-gray-600"
       >
-        <img
-          src={post.author.avatar || defaultpfp}
-          alt="avatar"
-          // transition={{
-          //   type: "spring",
-          //   stiffness: 260,
-          //   damping: 20,
-          // }}
-          style={{
-            borderRadius: "50%",
-            marginRight: 12,
-            objectFit: "cover",
-            //background: theme.border,
-            //border: `1px solid ${theme.border}`,
-            width: isQuote ? 16 : 42,
-            height: isQuote ? 16 : 42,
-          }}
-          className="border border-gray-300 dark:border-gray-600 bg-gray-300 dark:bg-gray-600"
-        />
-      </div>
-      <div style={{ display: "flex", alignItems: "flex-start", zIndex: 2 }}>
+        {isRepost && (
+          <div
+            style={{
+              marginLeft: 36,
+              display: "flex",
+              borderRadius: 12,
+              paddingBottom: "calc(22px - 1rem)",
+              fontSize: 14,
+              maxHeight: "1rem",
+              justifyContent: "flex-start",
+              //color: theme.textSecondary,
+              gap: 4,
+              alignItems: "center",
+            }}
+            className="text-gray-500 dark:text-gray-400"
+          >
+            <MdiRepost /> Reposted by @{isRepost}{" "}
+          </div>
+        )}
+        {!isQuote && (
+          <div
+            style={{
+              opacity:
+                topReplyLine || isReply /*&& (true || expanded)*/ ? 0.5 : 0,
+              position: "absolute",
+              top: 0,
+              left: 36, // why 36 ???
+              //left: 16 + (42 / 2),
+              width: 2,
+              //height: "100%",
+              height: isRepost ? "calc(16px + 1rem - 6px)" : 16 - 6,
+              // background: theme.textSecondary,
+              //opacity: 0.5,
+              // no flex here
+            }}
+            className="bg-gray-500 dark:bg-gray-400"
+          />
+        )}
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignSelf: "stretch",
-            alignItems: "center",
-            overflow: "hidden",
-            width: expanded || isQuote ? 0 : "auto",
-            marginRight: expanded || isQuote ? 0 : 12,
+            position: "absolute",
+            //top: isRepost ? "calc(16px + 1rem)" : 16,
+            //left: 16,
+            zIndex: 1,
+            top: isRepost ? "calc(16px + 1rem)" : isQuote ? 12 : 16,
+            left: isQuote ? 12 : 16,
           }}
+          onClick={onProfileClick}
         >
-          {/* dummy for later use */}
-          <div style={{ width: 42, height: 42 + 8, minHeight: 42 + 8 }} />
-          {/* reply line !!!!  bottomReplyLine */}
-          {bottomReplyLine && (
-            <div
-              style={{
-                width: 2,
-                height: "100%",
-                //background: theme.textSecondary,
-                opacity: 0.5,
-                // no flex here
-                //color: "Red",
-                //zIndex: 99
-              }}
-              className="bg-gray-500 dark:bg-gray-400"
-            />
-          )}
-          {/* <div
+          <img
+            src={post.author.avatar || defaultpfp}
+            alt="avatar"
+            // transition={{
+            //   type: "spring",
+            //   stiffness: 260,
+            //   damping: 20,
+            // }}
+            style={{
+              borderRadius: "50%",
+              marginRight: 12,
+              objectFit: "cover",
+              //background: theme.border,
+              //border: `1px solid ${theme.border}`,
+              width: isQuote ? 16 : 42,
+              height: isQuote ? 16 : 42,
+            }}
+            className="border border-gray-300 dark:border-gray-600 bg-gray-300 dark:bg-gray-600"
+          />
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-start", zIndex: 2 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignSelf: "stretch",
+              alignItems: "center",
+              overflow: "hidden",
+              width: expanded || isQuote ? 0 : "auto",
+              marginRight: expanded || isQuote ? 0 : 12,
+            }}
+          >
+            {/* dummy for later use */}
+            <div style={{ width: 42, height: 42 + 8, minHeight: 42 + 8 }} />
+            {/* reply line !!!!  bottomReplyLine */}
+            {bottomReplyLine && (
+              <div
+                style={{
+                  width: 2,
+                  height: "100%",
+                  //background: theme.textSecondary,
+                  opacity: 0.5,
+                  // no flex here
+                  //color: "Red",
+                  //zIndex: 99
+                }}
+                className="bg-gray-500 dark:bg-gray-400"
+              />
+            )}
+            {/* <div
             layout
             transition={{ duration: 0.2 }}
             animate={{ height: expanded ? 0 : '100%' }}
@@ -1315,261 +1355,264 @@ function UniversalPostRenderer({
               // no flex here
             }}
           /> */}
-        </div>
-        <div style={{ flex: 1, maxWidth: "100%" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              flexWrap: "nowrap",
-              maxWidth: `calc(100% - ${!expanded ? (isQuote ? 26 : 0) : 54}px)`,
-              width: `calc(100% - ${!expanded ? (isQuote ? 26 : 0) : 54}px)`,
-              marginLeft: !expanded ? (isQuote ? 26 : 0) : 54,
-              marginBottom: !expanded ? 4 : 6,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                //overflow: "hidden", // hey why is overflow hidden unapplied
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                flexShrink: 1,
-                flexGrow: 1,
-                flexBasis: 0,
-                width: 0,
-                gap: expanded ? 0 : 6,
-                alignItems: expanded ? "flex-start" : "center",
-                flexDirection: expanded ? "column" : "row",
-                height: expanded ? 42 : "1rem",
-              }}
-            >
-              <span
-                style={{
-                  display: "flex",
-                  fontWeight: 700,
-                  fontSize: 16,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  flexShrink: 1,
-                  minWidth: 0,
-                  gap: 4,
-                  alignItems: "center",
-                  //color: theme.text,
-                }}
-                className="text-gray-900 dark:text-gray-100"
-              >
-                {/* verified checkmark */}
-                {post.author.displayName || post.author.handle}{" "}
-                {post.author.verification?.verifiedStatus == "valid" && (
-                  <MdiVerified />
-                )}
-              </span>
-
-              <span
-                style={{
-                  //color: theme.textSecondary,
-                  fontSize: 16,
-                  overflowX: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  flexShrink: 1,
-                  flexGrow: 0,
-                  minWidth: 0,
-                }}
-                className="text-gray-500 dark:text-gray-400"
-              >
-                @{post.author.handle}
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                height: "1rem",
-              }}
-            >
-              <span
-                style={{
-                  //color: theme.textSecondary,
-                  fontSize: 16,
-                  marginLeft: 8,
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  maxWidth: "100%",
-                }}
-                className="text-gray-500 dark:text-gray-400"
-              >
-                · {/* time placeholder */}
-                {shortTimeAgo(post.indexedAt)}
-              </span>
-            </div>
           </div>
-          {/* reply indicator */}
-          {!!feedviewpostreplyhandle && (
+          <div style={{ flex: 1, maxWidth: "100%" }}>
             <div
               style={{
                 display: "flex",
-                borderRadius: 12,
-                paddingBottom: 2,
-                fontSize: 14,
-                justifyContent: "flex-start",
-                //color: theme.textSecondary,
-                gap: 4,
+                flexDirection: "row",
                 alignItems: "center",
-                //marginLeft: 36,
-                height:
-                  !(expanded || isQuote) && !!feedviewpostreplyhandle
-                    ? "1rem"
-                    : 0,
-                opacity:
-                  !(expanded || isQuote) && !!feedviewpostreplyhandle ? 1 : 0,
+                flexWrap: "nowrap",
+                maxWidth: `calc(100% - ${!expanded ? (isQuote ? 26 : 0) : 54}px)`,
+                width: `calc(100% - ${!expanded ? (isQuote ? 26 : 0) : 54}px)`,
+                marginLeft: !expanded ? (isQuote ? 26 : 0) : 54,
+                marginBottom: !expanded ? 4 : 6,
               }}
-              className="text-gray-500 dark:text-gray-400"
             >
-              <MdiReply /> Reply to @{feedviewpostreplyhandle}
-            </div>
-          )}
-          <div
-            style={{
-              fontSize: 16,
-              marginBottom: !post.embed /*|| depth > 0*/ ? 0 : 8,
-              whiteSpace: "pre-wrap",
-              textAlign: "left",
-              overflowWrap: "anywhere",
-              wordBreak: "break-word",
-              //color: theme.text,
-            }}
-            className="text-gray-900 dark:text-gray-100"
-          >
-            {renderTextWithFacets({
-              text: (post.record as { text?: string }).text ?? "",
-              facets: (post.record.facets as Facet[]) ?? [],
-              navigate: navigate,
-            })}
-            {}
-          </div>
-          {post.embed && depth < 1 ? (
-            <PostEmbeds
-              embed={post.embed}
-              //moderation={moderation}
-              viewContext={PostEmbedViewContext.Feed}
-              salt={salt}
-              navigate={navigate}
-            />
-          ) : null}
-          {post.embed && depth > 0 && (
-            /*  pretty bad hack imo. its trying to sync up with how the embed shim doesnt
-                hydrate embeds this deep but the connection here is implicit
-                todo: idk make this a real part of the embed shim so its not implicit */
-            <>
-              <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400 text-[14px]">
-                (there is an embed here thats too deep to render)
-              </div>
-            </>
-          )}
-          <div style={{ paddingTop: post.embed && depth < 1 ? 4 : 0 }}>
-            <>
-              {expanded && (
-                <div
-                  style={{
-                    overflow: "hidden",
-                    //color: theme.textSecondary,
-                    fontSize: 14,
-                    display: "flex",
-                    borderBottomStyle: "solid",
-                    //borderBottomColor: theme.border,
-                    //background: "#f00",
-                    // height: "1rem",
-                    paddingTop: 4,
-                    paddingBottom: 8,
-                    borderBottomWidth: 1,
-                    marginBottom: 8,
-                  }} // important for height animation
-                  className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
-                >
-                  {fullDateTimeFormat(post.indexedAt)}
-                </div>
-              )}
-            </>
-            {!isQuote && (
               <div
                 style={{
                   display: "flex",
-                  gap: 32,
-                  paddingTop: 8,
+                  //overflow: "hidden", // hey why is overflow hidden unapplied
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  flexShrink: 1,
+                  flexGrow: 1,
+                  flexBasis: 0,
+                  width: 0,
+                  gap: expanded ? 0 : 6,
+                  alignItems: expanded ? "flex-start" : "center",
+                  flexDirection: expanded ? "column" : "row",
+                  height: expanded ? 42 : "1rem",
+                }}
+              >
+                <span
+                  style={{
+                    display: "flex",
+                    fontWeight: 700,
+                    fontSize: 16,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flexShrink: 1,
+                    minWidth: 0,
+                    gap: 4,
+                    alignItems: "center",
+                    //color: theme.text,
+                  }}
+                  className="text-gray-900 dark:text-gray-100"
+                >
+                  {/* verified checkmark */}
+                  {post.author.displayName || post.author.handle}{" "}
+                  {post.author.verification?.verifiedStatus == "valid" && (
+                    <MdiVerified />
+                  )}
+                </span>
+
+                <span
+                  style={{
+                    //color: theme.textSecondary,
+                    fontSize: 16,
+                    overflowX: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flexShrink: 1,
+                    flexGrow: 0,
+                    minWidth: 0,
+                  }}
+                  className="text-gray-500 dark:text-gray-400"
+                >
+                  @{post.author.handle}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "1rem",
+                }}
+              >
+                <span
+                  style={{
+                    //color: theme.textSecondary,
+                    fontSize: 16,
+                    marginLeft: 8,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    maxWidth: "100%",
+                  }}
+                  className="text-gray-500 dark:text-gray-400"
+                >
+                  · {/* time placeholder */}
+                  {shortTimeAgo(post.indexedAt)}
+                </span>
+              </div>
+            </div>
+            {/* reply indicator */}
+            {!!feedviewpostreplyhandle && (
+              <div
+                style={{
+                  display: "flex",
+                  borderRadius: 12,
+                  paddingBottom: 2,
+                  fontSize: 14,
+                  justifyContent: "flex-start",
                   //color: theme.textSecondary,
-                  fontSize: 15,
-                  justifyContent: "space-between",
-                  //background: "#0f0",
+                  gap: 4,
+                  alignItems: "center",
+                  //marginLeft: 36,
+                  height:
+                    !(expanded || isQuote) && !!feedviewpostreplyhandle
+                      ? "1rem"
+                      : 0,
+                  opacity:
+                    !(expanded || isQuote) && !!feedviewpostreplyhandle ? 1 : 0,
                 }}
                 className="text-gray-500 dark:text-gray-400"
               >
-                <span style={btnstyle}>
-                  <MdiCommentOutline />
-                  {post.replyCount}
-                </span>
-                <HitSlopButton
-                  onClick={() => {
-                    repostOrUnrepostPost();
-                  }}
+                <MdiReply /> Reply to @{feedviewpostreplyhandle}
+              </div>
+            )}
+            <div
+              style={{
+                fontSize: 16,
+                marginBottom: !post.embed /*|| depth > 0*/ ? 0 : 8,
+                whiteSpace: "pre-wrap",
+                textAlign: "left",
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+                //color: theme.text,
+              }}
+              className="text-gray-900 dark:text-gray-100"
+            >
+              {renderTextWithFacets({
+                text: (post.record as { text?: string }).text ?? "",
+                facets: (post.record.facets as Facet[]) ?? [],
+                navigate: navigate,
+              })}
+              {}
+            </div>
+            {post.embed && depth < 1 ? (
+              <PostEmbeds
+                embed={post.embed}
+                //moderation={moderation}
+                viewContext={PostEmbedViewContext.Feed}
+                salt={salt}
+                navigate={navigate}
+                postid={{ did: post.author.did, rkey: parsed.rkey }}
+                nopics={nopics}
+              />
+            ) : null}
+            {post.embed && depth > 0 && (
+              /*  pretty bad hack imo. its trying to sync up with how the embed shim doesnt
+                hydrate embeds this deep but the connection here is implicit
+                todo: idk make this a real part of the embed shim so its not implicit */
+              <>
+                <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400 text-[14px]">
+                  (there is an embed here thats too deep to render)
+                </div>
+              </>
+            )}
+            <div style={{ paddingTop: post.embed && depth < 1 ? 4 : 0 }}>
+              <>
+                {expanded && (
+                  <div
+                    style={{
+                      overflow: "hidden",
+                      //color: theme.textSecondary,
+                      fontSize: 14,
+                      display: "flex",
+                      borderBottomStyle: "solid",
+                      //borderBottomColor: theme.border,
+                      //background: "#f00",
+                      // height: "1rem",
+                      paddingTop: 4,
+                      paddingBottom: 8,
+                      borderBottomWidth: 1,
+                      marginBottom: 8,
+                    }} // important for height animation
+                    className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                  >
+                    {fullDateTimeFormat(post.indexedAt)}
+                  </div>
+                )}
+              </>
+              {!isQuote && (
+                <div
                   style={{
-                    ...btnstyle,
-                    ...(hasRetweeted ? { color: "#5CEFAA" } : {}),
+                    display: "flex",
+                    gap: 32,
+                    paddingTop: 8,
+                    //color: theme.textSecondary,
+                    fontSize: 15,
+                    justifyContent: "space-between",
+                    //background: "#0f0",
                   }}
+                  className="text-gray-500 dark:text-gray-400"
                 >
-                  {hasRetweeted ? <MdiRepeatGreen /> : <MdiRepeat />}
-                  {(post.repostCount || 0) + (hasRetweeted ? 1 : 0)}
-                </HitSlopButton>
-                <HitSlopButton
-                  onClick={() => {
-                    likeOrUnlikePost();
-                  }}
-                  style={{
-                    ...btnstyle,
-                    ...(hasLiked ? { color: "#EC4899" } : {}),
-                  }}
-                >
-                  {hasLiked ? <MdiCardsHeart /> : <MdiCardsHeartOutline />}
-                  {(post.likeCount || 0) + (hasLiked ? 1 : 0)}
-                </HitSlopButton>
-                <div style={{ display: "flex", gap: 8 }}>
+                  <span style={btnstyle}>
+                    <MdiCommentOutline />
+                    {post.replyCount}
+                  </span>
                   <HitSlopButton
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        await navigator.clipboard.writeText(
-                          "https://bsky.app" +
-                            "/profile/" +
-                            post.author.handle +
-                            "/post/" +
-                            post.uri.split("/").pop()
-                        );
-                      } catch (_e) {
-                        // idk
-                      }
+                    onClick={() => {
+                      repostOrUnrepostPost();
                     }}
                     style={{
                       ...btnstyle,
+                      ...(hasRetweeted ? { color: "#5CEFAA" } : {}),
                     }}
                   >
-                    <MdiShareVariant />
+                    {hasRetweeted ? <MdiRepeatGreen /> : <MdiRepeat />}
+                    {(post.repostCount || 0) + (hasRetweeted ? 1 : 0)}
                   </HitSlopButton>
-                  <span style={btnstyle}>
-                    <MdiMoreHoriz />
-                  </span>
+                  <HitSlopButton
+                    onClick={() => {
+                      likeOrUnlikePost();
+                    }}
+                    style={{
+                      ...btnstyle,
+                      ...(hasLiked ? { color: "#EC4899" } : {}),
+                    }}
+                  >
+                    {hasLiked ? <MdiCardsHeart /> : <MdiCardsHeartOutline />}
+                    {(post.likeCount || 0) + (hasLiked ? 1 : 0)}
+                  </HitSlopButton>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <HitSlopButton
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await navigator.clipboard.writeText(
+                            "https://bsky.app" +
+                              "/profile/" +
+                              post.author.handle +
+                              "/post/" +
+                              post.uri.split("/").pop()
+                          );
+                        } catch (_e) {
+                          // idk
+                        }
+                      }}
+                      style={{
+                        ...btnstyle,
+                      }}
+                    >
+                      <MdiShareVariant />
+                    </HitSlopButton>
+                    <span style={btnstyle}>
+                      <MdiMoreHoriz />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            <div
+              style={{
+                //height: bottomReplyLine ? 16 : 0
+                height: isQuote ? 12 : 16,
+              }}
+            />
           </div>
-          <div
-            style={{
-              //height: bottomReplyLine ? 16 : 0
-              height: isQuote ? 12 : 16,
-            }}
-          />
         </div>
       </div>
     </div>
@@ -1661,6 +1704,8 @@ function PostEmbeds({
   viewContext,
   salt,
   navigate,
+  postid,
+  nopics,
 }: {
   embed?: Embed;
   moderation?: ModerationDecision;
@@ -1669,6 +1714,8 @@ function PostEmbeds({
   viewContext?: PostEmbedViewContext;
   salt: string;
   navigate: (_: any) => void;
+  postid?: { did: string; rkey: string };
+  nopics?: boolean;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   if (
@@ -1704,6 +1751,8 @@ function PostEmbeds({
           viewContext={viewContext}
           salt={salt}
           navigate={navigate}
+          postid={postid}
+          nopics={nopics}
         />
         {/* padding empty div of 8px height */}
         <div style={{ height: 12 }} />
@@ -1871,7 +1920,7 @@ function PostEmbeds({
 
   // image embed
   // =
-  if (AppBskyEmbedImages.isView(embed)) {
+  if (AppBskyEmbedImages.isView(embed) && !nopics) {
     const { images } = embed;
 
     const lightboxImages = images.map((img) => ({
@@ -1915,6 +1964,7 @@ function PostEmbeds({
                   index={lightboxIndex}
                   onClose={() => setLightboxIndex(null)}
                   onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+                  post={postid}
                 />
               )}
               <img
@@ -1955,6 +2005,7 @@ function PostEmbeds({
                 index={lightboxIndex}
                 onClose={() => setLightboxIndex(null)}
                 onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+                post={postid}
               />
             )}
             {images.map((img, i) => (
@@ -2004,6 +2055,7 @@ function PostEmbeds({
                 index={lightboxIndex}
                 onClose={() => setLightboxIndex(null)}
                 onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+                post={postid}
               />
             )}
             {/* Left: 1:1 */}
@@ -2088,6 +2140,7 @@ function PostEmbeds({
                 index={lightboxIndex}
                 onClose={() => setLightboxIndex(null)}
                 onNavigate={(newIndex) => setLightboxIndex(newIndex)}
+                post={postid}
               />
             )}
             {images.map((img, i) => (
@@ -2180,18 +2233,19 @@ function PostEmbeds({
   return <div />;
 }
 
-import { createPortal } from "react-dom";
 type LightboxProps = {
   images: { src: string; alt?: string }[];
   index: number;
   onClose: () => void;
   onNavigate?: (newIndex: number) => void;
+  post?: { did: string; rkey: string };
 };
 export function Lightbox({
   images,
   index,
   onClose,
   onNavigate,
+  post,
 }: LightboxProps) {
   const image = images[index];
 
@@ -2208,69 +2262,86 @@ export function Lightbox({
   }, [index, images.length, onClose, onNavigate]);
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
-    >
-      <img
-        src={image.src}
-        alt={image.alt}
-        className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      />
-
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate?.((index - 1 + images.length) % images.length);
-            }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width={28}
-              height={28}
-              viewBox="0 0 24 24"
-            >
-              <g fill="none" fillRule="evenodd">
-                <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path>
-                <path
-                  fill="currentColor"
-                  d="M8.293 12.707a1 1 0 0 1 0-1.414l5.657-5.657a1 1 0 1 1 1.414 1.414L10.414 12l4.95 4.95a1 1 0 0 1-1.414 1.414z"
-                ></path>
-              </g>
-            </svg>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate?.((index + 1) % images.length);
-            }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width={28}
-              height={28}
-              viewBox="0 0 24 24"
-            >
-              <g fill="none" fillRule="evenodd">
-                <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path>
-                <path
-                  fill="currentColor"
-                  d="M15.707 11.293a1 1 0 0 1 0 1.414l-5.657 5.657a1 1 0 1 1-1.414-1.414l4.95-4.95l-4.95-4.95a1 1 0 0 1 1.414-1.414z"
-                ></path>
-              </g>
-            </svg>
-          </button>
-        </>
+    <>
+      {post && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            e.nativeEvent.stopImmediatePropagation();
+          }}
+          className="lightbox-sidebar overscroll-none disablegutter border-l dark:border-gray-700 border-gray-300 fixed z-50 flex top-0 right-0 flex-col max-w-[350px] min-w-[350px] max-h-screen overflow-y-scroll dark:bg-gray-950 bg-white"
+        >
+          <ProfilePostComponent
+            did={post.did}
+            rkey={post.rkey}
+            nopics={onClose}
+          />
+        </div>
       )}
-    </div>,
+      <div
+        className="lightbox fixed inset-0 z-50 flex items-center justify-center bg-black/80 w-screen lg:w-[calc(100vw-350px-var(--scrollbar-width)*0)] lg:max-w-[calc(100vw-350px-var(--scrollbar-width)*0)]"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+      >
+        <img
+          src={image.src}
+          alt={image.alt}
+          className="max-h-[90%] max-w-[90%] object-contain rounded-lg shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.((index - 1 + images.length) % images.length);
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={28}
+                height={28}
+                viewBox="0 0 24 24"
+              >
+                <g fill="none" fillRule="evenodd">
+                  <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path>
+                  <path
+                    fill="currentColor"
+                    d="M8.293 12.707a1 1 0 0 1 0-1.414l5.657-5.657a1 1 0 1 1 1.414 1.414L10.414 12l4.95 4.95a1 1 0 0 1-1.414 1.414z"
+                  ></path>
+                </g>
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.((index + 1) % images.length);
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl h-8 w-8 rounded-full bg-gray-900 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={28}
+                height={28}
+                viewBox="0 0 24 24"
+              >
+                <g fill="none" fillRule="evenodd">
+                  <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"></path>
+                  <path
+                    fill="currentColor"
+                    d="M15.707 11.293a1 1 0 0 1 0 1.414l-5.657 5.657a1 1 0 1 1-1.414-1.414l4.95-4.95l-4.95-4.95a1 1 0 0 1 1.414-1.414z"
+                  ></path>
+                </g>
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
+    </>,
     document.body
   );
 }

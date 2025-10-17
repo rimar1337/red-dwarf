@@ -1,17 +1,17 @@
-import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-
-// Import the generated route tree
-import { routeTree } from "./routeTree.gen";
-
 import "~/styles/app.css";
-import reportWebVitals from "./reportWebVitals.ts";
+
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient, QueryClientProvider, } from "@tanstack/react-query";
 import {
   persistQueryClient,
 } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createRouter,RouterProvider } from "@tanstack/react-router";
+//import { StrictMode } from "react";
+import ReactDOM from "react-dom/client";
+
+import reportWebVitals from "./reportWebVitals.ts";
+// Import the generated route tree
+import { routeTree } from "./routeTree.gen";
 
 
 const queryClient = new QueryClient({

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import React, { useLayoutEffect } from "react";
 
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
@@ -32,7 +32,15 @@ function RouterWrapper() {
   );
 }
 
-function ProfilePostComponent({ did, rkey }: { did: string; rkey: string }) {
+export function ProfilePostComponent({
+  did,
+  rkey,
+  nopics,
+}: {
+  did: string;
+  rkey: string;
+  nopics?: () => void;
+}) {
   //const { get, set } = usePersistentStore();
   const queryClient = useQueryClient();
   // const [resolvedDid, setResolvedDid] = React.useState<string | null>(null);
@@ -201,10 +209,8 @@ function ProfilePostComponent({ did, rkey }: { did: string; rkey: string }) {
 
   const scrollAnchor = React.useRef<{ top: number } | null>(null);
 
-
   React.useEffect(() => {
     const onScroll = () => {
-
       if (window.scrollY > 50) {
         userHasScrolled.current = true;
 
@@ -291,21 +297,35 @@ function ProfilePostComponent({ did, rkey }: { did: string; rkey: string }) {
   return (
     <>
       <div className="flex items-center gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700">
-        <Link
-          to=".."
-          className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
-          onClick={(e) => {
-            e.preventDefault();
-            if (window.history.length > 1) {
-              window.history.back();
-            } else {
-              window.location.assign("/");
-            }
-          }}
-          aria-label="Go back"
-        >
-          ←
-        </Link>
+        {!nopics ? (
+          <button
+            //to=".."
+            className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
+            onClick={(e) => {
+              e.preventDefault();
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                window.location.assign("/");
+              }
+            }}
+            aria-label="Go back"
+          >
+            ←
+          </button>
+        ) : (
+          <button
+            //to=".."
+            className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
+            onClick={(e) => {
+              e.preventDefault();
+              nopics();
+            }}
+            aria-label="Go back"
+          >
+            ←
+          </button>
+        )}
         <span className="text-xl font-bold ml-2">Post</span>
       </div>
 
@@ -322,7 +342,7 @@ function ProfilePostComponent({ did, rkey }: { did: string; rkey: string }) {
       )}
 
       {/* we should use the reply lines here thats provided by UPR*/}
-      <div style={{ maxWidth: 600, margin: "0px auto 0", padding: 0 }}>
+      <div style={{ maxWidth: 600, padding: 0 }}>
         {parents.map((parent, index) => (
           <UniversalPostRendererATURILoader
             key={parent.uri}
@@ -338,12 +358,13 @@ function ProfilePostComponent({ did, rkey }: { did: string; rkey: string }) {
           atUri={atUri}
           detailed={true}
           topReplyLine={parentsLoading || parents.length > 0}
+          nopics={!!nopics}
         />
       </div>
       <div
         style={{
           maxWidth: 600,
-          margin: "0px auto 0",
+          //margin: "0px auto 0",
           padding: 0,
           minHeight: "100dvh",
         }}
