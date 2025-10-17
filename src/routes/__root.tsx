@@ -2,7 +2,6 @@
 
 // dont forget to run this
 // npx @tanstack/router-cli generate
-
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
@@ -13,7 +12,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { type SVGProps, useState } from "react";
+import { useState } from "react";
 import * as React from "react";
 import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
@@ -22,6 +21,16 @@ import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
 import { seo } from "~/utils/seo";
+import IconHome from "~icons/material-symbols/home"
+import IconHomeOutline from "~icons/material-symbols/home-outline"
+import IconNotifications from "~icons/material-symbols/notifications"
+import IconNotificationsOutline from "~icons/material-symbols/notifications-outline"
+import IconSearch from "~icons/material-symbols/search"
+import IconSettings from "~icons/material-symbols/settings"
+import IconSettingsOutline from "~icons/material-symbols/settings-outline"
+import IconTag from "~icons/material-symbols/tag"
+import IconAccountCircleOutline from  "~icons/mdi/account-circle-outline"
+import IconPencilOutline from "~icons/mdi/pencil-outline"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -194,10 +203,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               (isHome ? "font-bold" : "")
             }
           >
-            {isHome ? (
-              <TablerHomeFilled width={28} height={28} />
+            {!isHome ? (
+              <IconHomeOutline width={28} height={28} />
             ) : (
-              <TablerHome width={28} height={28} />
+              <IconHome width={28} height={28} />
             )}
             <span>Home</span>
           </Link>
@@ -208,10 +217,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               (isNotifications ? "font-bold" : "")
             }
           >
-            {isNotifications ? (
-              <TablerBellFilled width={28} height={28} />
+            {!isNotifications ? (
+              <IconNotificationsOutline width={28} height={28} />
             ) : (
-              <TablerBell width={28} height={28} />
+              <IconNotifications width={28} height={28} />
             )}
             <span>Notifications</span>
           </Link>
@@ -222,9 +231,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {location.pathname.startsWith("/feeds") ? (
-              <TablerHashtagFilled width={28} height={28} />
+              <IconTag width={28} height={28} />
             ) : (
-              <TablerHashtag width={28} height={28} />
+              <IconTag width={28} height={28} />
             )}
             <span>Feeds</span>
           </Link>
@@ -236,9 +245,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {location.pathname.startsWith("/search") ? (
-              <TablerSearchFilled width={28} height={28} />
+              <IconSearch width={28} height={28} />
             ) : (
-              <TablerSearch width={28} height={28} />
+              <IconSearch width={28} height={28} />
             )}
             <span>Search</span>
           </Link>
@@ -257,7 +266,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }}
             type="button"
           >
-            <TablerUserCircle width={28} height={28} />
+            <IconAccountCircleOutline width={28} height={28} />
             <span>Profile</span>
           </button>
           <Link
@@ -266,10 +275,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               location.pathname.startsWith("/settings") ? "font-bold" : ""
             }`}
           >
-            {location.pathname.startsWith("/settings") ? (
-              <IonSettingsSharp width={28} height={28} />
+            {!location.pathname.startsWith("/settings") ? (
+              <IconSettingsOutline width={28} height={28} />
             ) : (
-              <IonSettings width={28} height={28} />
+              <IconSettings width={28} height={28} />
             )}
             <span>Settings</span>
           </Link>
@@ -278,7 +287,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             onClick={() => setPostOpen(true)}
             type="button"
           >
-            <TablerEdit
+            <IconPencilOutline
               width={24}
               height={24}
               className="text-gray-600 dark:text-gray-400"
@@ -322,7 +331,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           type="button"
           aria-label="Create Post"
         >
-          <TablerEdit
+          <IconPencilOutline
             width={24}
             height={24}
             className="text-gray-600 dark:text-gray-400"
@@ -374,10 +383,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 : "text-gray-600 dark:text-gray-400"
             }`}
           >
-            {isHome ? (
-              <TablerHomeFilled width={24} height={24} />
+            {!isHome ? (
+              <IconHomeOutline width={24} height={24} />
             ) : (
-              <TablerHome width={24} height={24} />
+              <IconHome width={24} height={24} />
             )}
             <span className="text-xs mt-1">Home</span>
           </Link>
@@ -389,10 +398,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 : "text-gray-600 dark:text-gray-400"
             }`}
           >
-            {location.pathname.startsWith("/search") ? (
-              <TablerSearchFilled width={24} height={24} />
+            {!location.pathname.startsWith("/search") ? (
+              <IconSearch width={24} height={24} />
             ) : (
-              <TablerSearch width={24} height={24} />
+              <IconSearch width={24} height={24} />
             )}
             <span className="text-xs mt-1">Search</span>
           </Link>
@@ -404,10 +413,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 : "text-gray-600 dark:text-gray-400"
             }`}
           >
-            {isNotifications ? (
-              <TablerBellFilled width={24} height={24} />
+            {!isNotifications ? (
+              <IconNotificationsOutline width={24} height={24} />
             ) : (
-              <TablerBell width={24} height={24} />
+              <IconNotifications width={24} height={24} />
             )}
             <span className="text-xs mt-1">Notifications</span>
           </Link>
@@ -428,7 +437,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }}
             type="button"
           >
-            <TablerUserCircle width={24} height={24} />
+            <IconAccountCircleOutline width={24} height={24} />
             <span className="text-xs mt-1">Profile</span>
           </button>
           <Link
@@ -439,10 +448,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 : "text-gray-600 dark:text-gray-400"
             }`}
           >
-            {location.pathname.startsWith("/settings") ? (
-              <IonSettingsSharp width={24} height={24} />
+            {!location.pathname.startsWith("/settings") ? (
+              <IconSettingsOutline width={24} height={24} />
             ) : (
-              <IonSettings width={24} height={24} />
+              <IconSettings width={24} height={24} />
             )}
             <span className="text-xs mt-1">Settings</span>
           </Link>
@@ -452,255 +461,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <TanStackRouterDevtools position="bottom-right" />
       <Scripts />
     </>
-  );
-}
-export function TablerHashtag(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 9h14M5 15h14M11 4L7 20M17 4l-4 16"
-      ></path>
-    </svg>
-  );
-}
-
-export function TablerHashtagFilled(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={3}
-        d="M5 9h14M5 15h14M11 4L7 20M17 4l-4 16"
-      ></path>
-    </svg>
-  );
-}
-export function TablerEdit(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      className="text-white"
-      {...props}
-    >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-      >
-        <path d="M16.475 5.408a2.36 2.36 0 1 1 3.34 3.34L7.5 21H3v-4.5z"></path>
-      </g>
-    </svg>
-  );
-}
-export function TablerHome(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-      {...props}
-    >
-      <g
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        fill="none"
-      >
-        <path d="M5 12H3l9-9l9 9h-2M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
-        <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"></path>
-      </g>
-    </svg>
-  );
-}
-export function TablerHomeFilled(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-      {...props}
-    >
-      <path
-        fill="currentColor"
-        d="m12.707 2.293l9 9c.63.63.184 1.707-.707 1.707h-1v6a3 3 0 0 1-3 3h-1v-7a3 3 0 0 0-2.824-2.995L13 12h-2a3 3 0 0 0-3 3v7H7a3 3 0 0 1-3-3v-6H3c-.89 0-1.337-1.077-.707-1.707l9-9a1 1 0 0 1 1.414 0M13 14a1 1 0 0 1 1 1v7h-4v-7a1 1 0 0 1 .883-.993L11 14z"
-      ></path>
-    </svg>
-  );
-}
-
-export function TablerBell(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6M9 17v1a3 3 0 0 0 6 0v-1"
-      ></path>
-    </svg>
-  );
-}
-export function TablerBellFilled(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-      {...props}
-    >
-      <path
-        fill="currentColor"
-        stroke="currentColor"
-        d="M14.235 19c.865 0 1.322 1.024.745 1.668A4 4 0 0 1 12 22a4 4 0 0 1-2.98-1.332c-.552-.616-.158-1.579.634-1.661l.11-.006zM12 2c1.358 0 2.506.903 2.875 2.141l.046.171l.008.043a8.01 8.01 0 0 1 4.024 6.069l.028.287L19 11v2.931l.021.136a3 3 0 0 0 1.143 1.847l.167.117l.162.099c.86.487.56 1.766-.377 1.864L20 18H4c-1.028 0-1.387-1.364-.493-1.87a3 3 0 0 0 1.472-2.063L5 13.924l.001-2.97A8 8 0 0 1 8.822 4.5l.248-.146l.01-.043a3 3 0 0 1 2.562-2.29l.182-.017z"
-      ></path>
-    </svg>
-  );
-}
-
-export function TablerUserCircle(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-      {...props}
-    >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-      >
-        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0"></path>
-        <path d="M9 10a3 3 0 1 0 6 0a3 3 0 1 0-6 0m-2.832 8.849A4 4 0 0 1 10 16h4a4 4 0 0 1 3.834 2.855"></path>
-      </g>
-    </svg>
-  );
-}
-
-export function TablerSearch(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      //className="text-gray-400 dark:text-gray-500"
-      {...props}
-    >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-      >
-        <path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0"></path>
-        <path d="m21 21l-6-6"></path>
-      </g>
-    </svg>
-  );
-}
-export function TablerSearchFilled(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      //className="text-gray-400 dark:text-gray-500"
-      {...props}
-    >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={3}
-      >
-        <path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0"></path>
-        <path d="m21 21l-6-6"></path>
-      </g>
-    </svg>
-  );
-}
-
-export function IonSettings(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 512 512"
-      {...props}
-    >
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={32}
-        d="M262.29 192.31a64 64 0 1 0 57.4 57.4a64.13 64.13 0 0 0-57.4-57.4M416.39 256a154 154 0 0 1-1.53 20.79l45.21 35.46a10.81 10.81 0 0 1 2.45 13.75l-42.77 74a10.81 10.81 0 0 1-13.14 4.59l-44.9-18.08a16.11 16.11 0 0 0-15.17 1.75A164.5 164.5 0 0 1 325 400.8a15.94 15.94 0 0 0-8.82 12.14l-6.73 47.89a11.08 11.08 0 0 1-10.68 9.17h-85.54a11.11 11.11 0 0 1-10.69-8.87l-6.72-47.82a16.07 16.07 0 0 0-9-12.22a155 155 0 0 1-21.46-12.57a16 16 0 0 0-15.11-1.71l-44.89 18.07a10.81 10.81 0 0 1-13.14-4.58l-42.77-74a10.8 10.8 0 0 1 2.45-13.75l38.21-30a16.05 16.05 0 0 0 6-14.08c-.36-4.17-.58-8.33-.58-12.5s.21-8.27.58-12.35a16 16 0 0 0-6.07-13.94l-38.19-30A10.81 10.81 0 0 1 49.48 186l42.77-74a10.81 10.81 0 0 1 13.14-4.59l44.9 18.08a16.11 16.11 0 0 0 15.17-1.75A164.5 164.5 0 0 1 187 111.2a15.94 15.94 0 0 0 8.82-12.14l6.73-47.89A11.08 11.08 0 0 1 213.23 42h85.54a11.11 11.11 0 0 1 10.69 8.87l6.72 47.82a16.07 16.07 0 0 0 9 12.22a155 155 0 0 1 21.46 12.57a16 16 0 0 0 15.11 1.71l44.89-18.07a10.81 10.81 0 0 1 13.14 4.58l42.77 74a10.8 10.8 0 0 1-2.45 13.75l-38.21 30a16.05 16.05 0 0 0-6.05 14.08c.33 4.14.55 8.3.55 12.47"
-      ></path>
-    </svg>
-  );
-}
-export function IonSettingsSharp(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 512 512"
-      {...props}
-    >
-      <path
-        fill="currentColor"
-        d="M256 176a80 80 0 1 0 80 80a80.24 80.24 0 0 0-80-80m172.72 80a165.5 165.5 0 0 1-1.64 22.34l48.69 38.12a11.59 11.59 0 0 1 2.63 14.78l-46.06 79.52a11.64 11.64 0 0 1-14.14 4.93l-57.25-23a176.6 176.6 0 0 1-38.82 22.67l-8.56 60.78a11.93 11.93 0 0 1-11.51 9.86h-92.12a12 12 0 0 1-11.51-9.53l-8.56-60.78A169.3 169.3 0 0 1 151.05 393L93.8 416a11.64 11.64 0 0 1-14.14-4.92L33.6 331.57a11.59 11.59 0 0 1 2.63-14.78l48.69-38.12A175 175 0 0 1 83.28 256a165.5 165.5 0 0 1 1.64-22.34l-48.69-38.12a11.59 11.59 0 0 1-2.63-14.78l46.06-79.52a11.64 11.64 0 0 1 14.14-4.93l57.25 23a176.6 176.6 0 0 1 38.82-22.67l8.56-60.78A11.93 11.93 0 0 1 209.94 26h92.12a12 12 0 0 1 11.51 9.53l8.56 60.78A169.3 169.3 0 0 1 361 119l57.2-23a11.64 11.64 0 0 1 14.14 4.92l46.06 79.52a11.59 11.59 0 0 1-2.63 14.78l-48.69 38.12a175 175 0 0 1 1.64 22.66"
-      ></path>
-    </svg>
   );
 }
