@@ -6,5 +6,16 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-
+  const IconMaterialSymbolsAccountCircle: typeof import('~icons/material-symbols/account-circle.jsx').default
+  const IconMaterialSymbolsAccountCircleOutline: typeof import('~icons/material-symbols/account-circle-outline.jsx').default
+  const IconMaterialSymbolsHome: typeof import('~icons/material-symbols/home.jsx').default
+  const IconMaterialSymbolsHomeOutline: typeof import('~icons/material-symbols/home-outline.jsx').default
+  const IconMaterialSymbolsNotifications: typeof import('~icons/material-symbols/notifications.jsx').default
+  const IconMaterialSymbolsNotificationsOutline: typeof import('~icons/material-symbols/notifications-outline.jsx').default
+  const IconMaterialSymbolsSearch: typeof import('~icons/material-symbols/search.jsx').default
+  const IconMaterialSymbolsSettings: typeof import('~icons/material-symbols/settings.jsx').default
+  const IconMaterialSymbolsSettingsOutline: typeof import('~icons/material-symbols/settings-outline.jsx').default
+  const IconMaterialSymbolsTag: typeof import('~icons/material-symbols/tag.jsx').default
+  const IconMdiAccountCircle: typeof import('~icons/mdi/account-circle.jsx').default
+  const IconMdiPencilOutline: typeof import('~icons/mdi/pencil-outline.jsx').default
 }

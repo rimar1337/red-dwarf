@@ -1,7 +1,7 @@
 # Red Dwarf
 Red Dwarf is a Bluesky client that does not use any AppView servers, instead it gathers the data from [Constellation](https://constellation.microcosm.blue/) and each users' PDS.
 
-![screenshot of red dwarf](/public/screenshot.png)
+![screenshot of red dwarf](/public/screenshot.jpg)
 
 huge thanks to [Microcosm](https://microcosm.blue/) for making this possible
 
@@ -52,6 +52,24 @@ in place of a following feed you can just use any custom feed that implements th
 and for list feeds, you can just use something like graze or skyfeed to input a list of users and output a custom feed
 
 ## Tanstack Router
-it does the job, nothing very specific was used here
+something specific was used here
 
-im planning to use the loader system on select pages to prevent loss of scroll positon and state though its really complex so i havent done it yet but the migration to tanstack query is a huge first step towards this goal
+so tanstack router is used as the base, but the home route is using tanstack-router-keepalive to preserve the route for better responsiveness, and it also saves scroll position of feeds into jotai (persistent)
+
+i previously used a tanstack router loader to ensure the tanstack query cache is ready to prevent scroll jumps but it is way too slow so i replaced it with tanstack-router-keepalive
+
+## Icons
+this project uses Material icons. do not the light variant. sometimes i use `Mdi` if the icon needed doesnt exist in `MaterialSymbols`
+
+the project uses unplugin icon auto import, so you can just use the component and itll just work!
+
+the format is:
+```tsx
+<IconMaterialSymbols{icon name here} />
+// or
+<IconMdi{icon name here} />
+```
+
+you can get the full list of icon names from iconify ([Material Symbols](https://icon-sets.iconify.design/material-symbols/) or [MDI](https://icon-sets.iconify.design/mdi/))
+
+while it is nice to keep everything consistent by using material icons, if the icon you need is not provided by either material symbols nor mdi, you are allowed to just grab any icon from any pack (please do prioritize icons that fit in)

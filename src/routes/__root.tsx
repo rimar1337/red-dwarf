@@ -21,16 +21,6 @@ import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
 import { seo } from "~/utils/seo";
-import IconHome from "~icons/material-symbols/home"
-import IconHomeOutline from "~icons/material-symbols/home-outline"
-import IconNotifications from "~icons/material-symbols/notifications"
-import IconNotificationsOutline from "~icons/material-symbols/notifications-outline"
-import IconSearch from "~icons/material-symbols/search"
-import IconSettings from "~icons/material-symbols/settings"
-import IconSettingsOutline from "~icons/material-symbols/settings-outline"
-import IconTag from "~icons/material-symbols/tag"
-import IconAccountCircleOutline from  "~icons/mdi/account-circle-outline"
-import IconPencilOutline from "~icons/mdi/pencil-outline"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -204,9 +194,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }
           >
             {!isHome ? (
-              <IconHomeOutline width={28} height={28} />
+              <IconMaterialSymbolsHomeOutline width={28} height={28} />
             ) : (
-              <IconHome width={28} height={28} />
+              <IconMaterialSymbolsHome width={28} height={28} />
             )}
             <span>Home</span>
           </Link>
@@ -218,9 +208,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }
           >
             {!isNotifications ? (
-              <IconNotificationsOutline width={28} height={28} />
+              <IconMaterialSymbolsNotificationsOutline width={28} height={28} />
             ) : (
-              <IconNotifications width={28} height={28} />
+              <IconMaterialSymbolsNotifications width={28} height={28} />
             )}
             <span>Notifications</span>
           </Link>
@@ -231,9 +221,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {location.pathname.startsWith("/feeds") ? (
-              <IconTag width={28} height={28} />
+              <IconMaterialSymbolsTag width={28} height={28} />
             ) : (
-              <IconTag width={28} height={28} />
+              <IconMaterialSymbolsTag width={28} height={28} />
             )}
             <span>Feeds</span>
           </Link>
@@ -245,9 +235,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {location.pathname.startsWith("/search") ? (
-              <IconSearch width={28} height={28} />
+              <IconMaterialSymbolsSearch width={28} height={28} />
             ) : (
-              <IconSearch width={28} height={28} />
+              <IconMaterialSymbolsSearch width={28} height={28} />
             )}
             <span>Search</span>
           </Link>
@@ -266,7 +256,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }}
             type="button"
           >
-            <IconAccountCircleOutline width={28} height={28} />
+            {!isProfile ? (
+              <IconMaterialSymbolsAccountCircleOutline width={28} height={28} />
+            ) : (
+              <IconMaterialSymbolsAccountCircle width={28} height={28} />
+            )
+              }
             <span>Profile</span>
           </button>
           <Link
@@ -276,9 +271,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {!location.pathname.startsWith("/settings") ? (
-              <IconSettingsOutline width={28} height={28} />
+              <IconMaterialSymbolsSettingsOutline width={28} height={28} />
             ) : (
-              <IconSettings width={28} height={28} />
+              <IconMaterialSymbolsSettings width={28} height={28} />
             )}
             <span>Settings</span>
           </Link>
@@ -287,7 +282,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             onClick={() => setPostOpen(true)}
             type="button"
           >
-            <IconPencilOutline
+            <IconMdiPencilOutline
               width={24}
               height={24}
               className="text-gray-600 dark:text-gray-400"
@@ -331,7 +326,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           type="button"
           aria-label="Create Post"
         >
-          <IconPencilOutline
+          <IconMdiPencilOutline
             width={24}
             height={24}
             className="text-gray-600 dark:text-gray-400"
@@ -384,9 +379,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {!isHome ? (
-              <IconHomeOutline width={24} height={24} />
+              <IconMaterialSymbolsHomeOutline width={24} height={24} />
             ) : (
-              <IconHome width={24} height={24} />
+              <IconMaterialSymbolsHome width={24} height={24} />
             )}
             <span className="text-xs mt-1">Home</span>
           </Link>
@@ -399,9 +394,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {!location.pathname.startsWith("/search") ? (
-              <IconSearch width={24} height={24} />
+              <IconMaterialSymbolsSearch width={24} height={24} />
             ) : (
-              <IconSearch width={24} height={24} />
+              <IconMaterialSymbolsSearch width={24} height={24} />
             )}
             <span className="text-xs mt-1">Search</span>
           </Link>
@@ -414,9 +409,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {!isNotifications ? (
-              <IconNotificationsOutline width={24} height={24} />
+              <IconMaterialSymbolsNotificationsOutline width={24} height={24} />
             ) : (
-              <IconNotifications width={24} height={24} />
+              <IconMaterialSymbolsNotifications width={24} height={24} />
             )}
             <span className="text-xs mt-1">Notifications</span>
           </Link>
@@ -437,7 +432,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }}
             type="button"
           >
-            <IconAccountCircleOutline width={24} height={24} />
+            <IconMaterialSymbolsAccountCircleOutline width={24} height={24} />
             <span className="text-xs mt-1">Profile</span>
           </button>
           <Link
@@ -449,9 +444,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }`}
           >
             {!location.pathname.startsWith("/settings") ? (
-              <IconSettingsOutline width={24} height={24} />
+              <IconMaterialSymbolsSettingsOutline width={24} height={24} />
             ) : (
-              <IconSettings width={24} height={24} />
+              <IconMaterialSymbolsSettings width={24} height={24} />
             )}
             <span className="text-xs mt-1">Settings</span>
           </Link>
