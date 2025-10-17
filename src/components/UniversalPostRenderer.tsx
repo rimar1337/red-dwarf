@@ -2279,7 +2279,7 @@ export function Lightbox({
         </div>
       )}
       <div
-        className="lightbox fixed inset-0 z-50 flex items-center justify-center bg-black/80 w-screen lg:w-[calc(100vw-350px-var(--scrollbar-width)*0)] lg:max-w-[calc(100vw-350px-var(--scrollbar-width)*0)]"
+        className="lightbox fixed inset-0 z-50 flex items-center justify-center bg-black/80 w-screen lg:w-[calc(100vw-350px)] lg:max-w-[calc(100vw-350px)]"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
