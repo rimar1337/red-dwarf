@@ -7,14 +7,15 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   Link,
-  Outlet,
+  // Outlet,
   Scripts,
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { type SVGProps,useState } from "react";
+import { type SVGProps, useState } from "react";
 import * as React from "react";
+import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import Login from "~/components/Login";
@@ -76,7 +77,9 @@ function RootComponent() {
   return (
     <UnifiedAuthProvider>
       <RootDocument>
-        <Outlet />
+        <KeepAliveProvider>
+          <KeepAliveOutlet />
+        </KeepAliveProvider>
       </RootDocument>
     </UnifiedAuthProvider>
   );
@@ -89,7 +92,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const authed = !!agent?.did;
   const isHome = location.pathname === "/";
   const isNotifications = location.pathname.startsWith("/notifications");
-  const isProfile = agent && ((location.pathname === (`/profile/${agent?.did}`)) || (location.pathname === (`/profile/${encodeURIComponent(agent?.did??"")}`)));
+  const isProfile =
+    agent &&
+    (location.pathname === `/profile/${agent?.did}` ||
+      location.pathname === `/profile/${encodeURIComponent(agent?.did ?? "")}`);
 
   const [postOpen, setPostOpen] = useState(false);
   const [postText, setPostText] = useState("");
@@ -246,7 +252,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 navigate({
                   to: "/profile/$did",
                   params: { did: agent.assertDid },
-                })
+                });
               }
             }}
             type="button"
@@ -417,7 +423,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 navigate({
                   to: "/profile/$did",
                   params: { did: agent.assertDid },
-                })
+                });
               }
             }}
             type="button"
