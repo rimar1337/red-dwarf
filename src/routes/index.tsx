@@ -359,7 +359,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
       className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"} ${!isAtTop && "shadow"}`}
     >
       {savedFeeds.length > 0 ? (
-        <div className="flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] z-10 border-0 border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin">
+        <div className="flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] sm:bg-white sm:dark:bg-gray-950 z-10 border-0 border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin">
           {savedFeeds.map((item: any, idx: number) => {
             const label = item.value.split("/").pop() || item.value;
             const isActive = selectedFeed === item.value;
