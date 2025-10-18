@@ -36,6 +36,7 @@
     "@iconify-icon/react": "^3.0.1",
     "@iconify-json/material-symbols": "^1.2.42",
     "@iconify-json/mdi": "^1.2.3",
+    "@iconify/json": "^2.2.396",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@testing-library/dom": "^10.4.0",

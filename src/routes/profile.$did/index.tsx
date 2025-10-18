@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import React from "react";
 
+import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { toggleFollow, useGetFollowState } from "~/utils/followState";
@@ -104,7 +105,17 @@ function ProfileComponent() {
 
   return (
     <>
-      <div className="flex gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700">
+      <Header
+        title={`Profile`}
+        backButtonCallback={() => {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.assign("/");
+          }
+        }}
+      />
+      {/* <div className="flex gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700">
         <Link
           to=".."
           className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
@@ -121,7 +132,7 @@ function ProfileComponent() {
           ←
         </Link>
         <span className="text-xl font-bold ml-2">Profile</span>
-      </div>
+      </div> */}
 
       {/* Profile Header */}
       <div className="w-full max-w-2xl mx-auto overflow-hidden relative bg-gray-100 dark:bg-gray-900">

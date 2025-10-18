@@ -39,12 +39,13 @@ export default defineConfig({
         IconsResolver({
           prefix: 'Icon',
           extension: 'jsx',
+          enabledCollections: ['mdi','material-symbols'],
         }),
       ],
       dts: 'src/auto-imports.d.ts',
     }),
     Icons({
-      autoInstall: true,
+      //autoInstall: true,
       compiler: 'jsx',
       jsx: 'react'
     }),

@@ -3,6 +3,7 @@ import { useAtom } from "jotai";
 import * as React from "react";
 import { useEffect, useLayoutEffect } from "react";
 
+import { Header } from "~/components/Header";
 import { InfiniteCustomFeed } from "~/components/InfiniteCustomFeed";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
@@ -353,9 +354,9 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     <div
       className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"}`}
     >
-      <div className="flex items-center gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin">
-        {savedFeeds.length > 0 ? (
-          savedFeeds.map((item: any, idx: number) => {
+      {savedFeeds.length > 0 ? (
+        <div className="flex items-center px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin">
+          {savedFeeds.map((item: any, idx: number) => {
             const label = item.value.split("/").pop() || item.value;
             const isActive = selectedFeed === item.value;
             return (
@@ -363,27 +364,36 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
                 key={item.value || idx}
                 className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${
                   isActive
-                    ? "bg-gray-500 text-white"
-                    : item.pinned
-                      ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                      : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                    ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+                  // ? "bg-gray-500 text-white"
+                  // : item.pinned
+                  //   ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                  //   : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                 }`}
                 onClick={() => setSelectedFeed(item.value)}
                 title={item.value}
               >
                 {label}
                 {item.pinned && (
-                  <span className="ml-1 text-xs text-gray-700 dark:text-gray-200">
+                  <span
+                    className={`ml-1 text-xs ${
+                      isActive
+                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+                    }`}
+                  >
                     ★
                   </span>
                 )}
               </button>
             );
-          })
-        ) : (
-          <span className="text-xl font-bold ml-2">Home</span>
-        )}
-      </div>
+          })}
+        </div>
+      ) : (
+        // <span className="text-xl font-bold ml-2">Home</span>
+        <Header title="Home" />
+      )}
       {/* {isFeedLoading && <div className="p-4 text-gray-500">Loading...</div>}
       {feedError && <div className="p-4 text-red-500">{feedError.message}</div>}
       {!isFeedLoading && !feedError && feed.length === 0 && (

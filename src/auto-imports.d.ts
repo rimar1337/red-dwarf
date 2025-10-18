@@ -8,6 +8,7 @@ export {}
 declare global {
   const IconMaterialSymbolsAccountCircle: typeof import('~icons/material-symbols/account-circle.jsx').default
   const IconMaterialSymbolsAccountCircleOutline: typeof import('~icons/material-symbols/account-circle-outline.jsx').default
+  const IconMaterialSymbolsArrowBack: typeof import('~icons/material-symbols/arrow-back.jsx').default
   const IconMaterialSymbolsHome: typeof import('~icons/material-symbols/home.jsx').default
   const IconMaterialSymbolsHomeOutline: typeof import('~icons/material-symbols/home-outline.jsx').default
   const IconMaterialSymbolsNotifications: typeof import('~icons/material-symbols/notifications.jsx').default

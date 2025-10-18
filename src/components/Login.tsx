@@ -1,10 +1,17 @@
 // src/components/Login.tsx
-import React, { useEffect, useState, useRef } from "react";
-import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { Agent } from "@atproto/api";
+import React, { useEffect, useRef, useState } from "react";
+
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 
 // --- 1. The Main Component (Orchestrator with `compact` prop) ---
-export default function Login({ compact = false }: { compact?: boolean }) {
+export default function Login({
+  compact = false,
+  popup = false,
+}: {
+  compact?: boolean;
+  popup?: boolean;
+}) {
   const { status, agent, logout } = useAuth();
 
   // Loading state can be styled differently based on the prop
@@ -33,7 +40,7 @@ export default function Login({ compact = false }: { compact?: boolean }) {
     // Large view
     if (!compact) {
       return (
-        <div className="p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4">
+        <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800 mt-6 mx-4">
           <div className="flex flex-col items-center justify-center text-center">
             <p className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               You are logged in!
@@ -41,7 +48,7 @@ export default function Login({ compact = false }: { compact?: boolean }) {
             <ProfileThing agent={agent} large />
             <button
               onClick={logout}
-              className="bg-gray-600 mt-4 hover:bg-gray-700 text-white rounded px-6 py-2 font-semibold text-base transition-colors"
+              className="bg-gray-600 mt-4 hover:bg-gray-700 text-white rounded-full px-6 py-2 font-semibold text-base transition-colors"
             >
               Log out
             </button>
@@ -67,14 +74,14 @@ export default function Login({ compact = false }: { compact?: boolean }) {
   if (!compact) {
     // Large view renders the form directly in the card
     return (
-      <div className="p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-6 mx-4">
+      <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800 mt-6 mx-4">
         <UnifiedLoginForm />
       </div>
     );
   }
 
   // Compact view renders a button that toggles the form in a dropdown
-  return <CompactLoginButton />;
+  return <CompactLoginButton popup={popup} />;
 }
 
 // --- 2. The Reusable, Self-Contained Login Form Component ---
@@ -83,7 +90,7 @@ export function UnifiedLoginForm() {
 
   return (
     <div>
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+      <div className="flex bg-gray-300 rounded-full dark:bg-gray-700 mb-4">
         <TabButton
           label="OAuth"
           active={mode === "oauth"}
@@ -103,7 +110,7 @@ export function UnifiedLoginForm() {
 // --- 3. Helper components for layouts, forms, and UI ---
 
 // A new component to contain the logic for the compact dropdown
-const CompactLoginButton = () => {
+const CompactLoginButton = ({popup}:{popup?: boolean}) => {
   const [showForm, setShowForm] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -125,12 +132,12 @@ const CompactLoginButton = () => {
     <div className="relative" ref={formRef}>
       <button
         onClick={() => setShowForm(!showForm)}
-        className="text-sm bg-gray-600 hover:bg-gray-700 text-white rounded px-3 py-1 font-medium transition-colors"
+        className="text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-full px-3 py-1 font-medium transition-colors"
       >
         Log in
       </button>
       {showForm && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
+        <div className={`absolute ${popup ? `bottom-[calc(100%)]` :`top-full`} right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50`}>
           <UnifiedLoginForm />
         </div>
       )}
@@ -138,13 +145,21 @@ const CompactLoginButton = () => {
   );
 };
 
-const TabButton = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void; }) => (
+const TabButton = ({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 text-sm font-medium transition-colors ${
+    className={`px-4 py-2 text-sm font-medium transition-colors rounded-full flex-1 ${
       active
-        ? "text-gray-600 dark:text-gray-200 border-b-2 border-gray-500"
-        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        ? "text-gray-950 dark:text-gray-200 border-gray-500 bg-gray-400 dark:bg-gray-500"
+        : "text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200"
     }`}
   >
     {label}
@@ -169,9 +184,22 @@ const OAuthForm = () => {
   };
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <p className="text-xs text-gray-500 dark:text-gray-400">Sign in with AT. Your password is never shared.</p>
-      <input type="text" placeholder="handle.bsky.social" value={handle} onChange={(e) => setHandle(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" />
-      <button type="submit" className="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 font-medium text-sm transition-colors">Log in</button>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Sign in with AT. Your password is never shared.
+      </p>
+      <input
+        type="text"
+        placeholder="handle.bsky.social"
+        value={handle}
+        onChange={(e) => setHandle(e.target.value)}
+        className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+      />
+      <button
+        type="submit"
+        className="bg-gray-600 hover:bg-gray-700 text-white rounded-full px-4 py-2 font-medium text-sm transition-colors"
+      >
+        Log in
+      </button>
     </form>
   );
 };
@@ -201,51 +229,109 @@ const PasswordForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <p className="text-xs text-red-500 dark:text-red-400">Warning: Less secure. Use an App Password.</p>
-      <input type="text" placeholder="handle.bsky.social" value={user} onChange={(e) => setUser(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" autoComplete="username" />
-      <input type="password" placeholder="App Password" value={password} onChange={(e) => setPassword(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" autoComplete="current-password" />
-      <input type="text" placeholder="PDS (e.g., bsky.social)" value={serviceURL} onChange={(e) => setServiceURL(e.target.value)} className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" />
+      <p className="text-xs text-red-500 dark:text-red-400">
+        Warning: Less secure. Use an App Password.
+      </p>
+      <input
+        type="text"
+        placeholder="handle.bsky.social"
+        value={user}
+        onChange={(e) => setUser(e.target.value)}
+        className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+        autoComplete="username"
+      />
+      <input
+        type="password"
+        placeholder="App Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+        autoComplete="current-password"
+      />
+      <input
+        type="text"
+        placeholder="PDS (e.g., bsky.social)"
+        value={serviceURL}
+        onChange={(e) => setServiceURL(e.target.value)}
+        className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+      />
       {error && <p className="text-xs text-red-500">{error}</p>}
-      <button type="submit" className="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 font-medium text-sm transition-colors">Log in</button>
+      <button
+        type="submit"
+        className="bg-gray-600 hover:bg-gray-700 text-white rounded-full px-4 py-2 font-medium text-sm transition-colors"
+      >
+        Log in
+      </button>
     </form>
   );
 };
 
 // --- Profile Component (now supports a `large` prop for styling) ---
-export const ProfileThing = ({ agent, large = false }: { agent: Agent | null; large?: boolean }) => {
-    const [profile, setProfile] = useState<any>(null);
+export const ProfileThing = ({
+  agent,
+  large = false,
+}: {
+  agent: Agent | null;
+  large?: boolean;
+}) => {
+  const [profile, setProfile] = useState<any>(null);
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            const did = (agent as any)?.session?.did ?? (agent as any)?.assertDid;
-            if (!did) return;
-            try {
-                const res = await agent!.getProfile({ actor: did });
-                setProfile(res.data);
-            } catch (e) { console.error("Failed to fetch profile", e); }
-        };
-        if (agent) fetchUser();
-    }, [agent]);
-
-    if (!profile) {
-        return ( // Skeleton loader
-          <div className={`flex items-center gap-2.5 animate-pulse ${large ? 'mb-1' : ''}`}>
-            <div className={`rounded-full bg-gray-300 dark:bg-gray-700 ${large ? 'w-10 h-10' : 'w-[30px] h-[30px]'}`} />
-            <div className="flex flex-col gap-2">
-              <div className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? 'h-4 w-28' : 'h-3 w-20'}`} />
-              <div className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? 'h-4 w-20' : 'h-3 w-16'}`} />
-            </div>
-          </div>
-        );
+  useEffect(() => {
+    const fetchUser = async () => {
+      const did = (agent as any)?.session?.did ?? (agent as any)?.assertDid;
+      if (!did) return;
+      try {
+        const res = await agent!.getProfile({ actor: did });
+        setProfile(res.data);
+      } catch (e) {
+        console.error("Failed to fetch profile", e);
       }
-    
-      return (
-        <div className={`flex flex-row items-center gap-2.5 ${large ? 'mb-1' : ''}`}>
-          <img src={profile?.avatar} alt="avatar" className={`object-cover rounded-full ${large ? 'w-10 h-10' : 'w-[30px] h-[30px]'}`} />
-          <div className="flex flex-col items-start text-left">
-            <div className={`font-medium ${large ? 'text-gray-800 dark:text-gray-100 text-md' : 'text-gray-800 dark:text-gray-100 text-sm'}`}>{profile?.displayName}</div>
-            <div className={` ${large ? 'text-gray-500 dark:text-gray-400 text-sm' : 'text-gray-500 dark:text-gray-400 text-xs'}`}>@{profile?.handle}</div>
-          </div>
+    };
+    if (agent) fetchUser();
+  }, [agent]);
+
+  if (!profile) {
+    return (
+      // Skeleton loader
+      <div
+        className={`flex items-center gap-2.5 animate-pulse ${large ? "mb-1" : ""}`}
+      >
+        <div
+          className={`rounded-full bg-gray-300 dark:bg-gray-700 ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
+        />
+        <div className="flex flex-col gap-2">
+          <div
+            className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? "h-4 w-28" : "h-3 w-20"}`}
+          />
+          <div
+            className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? "h-4 w-20" : "h-3 w-16"}`}
+          />
         </div>
-      );
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex flex-row items-center gap-2.5 ${large ? "mb-1" : ""}`}
+    >
+      <img
+        src={profile?.avatar}
+        alt="avatar"
+        className={`object-cover rounded-full ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
+      />
+      <div className="flex flex-col items-start text-left">
+        <div
+          className={`font-medium ${large ? "text-gray-800 dark:text-gray-100 text-md" : "text-gray-800 dark:text-gray-100 text-sm"}`}
+        >
+          {profile?.displayName}
+        </div>
+        <div
+          className={` ${large ? "text-gray-500 dark:text-gray-400 text-sm" : "text-gray-500 dark:text-gray-400 text-xs"}`}
+        >
+          @{profile?.handle}
+        </div>
+      </div>
+    </div>
+  );
 };

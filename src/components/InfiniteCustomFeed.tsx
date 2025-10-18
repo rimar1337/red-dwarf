@@ -1,11 +1,12 @@
 import * as React from "react";
+
 //import { useInView } from "react-intersection-observer";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
-  useQueryArbitrary,
-  useQueryIdentity,
   useInfiniteQueryFeedSkeleton,
+  // useQueryArbitrary,
+  // useQueryIdentity,
 } from "~/utils/useQuery";
 
 interface InfiniteCustomFeedProps {
@@ -112,10 +113,10 @@ export function InfiniteCustomFeed({
       <button
         onClick={handleRefresh}
         disabled={isRefetching}
-        className="sticky lg:bottom-6 bottom-24 ml-4 w-[42px] h-[42px] z-10 bg-gray-500 hover:bg-gray-600 text-gray-50 p-[9px] rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-110 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="sticky lg:bottom-4 bottom-22 ml-4 w-[42px] h-[42px] z-10 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-50 p-[9px] rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-110 disabled:bg-gray-400 disabled:cursor-not-allowed"
         aria-label="Refresh feed"
       >
-        {isRefetching ? <RefreshIcon className="h-6 w-6 animate-spin" /> : <RefreshIcon className="h-6 w-6" />}
+        {isRefetching ? <RefreshIcon className="h-6 w-6 text-gray-600 dark:text-gray-400 animate-spin" /> : <RefreshIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />}
       </button>
     </>
   );

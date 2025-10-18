@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import React, { useLayoutEffect } from "react";
 
+import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 //import { usePersistentStore } from '~/providers/PersistentStoreProvider';
 import {
@@ -296,38 +297,20 @@ export function ProfilePostComponent({
 
   return (
     <>
-      <div className="flex items-center gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700">
-        {!nopics ? (
-          <button
-            //to=".."
-            className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
-            onClick={(e) => {
-              e.preventDefault();
-              if (window.history.length > 1) {
-                window.history.back();
-              } else {
-                window.location.assign("/");
+      <Header
+        title={`Post`}
+        backButtonCallback={
+          nopics
+            ? nopics
+            : () => {
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  window.location.assign("/");
+                }
               }
-            }}
-            aria-label="Go back"
-          >
-            ←
-          </button>
-        ) : (
-          <button
-            //to=".."
-            className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
-            onClick={(e) => {
-              e.preventDefault();
-              nopics();
-            }}
-            aria-label="Go back"
-          >
-            ←
-          </button>
-        )}
-        <span className="text-xl font-bold ml-2">Post</span>
-      </div>
+        }
+      />
 
       {parentsLoading && (
         <div className="text-center text-gray-500 dark:text-gray-400 flex flex-row">
