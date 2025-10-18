@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
 import * as React from "react";
 import { type SVGProps } from "react";
@@ -1202,6 +1203,8 @@ function UniversalPostRenderer({
     : undefined;
 
   const emergencySalt = randomString();
+  const fedi = (post.record as { bridgyOriginalText?: string })
+    .bridgyOriginalText;
 
   /* fuck you */
   const isMainItem = false;
@@ -1484,12 +1487,23 @@ function UniversalPostRenderer({
               }}
               className="text-gray-900 dark:text-gray-100"
             >
-              {renderTextWithFacets({
-                text: (post.record as { text?: string }).text ?? "",
-                facets: (post.record.facets as Facet[]) ?? [],
-                navigate: navigate,
-              })}
-              {}
+              {fedi ? (
+                <>
+                  <span className="dangerousFediContent"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(fedi),
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  {renderTextWithFacets({
+                    text: (post.record as { text?: string }).text ?? "",
+                    facets: (post.record.facets as Facet[]) ?? [],
+                    navigate: navigate,
+                  })}
+                </>
+              )}
             </div>
             {post.embed && depth < 1 ? (
               <PostEmbeds
