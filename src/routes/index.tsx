@@ -356,10 +356,10 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   return (
     <div
-      className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"} ${!isAtTop && "shadow"}`}
+      className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"}`}
     >
       {savedFeeds.length > 0 ? (
-        <div className="flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] sm:bg-white sm:dark:bg-gray-950 z-10 border-0 border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin">
+        <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
           {savedFeeds.map((item: any, idx: number) => {
             const label = item.value.split("/").pop() || item.value;
             const isActive = selectedFeed === item.value;
@@ -383,8 +383,8 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
                   <span
                     className={`ml-1 text-xs ${
                       isActive
-                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+                        ? "text-gray-900 dark:text-gray-100"
+                        : "text-gray-600 dark:text-gray-400"
                     }`}
                   >
                     ★

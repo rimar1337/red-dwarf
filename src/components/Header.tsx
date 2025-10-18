@@ -14,7 +14,7 @@ export function Header({
   const [isAtTop] = useAtom(isAtTopAtom);
   //const what = router.history.
   return (
-    <div className={`flex items-center gap-3 px-3 py-3 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] z-10 border-0 ${!isAtTop && "shadow-sm"} sm:dark:bg-gray-950 sm:bg-white border-gray-200 dark:border-gray-700`}>
+    <div className={`flex items-center gap-3 px-3 py-3 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] z-10 border-0 sm:border-b ${!isAtTop && "shadow-sm"} sm:shadow-none sm:dark:bg-gray-950 sm:bg-white border-gray-200 dark:border-gray-700`}>
       {backButtonCallback ? (<Link
         to=".."
         //className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"
