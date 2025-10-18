@@ -1,4 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
+import { useAtom } from "jotai";
+
+import { isAtTopAtom } from "~/utils/atoms";
 
 export function Header({
   backButtonCallback,
@@ -8,9 +11,10 @@ export function Header({
   title?: string;
 }) {
   const router = useRouter();
+  const [isAtTop] = useAtom(isAtTopAtom);
   //const what = router.history.
   return (
-    <div className="flex items-center gap-4 px-4 py-3 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700">
+    <div className={`flex items-center gap-3 px-3 py-3 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] z-10 border-0 ${!isAtTop && "shadow"} border-gray-200 dark:border-gray-700`}>
       {backButtonCallback ? (<Link
         to=".."
         //className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900 font-bold text-lg"

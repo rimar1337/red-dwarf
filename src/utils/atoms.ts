@@ -21,5 +21,7 @@ export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   {}
 );
 
+export const isAtTopAtom = atom<boolean>(true);
+
 export const agentAtom = atom<Agent|null>(null);
 export const authedAtom = atom<boolean>(false);

@@ -431,7 +431,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </button>
         )}
 
-        <main className="w-full max-w-[600px] lg:border-x border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 pb-16 lg:pb-0">
+        <main className="w-full max-w-[600px] lg:border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pb-16 lg:pb-0 overflow-x-clip">
           {children}
         </main>
 
@@ -448,7 +448,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </div>
 
       {agent?.did ? (
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-700 z-40">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-50 dark:bg-gray-900 border-0 shadow border-gray-200 dark:border-gray-700 z-40">
           <div className="flex justify-around items-center p-2">
             <MaterialNavItem
               small
@@ -616,7 +616,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       ) : (
-        <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 z-10">
+        <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-0 shadow border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 z-10">
           <div className="flex items-center gap-2">
             <img src="/redstar.png" alt="Red Dwarf Logo" className="w-6 h-6" />
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
@@ -682,8 +682,8 @@ function MaterialNavItem({
     <button
       className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${
         active
-          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-900"
       }`}
       onClick={() => {
         onClickCallbback();
@@ -693,7 +693,7 @@ function MaterialNavItem({
         {active ? ActiveIcon : InactiveIcon}
       </div>
       <span
-        className={`text-[16px] text-roboto ${active ? "font-medium" : ""}`}
+        className={`text-[17px] text-roboto ${active ? "font-medium" : ""}`}
       >
         {text}
       </span>
@@ -732,7 +732,7 @@ function MaterialPillButton({
         {active ? ActiveIcon : InactiveIcon}
       </div>
       <span
-        className={`text-[16px] text-roboto ${active ? "font-medium" : ""}`}
+        className={`text-[17px] text-roboto ${active ? "font-medium" : ""}`}
       >
         {text}
       </span>

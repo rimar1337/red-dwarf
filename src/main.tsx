@@ -1,18 +1,18 @@
 import "~/styles/app.css";
 
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClient, QueryClientProvider, } from "@tanstack/react-query";
-import {
-  persistQueryClient,
-} from "@tanstack/react-query-persist-client";
-import { createRouter,RouterProvider } from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { persistQueryClient } from "@tanstack/react-query-persist-client";
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { useSetAtom } from "jotai";
+import { useEffect } from "react";
 //import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
 import reportWebVitals from "./reportWebVitals.ts";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
-
+import { isAtTopAtom } from "./utils/atoms.ts";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +28,7 @@ const localStoragePersister = createSyncStoragePersister({
 persistQueryClient({
   queryClient,
   persister: localStoragePersister,
-})
+});
 
 // Create a new router instance
 const router = createRouter({
@@ -54,9 +54,10 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     // double queries annoys me
     // <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <ScrollTopWatcher />
+      <RouterProvider router={router} />
+    </QueryClientProvider>
     // </StrictMode>
   );
 }
@@ -65,3 +66,45 @@ if (rootElement && !rootElement.innerHTML) {
 // to log results (for example: reportWebVitals(// /*mass comment*/ console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+export default function ScrollTopWatcher() {
+  const setIsAtTop = useSetAtom(isAtTopAtom);
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    let lastAtTop = window.scrollY === 0;
+    let timeoutId: number | undefined;
+
+    const setVars = (atTop: boolean) => {
+      const root = document.documentElement;
+      root.style.setProperty("--is-top", atTop ? "1" : "0");
+
+      const bg = getComputedStyle(root).getPropertyValue("--header-bg").trim();
+      if (meta && bg) meta.setAttribute("content", bg);
+      setIsAtTop(atTop);
+    };
+
+    const check = () => {
+      const atTop = window.scrollY === 0;
+      if (atTop !== lastAtTop) {
+        lastAtTop = atTop;
+        setVars(atTop);
+      }
+    };
+
+    const handleScroll = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(check, 2);
+    };
+
+    // initialize
+    setVars(lastAtTop);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
+
+  return null;
+}

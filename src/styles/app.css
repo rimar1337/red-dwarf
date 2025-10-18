@@ -87,3 +87,22 @@
 .font-roboto {
   font-family: "Roboto", sans-serif;
 }
+
+:root {
+  --header-bg-light: color-mix(in srgb, var(--color-white) calc(var(--is-top) * 100%), var(--color-gray-50));
+  --header-bg-dark: color-mix(in srgb, var(--color-gray-950) calc(var(--is-top) * 100%), var(--color-gray-900));
+}
+
+:root {
+  --header-bg: var(--header-bg-light);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --header-bg: var(--header-bg-dark);
+  }
+}
+
+:root {
+  --shadow-opacity: calc(1 - var(--is-top));
+  --tw-shadow-header: 0 2px 8px hsl(0 0% 0% / calc(var(--shadow-opacity) * 0.15));
+}

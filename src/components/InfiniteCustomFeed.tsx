@@ -113,10 +113,10 @@ export function InfiniteCustomFeed({
       <button
         onClick={handleRefresh}
         disabled={isRefetching}
-        className="sticky lg:bottom-4 bottom-22 ml-4 w-[42px] h-[42px] z-10 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-50 p-[9px] rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-110 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="sticky lg:bottom-4 bottom-22 ml-4 w-[42px] h-[42px] z-10 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-50 p-[9px] rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-110 disabled:dark:bg-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
         aria-label="Refresh feed"
       >
-        {isRefetching ? <RefreshIcon className="h-6 w-6 text-gray-600 dark:text-gray-400 animate-spin" /> : <RefreshIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />}
+        <RefreshIcon className={`h-6 w-6 text-gray-600 dark:text-gray-400 ${isRefetching && "animate-spin"}`} />
       </button>
     </>
   );

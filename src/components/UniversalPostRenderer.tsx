@@ -1248,7 +1248,7 @@ function UniversalPostRenderer({
           // dont cursor: "pointer",
           borderBottomWidth: bottomBorder ? (isQuote ? 0 : 1) : 0,
         }}
-        className="border-gray-300 dark:border-gray-600"
+        className="border-gray-300 dark:border-gray-800"
       >
         {isRepost && (
           <div
@@ -1316,7 +1316,7 @@ function UniversalPostRenderer({
               width: isQuote ? 16 : 42,
               height: isQuote ? 16 : 42,
             }}
-            className="border border-gray-300 dark:border-gray-600 bg-gray-300 dark:bg-gray-600"
+            className="border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600"
           />
         </div>
         <div style={{ display: "flex", alignItems: "flex-start", zIndex: 2 }}>
@@ -1521,7 +1521,7 @@ function UniversalPostRenderer({
                 hydrate embeds this deep but the connection here is implicit
                 todo: idk make this a real part of the embed shim so its not implicit */
               <>
-                <div className="border-gray-300 dark:border-gray-600 p-3 rounded-xl border italic text-gray-400 text-[14px]">
+                <div className="border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px]">
                   (there is an embed here thats too deep to render)
                 </div>
               </>
@@ -1544,7 +1544,7 @@ function UniversalPostRenderer({
                       borderBottomWidth: 1,
                       marginBottom: 8,
                     }} // important for height animation
-                    className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                    className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 was7"
                   >
                     {fullDateTimeFormat(post.indexedAt)}
                   </div>
@@ -1780,7 +1780,7 @@ function PostEmbeds({
             //boxShadow: theme.cardShadow,
             overflow: "hidden",
           }}
-          className="shadow border border-gray-200 dark:border-gray-700"
+          className="shadow border border-gray-200 dark:border-gray-800 was7"
         >
           <UniversalPostRenderer
             post={post}
@@ -1897,7 +1897,7 @@ function PostEmbeds({
             //boxShadow: theme.cardShadow,
             overflow: "hidden",
           }}
-          className="shadow border border-gray-200 dark:border-gray-700"
+          className="shadow border border-gray-200 dark:border-gray-800 was7"
         >
           <UniversalPostRenderer
             post={post}
@@ -1970,7 +1970,7 @@ function PostEmbeds({
                 //border: `1px solid ${theme.border}`,
                 overflow: "hidden",
               }}
-              className="border border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-900"
+              className="border border-gray-200 dark:border-gray-800 was7 bg-gray-200 dark:bg-gray-900"
             >
               {lightboxIndex !== null && (
                 <Lightbox
@@ -2011,7 +2011,7 @@ function PostEmbeds({
               overflow: "hidden",
               //border: `1px solid ${theme.border}`,
             }}
-            className="border border-gray-200 dark:border-gray-700"
+            className="border border-gray-200 dark:border-gray-800 was7"
           >
             {lightboxIndex !== null && (
               <Lightbox
@@ -2061,7 +2061,7 @@ function PostEmbeds({
               //border: `1px solid ${theme.border}`,
               // height: 240, // fixed height for cropping
             }}
-            className="border border-gray-200 dark:border-gray-700"
+            className="border border-gray-200 dark:border-gray-800 was7"
           >
             {lightboxIndex !== null && (
               <Lightbox
@@ -2146,7 +2146,7 @@ function PostEmbeds({
               //border: `1px solid ${theme.border}`,
               //aspectRatio: "3 / 2", // overall grid aspect
             }}
-            className="border border-gray-200 dark:border-gray-700"
+            className="border border-gray-200 dark:border-gray-800 was7"
           >
             {lightboxIndex !== null && (
               <Lightbox
@@ -2283,7 +2283,7 @@ export function Lightbox({
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
           }}
-          className="lightbox-sidebar overscroll-none disablegutter border-l dark:border-gray-700 border-gray-300 fixed z-50 flex top-0 right-0 flex-col max-w-[350px] min-w-[350px] max-h-screen overflow-y-scroll dark:bg-gray-950 bg-white"
+          className="lightbox-sidebar overscroll-none disablegutter border-l dark:border-gray-800 was7 border-gray-300 fixed z-50 flex top-0 right-0 flex-col max-w-[350px] min-w-[350px] max-h-screen overflow-y-scroll dark:bg-gray-950 bg-white"
         >
           <ProfilePostComponent
             did={post.did}
@@ -2587,7 +2587,7 @@ function ExternalLinkEmbed({
     >
       <div
         style={containerStyle as React.CSSProperties}
-        className="border border-gray-200 dark:border-gray-700"
+        className="border border-gray-200 dark:border-gray-800 was7"
       >
         {thumb && (
           <div
@@ -2601,7 +2601,7 @@ function ExternalLinkEmbed({
               marginBottom: 8,
               //borderBottom: `1px solid ${theme.border}`,
             }}
-            className="border-b border-gray-200 dark:border-gray-700"
+            className="border-b border-gray-200 dark:border-gray-800 was7"
           >
             <img
               src={thumb}
@@ -2727,7 +2727,7 @@ const SmartHLSPlayer = ({
               borderRadius: 12,
               //border: `1px solid ${theme.border}`,
             }}
-            className="border border-gray-200 dark:border-gray-700"
+            className="border border-gray-200 dark:border-gray-800 was7"
             onClick={async (e) => {
               e.stopPropagation();
               setPlaying(true);
@@ -2768,7 +2768,7 @@ const SmartHLSPlayer = ({
               100 / (aspect ? aspect.width / aspect.height : 16 / 9)
             }%`, // 16:9 = 56.25%, 4:3 = 75%
           }}
-          className="border border-gray-200 dark:border-gray-700"
+          className="border border-gray-200 dark:border-gray-800 was7"
         >
           <ReactPlayer
             src={url}
