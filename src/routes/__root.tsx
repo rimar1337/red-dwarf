@@ -415,6 +415,116 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
+        <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
+          <div className="flex items-center gap-3 mb-4">
+            <img src="/redstar.png" alt="Red Dwarf Logo" className="w-8 h-8" />
+          </div>
+          <MaterialNavItem
+            small
+            InactiveIcon={
+              <IconMaterialSymbolsHomeOutline className="w-6 h-6" />
+            }
+            ActiveIcon={<IconMaterialSymbolsHome className="w-6 h-6" />}
+            active={isHome}
+            onClickCallbback={() =>
+              navigate({
+                to: "/",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Home"
+          />
+
+          <MaterialNavItem
+            small
+            InactiveIcon={
+              <IconMaterialSymbolsNotificationsOutline className="w-6 h-6" />
+            }
+            ActiveIcon={
+              <IconMaterialSymbolsNotifications className="w-6 h-6" />
+            }
+            active={isNotifications}
+            onClickCallbback={() =>
+              navigate({
+                to: "/notifications",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Notifications"
+          />
+          <MaterialNavItem
+            small
+            InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
+            ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
+            active={location.pathname.startsWith("/feeds")}
+            onClickCallbback={() =>
+              navigate({
+                to: "/feeds",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Feeds"
+          />
+          <MaterialNavItem
+            small
+            InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+            ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+            active={location.pathname.startsWith("/search")}
+            onClickCallbback={() =>
+              navigate({
+                to: "/search",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Search"
+          />
+          <MaterialNavItem
+            small
+            InactiveIcon={
+              <IconMaterialSymbolsAccountCircleOutline className="w-6 h-6" />
+            }
+            ActiveIcon={
+              <IconMaterialSymbolsAccountCircle className="w-6 h-6" />
+            }
+            active={isProfile ?? false}
+            onClickCallbback={() => {
+              if (authed && agent && agent.assertDid) {
+                //window.location.href = `/profile/${agent.assertDid}`;
+                navigate({
+                  to: "/profile/$did",
+                  params: { did: agent.assertDid },
+                });
+              }
+            }}
+            text="Profile"
+          />
+          <MaterialNavItem
+            small
+            InactiveIcon={
+              <IconMaterialSymbolsSettingsOutline className="w-6 h-6" />
+            }
+            ActiveIcon={<IconMaterialSymbolsSettings className="w-6 h-6" />}
+            active={location.pathname.startsWith("/settings")}
+            onClickCallbback={() =>
+              navigate({
+                to: "/settings",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Settings"
+          />
+          <div className="flex flex-row items-center justify-center mt-3">
+            <MaterialPillButton
+              small
+              InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
+              ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
+              //active={true}
+              onClickCallbback={() => setPostOpen(true)}
+              text="Post"
+            />
+          </div>
+        </nav>
+
         {agent?.did && (
           <button
             className="lg:hidden fixed bottom-22 right-4 z-50 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-2xl w-14 h-14 flex items-center justify-center transition-all"
@@ -431,7 +541,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </button>
         )}
 
-        <main className="w-full max-w-[600px] lg:border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pb-16 lg:pb-0 overflow-x-clip">
+        <main className="w-full max-w-[600px] sm:border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pb-16 lg:pb-0 overflow-x-clip">
           {children}
         </main>
 
@@ -448,7 +558,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </div>
 
       {agent?.did ? (
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-50 dark:bg-gray-900 border-0 shadow border-gray-200 dark:border-gray-700 z-40">
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-gray-50 dark:bg-gray-900 border-0 shadow border-gray-200 dark:border-gray-700 z-40">
           <div className="flex justify-around items-center p-2">
             <MaterialNavItem
               small
@@ -651,12 +761,12 @@ function MaterialNavItem({
   text: string;
   active: boolean;
   onClickCallbback: () => void;
-  small?: boolean;
+  small?: boolean | string;
 }) {
   if (small)
     return (
       <button
-        className={`flex flex-col items-center rounded-lg transition-colors flex-1 gap-1 ${
+        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${
           active
             ? "text-gray-900 dark:text-gray-100"
             : "text-gray-600 dark:text-gray-400"
@@ -714,12 +824,12 @@ function MaterialPillButton({
   text: string;
   //active: boolean;
   onClickCallbback: () => void;
-  small?: boolean;
+  small?: boolean | string;
 }) {
   const active = false;
   return (
     <button
-      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 items-center rounded-full transition-colors gap-1 ${
+      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${
         active
           ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
@@ -728,14 +838,14 @@ function MaterialPillButton({
         onClickCallbback();
       }}
     >
-      <div className={`mr-2 ${active ? " " : " "}`}>
+      <div className={`${!small && "mr-2"} ${active ? " " : " "}`}>
         {active ? ActiveIcon : InactiveIcon}
       </div>
-      <span
+      {!small && (<span
         className={`text-[17px] text-roboto ${active ? "font-medium" : ""}`}
       >
         {text}
-      </span>
+      </span>)}
     </button>
   );
 }
