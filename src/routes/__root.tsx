@@ -415,7 +415,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
+        <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-2 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
             <img src="/redstar.png" alt="Red Dwarf Logo" className="w-8 h-8" />
           </div>
