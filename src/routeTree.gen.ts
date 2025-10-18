@@ -21,6 +21,7 @@ import { Route as ProfileDidIndexRouteImport } from './routes/profile.$did/index
 import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
 import { Route as PathlessLayoutNestedLayoutRouteARouteImport } from './routes/_pathlessLayout/_nested-layout/route-a'
 import { Route as ProfileDidPostRkeyRouteImport } from './routes/profile.$did/post.$rkey'
+import { Route as ProfileDidPostRkeyImageIRouteImport } from './routes/profile.$did/post.$rkey.image.$i'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -83,6 +84,12 @@ const ProfileDidPostRkeyRoute = ProfileDidPostRkeyRouteImport.update({
   path: '/profile/$did/post/$rkey',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileDidPostRkeyImageIRoute =
+  ProfileDidPostRkeyImageIRouteImport.update({
+    id: '/image/$i',
+    path: '/image/$i',
+    getParentRoute: () => ProfileDidPostRkeyRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,7 +101,8 @@ export interface FileRoutesByFullPath {
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did': typeof ProfileDidIndexRoute
-  '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRoute
+  '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
+  '/profile/$did/post/$rkey/image/$i': typeof ProfileDidPostRkeyImageIRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,7 +114,8 @@ export interface FileRoutesByTo {
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did': typeof ProfileDidIndexRoute
-  '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRoute
+  '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
+  '/profile/$did/post/$rkey/image/$i': typeof ProfileDidPostRkeyImageIRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,7 +130,8 @@ export interface FileRoutesById {
   '/_pathlessLayout/_nested-layout/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/_pathlessLayout/_nested-layout/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did/': typeof ProfileDidIndexRoute
-  '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRoute
+  '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
+  '/profile/$did/post/$rkey/image/$i': typeof ProfileDidPostRkeyImageIRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/route-b'
     | '/profile/$did'
     | '/profile/$did/post/$rkey'
+    | '/profile/$did/post/$rkey/image/$i'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/route-b'
     | '/profile/$did'
     | '/profile/$did/post/$rkey'
+    | '/profile/$did/post/$rkey/image/$i'
   id:
     | '__root__'
     | '/'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
     | '/_pathlessLayout/_nested-layout/route-b'
     | '/profile/$did/'
     | '/profile/$did/post/$rkey'
+    | '/profile/$did/post/$rkey/image/$i'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -173,7 +186,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   CallbackIndexRoute: typeof CallbackIndexRoute
   ProfileDidIndexRoute: typeof ProfileDidIndexRoute
-  ProfileDidPostRkeyRoute: typeof ProfileDidPostRkeyRoute
+  ProfileDidPostRkeyRoute: typeof ProfileDidPostRkeyRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -262,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileDidPostRkeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$did/post/$rkey/image/$i': {
+      id: '/profile/$did/post/$rkey/image/$i'
+      path: '/image/$i'
+      fullPath: '/profile/$did/post/$rkey/image/$i'
+      preLoaderRoute: typeof ProfileDidPostRkeyImageIRouteImport
+      parentRoute: typeof ProfileDidPostRkeyRoute
+    }
   }
 }
 
@@ -295,6 +315,17 @@ const PathlessLayoutRouteWithChildren = PathlessLayoutRoute._addFileChildren(
   PathlessLayoutRouteChildren,
 )
 
+interface ProfileDidPostRkeyRouteChildren {
+  ProfileDidPostRkeyImageIRoute: typeof ProfileDidPostRkeyImageIRoute
+}
+
+const ProfileDidPostRkeyRouteChildren: ProfileDidPostRkeyRouteChildren = {
+  ProfileDidPostRkeyImageIRoute: ProfileDidPostRkeyImageIRoute,
+}
+
+const ProfileDidPostRkeyRouteWithChildren =
+  ProfileDidPostRkeyRoute._addFileChildren(ProfileDidPostRkeyRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PathlessLayoutRoute: PathlessLayoutRouteWithChildren,
@@ -304,7 +335,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   CallbackIndexRoute: CallbackIndexRoute,
   ProfileDidIndexRoute: ProfileDidIndexRoute,
-  ProfileDidPostRkeyRoute: ProfileDidPostRkeyRoute,
+  ProfileDidPostRkeyRoute: ProfileDidPostRkeyRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

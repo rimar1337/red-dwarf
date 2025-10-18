@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import React, { useLayoutEffect } from "react";
 
 import { Header } from "~/components/Header";
@@ -11,6 +11,8 @@ import {
   useQueryIdentity,
   useQueryPost,
 } from "~/utils/useQuery";
+
+import type { LightboxProps } from "./post.$rkey.image.$i";
 
 //const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
 
@@ -37,10 +39,12 @@ export function ProfilePostComponent({
   did,
   rkey,
   nopics,
+  lightboxCallback
 }: {
   did: string;
   rkey: string;
-  nopics?: () => void;
+  nopics?: boolean;
+  lightboxCallback?: (d:LightboxProps) => void;
 }) {
   //const { get, set } = usePersistentStore();
   const queryClient = useQueryClient();
@@ -297,19 +301,16 @@ export function ProfilePostComponent({
 
   return (
     <>
+      <Outlet />
       <Header
         title={`Post`}
-        backButtonCallback={
-          nopics
-            ? nopics
-            : () => {
-                if (window.history.length > 1) {
-                  window.history.back();
-                } else {
-                  window.location.assign("/");
-                }
-              }
-        }
+        backButtonCallback={() => {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.assign("/");
+          }
+        }}
       />
 
       {parentsLoading && (
@@ -342,6 +343,7 @@ export function ProfilePostComponent({
           detailed={true}
           topReplyLine={parentsLoading || parents.length > 0}
           nopics={!!nopics}
+          lightboxCallback={lightboxCallback}
         />
       </div>
       <div
