@@ -40,12 +40,12 @@ export function ProfilePostComponent({
   did,
   rkey,
   nopics,
-  lightboxCallback
+  lightboxCallback,
 }: {
   did: string;
   rkey: string;
   nopics?: boolean;
-  lightboxCallback?: (d:LightboxProps) => void;
+  lightboxCallback?: (d: LightboxProps) => void;
 }) {
   //const { get, set } = usePersistentStore();
   const queryClient = useQueryClient();
@@ -260,52 +260,43 @@ export function ProfilePostComponent({
     replyAturis.unshift(oldestOpsReply);
   }
 
-
   const [parents, setParents] = React.useState<any[]>([]);
   const [parentsLoading, setParentsLoading] = React.useState(false);
 
   const mainPostRef = React.useRef<HTMLDivElement>(null);
-  const userHasScrolled = React.useRef(false);
+  const hasPerformedInitialLayout = React.useRef(false);
 
-  const scrollAnchor = React.useRef<{ top: number } | null>(null);
+  const [layoutReady, setLayoutReady] = React.useState(false);
+
+  useLayoutEffect(() => {
+    if (parents.length > 0 && !layoutReady && mainPostRef.current) {
+      const mainPostElement = mainPostRef.current;
+
+      if (window.scrollY === 0 && !hasPerformedInitialLayout.current) {
+        const elementTop = mainPostElement.getBoundingClientRect().top;
+        const headerOffset = 70;
+
+        const targetScrollY = elementTop - headerOffset;
+
+        window.scrollBy(0, targetScrollY);
+
+        hasPerformedInitialLayout.current = true;
+      }
+      // todo idk what to do with this
+      setLayoutReady(true);
+    }
+  }, [parents, layoutReady]);
 
   React.useEffect(() => {
-    const onScroll = () => {
-      if (window.scrollY > 50) {
-        userHasScrolled.current = true;
-
-        window.removeEventListener("scroll", onScroll);
-      }
-    };
-
-    if (!userHasScrolled.current) {
-      window.addEventListener("scroll", onScroll, { passive: true });
+    if (parentsLoading) {
+      setLayoutReady(false);
     }
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
-  useLayoutEffect(() => {
-    if (parentsLoading && mainPostRef.current && !userHasScrolled.current) {
-      scrollAnchor.current = {
-        top: mainPostRef.current.getBoundingClientRect().top,
-      };
+    if (!mainPost?.value?.reply?.parent?.uri && !parentsLoading) {
+      setLayoutReady(true);
+      hasPerformedInitialLayout.current = true;
     }
-  }, [parentsLoading]);
-
-  useLayoutEffect(() => {
-    if (
-      scrollAnchor.current &&
-      mainPostRef.current &&
-      !userHasScrolled.current
-    ) {
-      const newTop = mainPostRef.current.getBoundingClientRect().top;
-      const topDiff = newTop - scrollAnchor.current.top;
-      if (topDiff > 0) {
-        window.scrollBy(0, topDiff);
-      }
-      scrollAnchor.current = null;
-    }
-  }, [parents]);
+  }, [parentsLoading, mainPost]);
 
   React.useEffect(() => {
     if (!mainPost?.value?.reply?.parent?.uri) {
@@ -407,7 +398,7 @@ export function ProfilePostComponent({
           //margin: "0px auto 0",
           padding: 0,
           minHeight: "80dvh",
-          paddingBottom: "20dvh"
+          paddingBottom: "20dvh",
         }}
       >
         <div
