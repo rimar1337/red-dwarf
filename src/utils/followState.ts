@@ -1,7 +1,8 @@
-import { AtUri, type Agent } from "@atproto/api";
-import { useQueryConstellation, type linksRecordsResponse } from "./useQuery";
-import type { QueryClient } from "@tanstack/react-query";
+import { type Agent,AtUri } from "@atproto/api";
 import { TID } from "@atproto/common-web";
+import type { QueryClient } from "@tanstack/react-query";
+
+import { type linksRecordsResponse,useQueryConstellation } from "./useQuery";
 
 export function useGetFollowState({
   target,

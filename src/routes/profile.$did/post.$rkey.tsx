@@ -1,13 +1,16 @@
 import { AtUri } from "@atproto/api";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import React, { useEffect, useLayoutEffect } from "react";
+import React, { useLayoutEffect } from "react";
 
 import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 //import { usePersistentStore } from '~/providers/PersistentStoreProvider';
 import {
   constructPostQuery,
+  type linksAllResponse,
+  type linksRecordsResponse,
+  useQueryConstellation,
   useQueryIdentity,
   useQueryPost,
   yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
@@ -193,11 +196,77 @@ export function ProfilePostComponent({
     () =>
       resolvedDid
         ? `at://${decodeURIComponent(resolvedDid)}/app.bsky.feed.post/${rkey}`
-        : "",
+        : undefined,
     [resolvedDid, rkey]
   );
 
   const { data: mainPost } = useQueryPost(atUri);
+
+  console.log("atUri",atUri)
+  
+  const opdid = React.useMemo(
+    () =>
+      atUri
+        ? new AtUri(atUri).host
+        : undefined,
+    [atUri]
+  );
+
+  // @ts-expect-error i hate overloads
+  const { data: links } = useQueryConstellation(atUri?{
+    method: "/links/all",
+    target: atUri,
+  } : {
+    method: "undefined",
+    target: ""
+  })as { data: linksAllResponse | undefined };
+
+  //const [likes, setLikes] = React.useState<number | null>(null);
+  //const [reposts, setReposts] = React.useState<number | null>(null);
+  const [replyCount, setReplyCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    // /*mass comment*/ console.log(JSON.stringify(links, null, 2));
+    // setLikes(
+    //   links
+    //     ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
+    //     : null
+    // );
+    // setReposts(
+    //   links
+    //     ? links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records || 0
+    //     : null
+    // );
+    setReplyCount(
+      links
+        ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
+            ?.records || 0
+        : null
+    );
+  }, [links]);
+
+  const { data: opreplies } = useQueryConstellation(
+    !!opdid && replyCount && replyCount >= 25
+      ? {
+          method: "/links",
+          target: atUri,
+          // @ts-expect-error overloading sucks so much
+          collection: "app.bsky.feed.post",
+          path: ".reply.parent.uri",
+          //cursor?: string;
+          dids: [opdid],
+        }
+      : {
+          method: "undefined",
+          target: "",
+        }
+  ) as { data: linksRecordsResponse | undefined };
+
+  const opReplyAturis =
+    opreplies?.linking_records.map(
+      (r) => `at://${r.did}/${r.collection}/${r.rkey}`,
+    ) ?? [];
+
 
   // const { data: repliesData } = useQueryConstellation({
   //   method: "/links",
@@ -219,35 +288,63 @@ export function ProfilePostComponent({
   });
 
   const {
-    data: repliesData,
-    // fetchNextPage,
-    // hasNextPage,
-    // isFetchingNextPage,
+    data: infiniteRepliesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = infinitequeryresults;
 
-  // auto-fetch all pages
-  useEffect(() => {
-    if (
-      infinitequeryresults.hasNextPage &&
-      !infinitequeryresults.isFetchingNextPage
-    ) {
-      console.log("Fetching the next page...");
-      infinitequeryresults.fetchNextPage();
+  // // auto-fetch all pages
+  // useEffect(() => {
+  //   if (
+  //     infinitequeryresults.hasNextPage &&
+  //     !infinitequeryresults.isFetchingNextPage
+  //   ) {
+  //     console.log("Fetching the next page...");
+  //     infinitequeryresults.fetchNextPage();
+  //   }
+  // }, [infinitequeryresults]);
+
+  // const replyAturis = repliesData
+  //   ? repliesData.pages.flatMap((page) =>
+  //       page
+  //         ? page.linking_records.map((record) => {
+  //             const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+  //             return aturi;
+  //           })
+  //         : []
+  //     )
+  //   : [];
+
+  const replyAturis = React.useMemo(() => {
+    // Get all replies from the standard infinite query
+    const allReplies =
+      infiniteRepliesData?.pages.flatMap(
+        (page) =>
+          page?.linking_records.map(
+            (r) => `at://${r.did}/${r.collection}/${r.rkey}`,
+          ) ?? [],
+      ) ?? [];
+
+    if (replyCount && (replyCount < 25)) {
+      // If count is low, just use the standard list and find the oldest OP reply to move to the top
+      const opdidFromUri = atUri ? new AtUri(atUri).host : undefined;
+      const oldestOpsIndex = allReplies.findIndex(
+        (aturi) => new AtUri(aturi).host === opdidFromUri,
+      );
+      if (oldestOpsIndex > 0) {
+        const [oldestOpsReply] = allReplies.splice(oldestOpsIndex, 1);
+        allReplies.unshift(oldestOpsReply);
+      }
+      return allReplies;
+    } else {
+      // If count is high, prioritize OP replies from the special query
+      // and filter them out from the main list to avoid duplication.
+      const opReplySet = new Set(opReplyAturis);
+      const otherReplies = allReplies.filter((uri) => !opReplySet.has(uri));
+      return [...opReplyAturis, ...otherReplies];
     }
-  }, [infinitequeryresults]);
-
-  const replyAturis = repliesData
-    ? repliesData.pages.flatMap((page) =>
-        page
-          ? page.linking_records.map((record) => {
-              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-              return aturi;
-            })
-          : []
-      )
-    : [];
-
-  const opdid = new AtUri(atUri).host;
+  }, [infiniteRepliesData, opReplyAturis, replyCount, atUri]);
 
   // Find oldest OP reply
   const oldestOpsIndex = replyAturis.findIndex(
@@ -282,7 +379,9 @@ export function ProfilePostComponent({
 
         hasPerformedInitialLayout.current = true;
       }
+      
       // todo idk what to do with this
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLayoutReady(true);
     }
   }, [parents, layoutReady]);
@@ -423,6 +522,15 @@ export function ProfilePostComponent({
                 />
               );
             })}
+            {hasNextPage && (
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold disabled:opacity-50"
+            >
+              {isFetchingNextPage ? "Loading..." : "Load More"}
+            </button>
+          )}
         </div>
       </div>
     </>

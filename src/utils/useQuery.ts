@@ -362,7 +362,7 @@ type linksDidsResponse = {
 type linksCountResponse = {
   total: string;
 };
-type linksAllResponse = {
+export type linksAllResponse = {
   links: Record<
     string,
     Record<
