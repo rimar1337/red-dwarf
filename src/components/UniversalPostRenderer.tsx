@@ -11,6 +11,7 @@ import {
   useQueryIdentity,
   useQueryPost,
   useQueryProfile,
+  yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
 } from "~/utils/useQuery";
 
 function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
@@ -33,7 +34,8 @@ export interface UniversalPostRendererATURILoaderProps {
   ref?: React.Ref<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
-  lightboxCallback?: (d:LightboxProps) => void;
+  lightboxCallback?: (d: LightboxProps) => void;
+  maxReplies?: number;
 }
 
 // export async function cachedGetRecord({
@@ -143,6 +145,7 @@ export function UniversalPostRendererATURILoader({
   dataIndexPropPass,
   nopics,
   lightboxCallback,
+  maxReplies,
 }: UniversalPostRendererATURILoaderProps) {
   // /*mass comment*/ console.log("atUri", atUri);
   //const { get, set } = usePersistentStore();
@@ -388,6 +391,88 @@ export function UniversalPostRendererATURILoader({
     );
   }, [links]);
 
+  // const { data: repliesData } = useQueryConstellation({
+  //   method: "/links",
+  //   target: atUri,
+  //   collection: "app.bsky.feed.post",
+  //   path: ".reply.parent.uri",
+  // });
+
+  const infinitequeryresults = useInfiniteQuery({
+    ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
+      {
+        method: "/links",
+        target: atUri,
+        collection: "app.bsky.feed.post",
+        path: ".reply.parent.uri",
+      }
+    ),
+    enabled: !!atUri && !!maxReplies,
+  });
+
+  const {
+    data: repliesData,
+    // fetchNextPage,
+    // hasNextPage,
+    // isFetchingNextPage,
+  } = infinitequeryresults;
+
+  // auto-fetch all pages
+  useEffect(() => {
+    if (!maxReplies) return;
+    if (
+      infinitequeryresults.hasNextPage &&
+      !infinitequeryresults.isFetchingNextPage
+    ) {
+      console.log("Fetching the next page...");
+      infinitequeryresults.fetchNextPage();
+    }
+  }, [infinitequeryresults]);
+
+  const replyAturis = repliesData
+    ? repliesData.pages.flatMap((page) =>
+        page
+          ? page.linking_records.map((record) => {
+              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+              return aturi;
+            })
+          : []
+      )
+    : [];
+
+  //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
+
+  const { oldestOpsReply, oldestOpsReplyElseNewestNonOpsReply } = (() => {
+    if (!replyAturis || replyAturis.length === 0 || !maxReplies)
+      return {
+        oldestOpsReply: undefined,
+        oldestOpsReplyElseNewestNonOpsReply: undefined,
+      };
+
+    const opdid = new AtUri(
+      //postQuery?.value.reply?.root.uri ?? postQuery?.uri ?? atUri
+      atUri
+    ).host;
+
+    const opReplies = replyAturis.filter(
+      (aturi) => new AtUri(aturi).host === opdid
+    );
+
+    if (opReplies.length > 0) {
+      const opreply = opReplies[opReplies.length - 1];
+      //setOldestOpsReply(opreply);
+      return {
+        oldestOpsReply: opreply,
+        oldestOpsReplyElseNewestNonOpsReply: opreply,
+      };
+    } else {
+      return {
+        oldestOpsReply: undefined,
+        oldestOpsReplyElseNewestNonOpsReply: replyAturis[0],
+      };
+    }
+  })();
+
   // const navigateToProfile = (e: React.MouseEvent) => {
   //   e.stopPropagation();
   //   if (resolved?.did) {
@@ -403,26 +488,103 @@ export function UniversalPostRendererATURILoader({
   }
 
   return (
-    <UniversalPostRendererRawRecordShim
-      detailed={detailed}
-      postRecord={postQuery}
-      profileRecord={opProfile}
-      aturi={atUri}
-      resolved={resolved}
-      likesCount={likes}
-      repostsCount={reposts}
-      repliesCount={replies}
-      bottomReplyLine={bottomReplyLine}
-      topReplyLine={topReplyLine}
-      bottomBorder={bottomBorder}
-      feedviewpost={feedviewpost}
-      repostedby={repostedby}
-      style={style}
-      ref={ref}
-      dataIndexPropPass={dataIndexPropPass}
-      nopics={nopics}
-      lightboxCallback={lightboxCallback}
-    />
+    <>
+      {/* <span>uprrs {maxReplies} {!!maxReplies&&!!oldestOpsReplyElseNewestNonOpsReply ? "true" : "false"}</span> */}
+      <UniversalPostRendererRawRecordShim
+        detailed={detailed}
+        postRecord={postQuery}
+        profileRecord={opProfile}
+        aturi={atUri}
+        resolved={resolved}
+        likesCount={likes}
+        repostsCount={reposts}
+        repliesCount={replies}
+        bottomReplyLine={
+          maxReplies && oldestOpsReplyElseNewestNonOpsReply
+            ? true
+            : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
+              ? false
+              : bottomReplyLine
+        }
+        topReplyLine={topReplyLine}
+        //bottomBorder={maxReplies&&oldestOpsReplyElseNewestNonOpsReply ? false : bottomBorder}
+        bottomBorder={
+          maxReplies && oldestOpsReplyElseNewestNonOpsReply
+            ? false
+            : maxReplies === 0
+              ? false
+              : bottomBorder
+        }
+        feedviewpost={feedviewpost}
+        repostedby={repostedby}
+        //style={{...style, background: oldestOpsReply === atUri ? "Red" : undefined}}
+        style={style}
+        ref={ref}
+        dataIndexPropPass={dataIndexPropPass}
+        nopics={nopics}
+        lightboxCallback={lightboxCallback}
+        maxReplies={maxReplies}
+      />
+      {oldestOpsReplyElseNewestNonOpsReply && (
+        <>
+          {/* <span>hello {maxReplies}</span> */}
+          <UniversalPostRendererATURILoader
+            //detailed={detailed}
+            atUri={oldestOpsReplyElseNewestNonOpsReply}
+            bottomReplyLine={(maxReplies ?? 0) > 0}
+            topReplyLine={(maxReplies ?? 0) > 1}
+            bottomBorder={bottomBorder}
+            feedviewpost={feedviewpost}
+            repostedby={repostedby}
+            style={style}
+            ref={ref}
+            dataIndexPropPass={dataIndexPropPass}
+            nopics={nopics}
+            lightboxCallback={lightboxCallback}
+            maxReplies={
+              maxReplies && maxReplies > 0 ? maxReplies - 1 : undefined
+            }
+          />
+      {maxReplies && maxReplies - 1 === 0 && (
+        <MoreReplies atUri={oldestOpsReplyElseNewestNonOpsReply} />
+      )}
+        </>
+      )}
+    </>
+  );
+}
+
+function MoreReplies({ atUri }: { atUri: string }) {
+  const navigate = useNavigate();
+  const aturio = new AtUri(atUri);
+  return (
+    <div
+      onClick={() =>
+        navigate({
+          to: "/profile/$did/post/$rkey",
+          params: { did: aturio.host, rkey: aturio.rkey },
+        })
+      }
+      className="border-b border-gray-300 dark:border-gray-800 flex flex-row px-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+    >
+      <div className="w-[42px] h-12 flex flex-col items-center justify-center">
+        <div
+          style={{
+            width: 2,
+            height: "100%",
+            backgroundImage:
+              "repeating-linear-gradient(to bottom, var(--color-gray-500) 0, var(--color-gray-500) 4px, transparent 4px, transparent 8px)",
+            opacity: 0.5,
+          }}
+          className="dark:bg-[repeating-linear-gradient(to_bottom,var(--color-gray-500)_0,var(--color-gray-400)_4px,transparent_4px,transparent_8px)]"
+          //className="border-gray-400 dark:border-gray-500"
+        />
+      </div>
+
+      <div className="flex items-center pl-3 text-sm text-gray-500 dark:text-gray-400 select-none">
+        More Replies
+      </div>
+    </div>
   );
 }
 
@@ -451,6 +613,7 @@ export function UniversalPostRendererRawRecordShim({
   dataIndexPropPass,
   nopics,
   lightboxCallback,
+  maxReplies,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -469,7 +632,8 @@ export function UniversalPostRendererRawRecordShim({
   ref?: React.Ref<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
-  lightboxCallback?: (d:LightboxProps) => void;
+  lightboxCallback?: (d: LightboxProps) => void;
+  maxReplies?: number;
 }) {
   // /*mass comment*/ console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
@@ -669,6 +833,7 @@ export function UniversalPostRendererRawRecordShim({
         dataIndexPropPass={dataIndexPropPass}
         nopics={nopics}
         lightboxCallback={lightboxCallback}
+        maxReplies={maxReplies}
       />
     </>
   );
@@ -982,6 +1147,7 @@ import type {
   PostView,
   //ThreadViewPost,
 } from "@atproto/api/dist/client/types/app/bsky/feed/defs";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 
@@ -1115,7 +1281,8 @@ function UniversalPostRenderer({
   ref,
   dataIndexPropPass,
   nopics,
-  lightboxCallback
+  lightboxCallback,
+  maxReplies,
 }: {
   post: PostView;
   // optional for now because i havent ported every use to this yet
@@ -1139,7 +1306,8 @@ function UniversalPostRenderer({
   ref?: React.Ref<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
-  lightboxCallback?: (d:LightboxProps) => void;
+  lightboxCallback?: (d: LightboxProps) => void;
+  maxReplies?: number;
 }) {
   const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
@@ -1496,7 +1664,8 @@ function UniversalPostRenderer({
             >
               {fedi ? (
                 <>
-                  <span className="dangerousFediContent"
+                  <span
+                    className="dangerousFediContent"
                     dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(fedi),
                     }}
@@ -1728,7 +1897,7 @@ function PostEmbeds({
   navigate,
   postid,
   nopics,
-  lightboxCallback
+  lightboxCallback,
 }: {
   embed?: Embed;
   moderation?: ModerationDecision;
@@ -1739,18 +1908,18 @@ function PostEmbeds({
   navigate: (_: any) => void;
   postid?: { did: string; rkey: string };
   nopics?: boolean;
-  lightboxCallback?: (d:LightboxProps) => void;
+  lightboxCallback?: (d: LightboxProps) => void;
 }) {
   //const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  function setLightboxIndex(number:number) {
+  function setLightboxIndex(number: number) {
     navigate({
-    to: "/profile/$did/post/$rkey/image/$i",
-    params: {
-      did: postid?.did,
-      rkey: postid?.rkey,
-      i: number.toString(),
-    },
-  });
+      to: "/profile/$did/post/$rkey/image/$i",
+      params: {
+        did: postid?.did,
+        rkey: postid?.rkey,
+        i: number.toString(),
+      },
+    });
   }
   if (
     AppBskyEmbedRecordWithMedia.isView(embed) &&
@@ -1962,11 +2131,11 @@ function PostEmbeds({
       src: img.fullsize,
       alt: img.alt,
     }));
-    console.log("rendering images")
+    console.log("rendering images");
     if (lightboxCallback) {
-      lightboxCallback({images: lightboxImages})
-      console.log("rendering images")
-    };
+      lightboxCallback({ images: lightboxImages });
+      console.log("rendering images");
+    }
 
     if (nopics) return;
 

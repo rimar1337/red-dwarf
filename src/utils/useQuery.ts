@@ -1,5 +1,6 @@
 import * as ATPAPI from "@atproto/api";
 import {
+  infiniteQueryOptions,
   type QueryFunctionContext,
   queryOptions,
   useInfiniteQuery,
@@ -614,4 +615,58 @@ export function useInfiniteQueryFeedSkeleton(options: {
     refetchOnWindowFocus: false,
     enabled: !!options.feedUri && (options.isAuthed ? !!options.agent && !!options.pdsUrl && !!options.feedServiceDid : true),
   });
+}
+
+
+export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(query?: {
+  method: '/links'
+  target?: string
+  collection: string
+  path: string
+}) {
+  const constellationHost = 'constellation.microcosm.blue'
+  console.log(
+    'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
+    query,
+  )
+
+  return infiniteQueryOptions({
+    enabled: !!query?.target,
+    queryKey: [
+      'reddwarf_constellation',
+      query?.method,
+      query?.target,
+      query?.collection,
+      query?.path,
+    ] as const,
+
+    queryFn: async ({pageParam}: {pageParam?: string}) => {
+      if (!query || !query?.target) return undefined
+
+      const method = query.method
+      const target = query.target
+      const collection = query.collection
+      const path = query.path
+      const cursor = pageParam
+
+      const res = await fetch(
+        `https://${constellationHost}${method}?target=${encodeURIComponent(target)}${
+          collection ? `&collection=${encodeURIComponent(collection)}` : ''
+        }${path ? `&path=${encodeURIComponent(path)}` : ''}${
+          cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+        }`,
+      )
+
+      if (!res.ok) throw new Error('Failed to fetch')
+
+      return (await res.json()) as linksRecordsResponse
+    },
+
+    getNextPageParam: lastPage => {
+      return (lastPage as any)?.cursor ?? undefined
+    },
+    initialPageParam: undefined,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  })
 }

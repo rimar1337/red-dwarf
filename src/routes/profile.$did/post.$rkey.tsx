@@ -1,15 +1,16 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { AtUri } from "@atproto/api";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import React, { useLayoutEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 
 import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 //import { usePersistentStore } from '~/providers/PersistentStoreProvider';
 import {
   constructPostQuery,
-  useQueryConstellation,
   useQueryIdentity,
   useQueryPost,
+  yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
 } from "~/utils/useQuery";
 
 import type { LightboxProps } from "./post.$rkey.image.$i";
@@ -198,13 +199,67 @@ export function ProfilePostComponent({
 
   const { data: mainPost } = useQueryPost(atUri);
 
-  const { data: repliesData } = useQueryConstellation({
-    method: "/links",
-    target: atUri,
-    collection: "app.bsky.feed.post",
-    path: ".reply.parent.uri",
+  // const { data: repliesData } = useQueryConstellation({
+  //   method: "/links",
+  //   target: atUri,
+  //   collection: "app.bsky.feed.post",
+  //   path: ".reply.parent.uri",
+  // });
+  // const replies = repliesData?.linking_records.slice(0, 50) ?? [];
+  const infinitequeryresults = useInfiniteQuery({
+    ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
+      {
+        method: "/links",
+        target: atUri,
+        collection: "app.bsky.feed.post",
+        path: ".reply.parent.uri",
+      }
+    ),
+    enabled: !!atUri,
   });
-  const replies = repliesData?.linking_records.slice(0, 50) ?? [];
+
+  const {
+    data: repliesData,
+    // fetchNextPage,
+    // hasNextPage,
+    // isFetchingNextPage,
+  } = infinitequeryresults;
+
+  // auto-fetch all pages
+  useEffect(() => {
+    if (
+      infinitequeryresults.hasNextPage &&
+      !infinitequeryresults.isFetchingNextPage
+    ) {
+      console.log("Fetching the next page...");
+      infinitequeryresults.fetchNextPage();
+    }
+  }, [infinitequeryresults]);
+
+  const replyAturis = repliesData
+    ? repliesData.pages.flatMap((page) =>
+        page
+          ? page.linking_records.map((record) => {
+              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+              return aturi;
+            })
+          : []
+      )
+    : [];
+
+  const opdid = new AtUri(atUri).host;
+
+  // Find oldest OP reply
+  const oldestOpsIndex = replyAturis.findIndex(
+    (aturi) => new AtUri(aturi).host === opdid
+  );
+
+  // Reorder: move oldest OP reply to the front
+  if (oldestOpsIndex > 0) {
+    const [oldestOpsReply] = replyAturis.splice(oldestOpsIndex, 1);
+    replyAturis.unshift(oldestOpsReply);
+  }
+
 
   const [parents, setParents] = React.useState<any[]>([]);
   const [parentsLoading, setParentsLoading] = React.useState(false);
@@ -351,7 +406,8 @@ export function ProfilePostComponent({
           maxWidth: 600,
           //margin: "0px auto 0",
           padding: 0,
-          minHeight: "100dvh",
+          minHeight: "80dvh",
+          paddingBottom: "20dvh"
         }}
       >
         <div
@@ -365,13 +421,14 @@ export function ProfilePostComponent({
           Replies
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          {replies.length > 0 &&
-            replies.map((reply) => {
-              const replyAtUri = `at://${reply.did}/app.bsky.feed.post/${reply.rkey}`;
+          {replyAturis.length > 0 &&
+            replyAturis.map((reply) => {
+              //const replyAtUri = `at://${reply.did}/app.bsky.feed.post/${reply.rkey}`;
               return (
                 <UniversalPostRendererATURILoader
-                  key={replyAtUri}
-                  atUri={replyAtUri}
+                  key={reply}
+                  atUri={reply}
+                  maxReplies={4}
                 />
               );
             })}
