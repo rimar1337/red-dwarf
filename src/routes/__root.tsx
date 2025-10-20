@@ -95,6 +95,27 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     agent &&
     (location.pathname === `/profile/${agent?.did}` ||
       location.pathname === `/profile/${encodeURIComponent(agent?.did ?? "")}`);
+  const isSettings = location.pathname.startsWith("/settings");
+  const isSearch = location.pathname.startsWith("/search");
+  const isFeeds = location.pathname.startsWith("/feeds");
+
+  const locationEnum:
+    | "feeds"
+    | "search"
+    | "settings"
+    | "notifications"
+    | "profile"
+    | "home" = isFeeds
+    ? "feeds"
+    : isSearch
+      ? "search"
+      : isSettings
+        ? "settings"
+        : isNotifications
+          ? "notifications"
+          : isProfile
+            ? "profile"
+            : "home";
 
   const [postOpen, setPostOpen] = useState(false);
   const [postText, setPostText] = useState("");
@@ -191,7 +212,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <IconMaterialSymbolsHomeOutline className="w-6 h-6" />
             }
             ActiveIcon={<IconMaterialSymbolsHome className="w-6 h-6" />}
-            active={isHome}
+            active={locationEnum === "home"}
             onClickCallbback={() =>
               navigate({
                 to: "/",
@@ -208,7 +229,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             ActiveIcon={
               <IconMaterialSymbolsNotifications className="w-6 h-6" />
             }
-            active={isNotifications}
+            active={locationEnum === "notifications"}
             onClickCallbback={() =>
               navigate({
                 to: "/notifications",
@@ -220,7 +241,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <MaterialNavItem
             InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
             ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
-            active={location.pathname.startsWith("/feeds")}
+            active={locationEnum === "feeds"}
             onClickCallbback={() =>
               navigate({
                 to: "/feeds",
@@ -232,7 +253,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <MaterialNavItem
             InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
             ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-            active={location.pathname.startsWith("/search")}
+            active={locationEnum === "search"}
             onClickCallbback={() =>
               navigate({
                 to: "/search",
@@ -248,7 +269,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             ActiveIcon={
               <IconMaterialSymbolsAccountCircle className="w-6 h-6" />
             }
-            active={isProfile ?? false}
+            active={locationEnum === "profile"}
             onClickCallbback={() => {
               if (authed && agent && agent.assertDid) {
                 //window.location.href = `/profile/${agent.assertDid}`;
@@ -265,7 +286,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <IconMaterialSymbolsSettingsOutline className="w-6 h-6" />
             }
             ActiveIcon={<IconMaterialSymbolsSettings className="w-6 h-6" />}
-            active={location.pathname.startsWith("/settings")}
+            active={locationEnum === "settings"}
             onClickCallbback={() =>
               navigate({
                 to: "/settings",
@@ -425,7 +446,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <IconMaterialSymbolsHomeOutline className="w-6 h-6" />
             }
             ActiveIcon={<IconMaterialSymbolsHome className="w-6 h-6" />}
-            active={isHome}
+            active={locationEnum === "home"}
             onClickCallbback={() =>
               navigate({
                 to: "/",
@@ -443,7 +464,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             ActiveIcon={
               <IconMaterialSymbolsNotifications className="w-6 h-6" />
             }
-            active={isNotifications}
+            active={locationEnum === "notifications"}
             onClickCallbback={() =>
               navigate({
                 to: "/notifications",
@@ -456,7 +477,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             small
             InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
             ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
-            active={location.pathname.startsWith("/feeds")}
+            active={locationEnum === "feeds"}
             onClickCallbback={() =>
               navigate({
                 to: "/feeds",
@@ -469,7 +490,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             small
             InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
             ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-            active={location.pathname.startsWith("/search")}
+            active={locationEnum === "search"}
             onClickCallbback={() =>
               navigate({
                 to: "/search",
@@ -486,7 +507,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             ActiveIcon={
               <IconMaterialSymbolsAccountCircle className="w-6 h-6" />
             }
-            active={isProfile ?? false}
+            active={locationEnum === "profile"}
             onClickCallbback={() => {
               if (authed && agent && agent.assertDid) {
                 //window.location.href = `/profile/${agent.assertDid}`;
@@ -504,7 +525,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <IconMaterialSymbolsSettingsOutline className="w-6 h-6" />
             }
             ActiveIcon={<IconMaterialSymbolsSettings className="w-6 h-6" />}
-            active={location.pathname.startsWith("/settings")}
+            active={locationEnum === "settings"}
             onClickCallbback={() =>
               navigate({
                 to: "/settings",
@@ -566,7 +587,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <IconMaterialSymbolsHomeOutline className="w-6 h-6" />
               }
               ActiveIcon={<IconMaterialSymbolsHome className="w-6 h-6" />}
-              active={isHome}
+              active={locationEnum === "home"}
               onClickCallbback={() =>
                 navigate({
                   to: "/",
@@ -594,7 +615,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               small
               InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
               ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-              active={location.pathname.startsWith("/search")}
+              active={locationEnum === "search"}
               onClickCallbback={() =>
                 navigate({
                   to: "/search",
@@ -626,7 +647,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               ActiveIcon={
                 <IconMaterialSymbolsNotifications className="w-6 h-6" />
               }
-              active={isNotifications}
+              active={locationEnum === "notifications"}
               onClickCallbback={() =>
                 navigate({
                   to: "/notifications",
@@ -661,7 +682,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               ActiveIcon={
                 <IconMaterialSymbolsAccountCircle className="w-6 h-6" />
               }
-              active={isProfile ?? false}
+              active={locationEnum === "profile"}
               onClickCallbback={() => {
                 if (authed && agent && agent.assertDid) {
                   //window.location.href = `/profile/${agent.assertDid}`;
@@ -699,7 +720,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <IconMaterialSymbolsSettingsOutline className="w-6 h-6" />
               }
               ActiveIcon={<IconMaterialSymbolsSettings className="w-6 h-6" />}
-              active={location.pathname.startsWith("/settings")}
+              active={locationEnum === "settings"}
               onClickCallbback={() =>
                 navigate({
                   to: "/settings",
@@ -841,11 +862,13 @@ function MaterialPillButton({
       <div className={`${!small && "mr-2"} ${active ? " " : " "}`}>
         {active ? ActiveIcon : InactiveIcon}
       </div>
-      {!small && (<span
-        className={`text-[17px] text-roboto ${active ? "font-medium" : ""}`}
-      >
-        {text}
-      </span>)}
+      {!small && (
+        <span
+          className={`text-[17px] text-roboto ${active ? "font-medium" : ""}`}
+        >
+          {text}
+        </span>
+      )}
     </button>
   );
 }
