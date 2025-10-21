@@ -150,6 +150,8 @@ export function UniversalPostRendererATURILoader({
   maxReplies,
   isQuote,
 }: UniversalPostRendererATURILoaderProps) {
+  // todo remove this once tree rendering is implemented, use a prop like isTree
+  const TEMPLINEAR = true;
   // /*mass comment*/ console.log("atUri", atUri);
   //const { get, set } = usePersistentStore();
   //const [record, setRecord] = React.useState<any>(null);
@@ -425,7 +427,7 @@ export function UniversalPostRendererATURILoader({
 
   // auto-fetch all pages
   useEffect(() => {
-    if (!maxReplies || isQuote) return;
+    if (!maxReplies || isQuote || TEMPLINEAR) return;
     if (
       infinitequeryresults.hasNextPage &&
       !infinitequeryresults.isFetchingNextPage
@@ -433,7 +435,7 @@ export function UniversalPostRendererATURILoader({
       console.log("Fetching the next page...");
       infinitequeryresults.fetchNextPage();
     }
-  }, [infinitequeryresults]);
+  }, [TEMPLINEAR, infinitequeryresults, isQuote, maxReplies]);
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
