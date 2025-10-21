@@ -1,6 +1,6 @@
 import { RichText } from "@atproto/api";
 import { useAtom } from "jotai";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { composerAtom } from "~/utils/atoms";
@@ -186,8 +186,8 @@ export function Composer() {
             <div className="flex w-full gap-1 flex-col">
               <ProfileThing agent={agent} large/>
               <div className="flex pl-[50px]">
-                <textarea
-                  className="w-full text-lg bg-transparent focus:outline-none resize-none placeholder:text-gray-500 text-black dark:text-white"
+                <AutoGrowTextarea
+                  className="w-full text-lg bg-transparent focus:outline-none resize-none placeholder:text-gray-500 text-black dark:text-white pb-2"
                   rows={5}
                   placeholder={getPlaceholder()}
                   value={postText}
@@ -221,5 +221,26 @@ export function Composer() {
         )}
       </div>
     </div>
+  );
+}
+
+function AutoGrowTextarea({ value, className, onChange, ...props }: React.DetailedHTMLProps<React.TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      className={className}
+      value={value}
+      onChange={onChange}
+      {...props}
+    />
   );
 }
