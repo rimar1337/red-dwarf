@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
+import { Slider } from "radix-ui";
 
 import { Header } from "~/components/Header";
 import Login from "~/components/Login";
 import {
   constellationURLAtom,
   defaultconstellationURL,
+  defaulthue,
   defaultImgCDN,
   defaultslingshotURL,
   defaultVideoCDN,
+  hueAtom,
   imgCDNAtom,
   slingshotURLAtom,
   videoCDNAtom,
@@ -31,7 +34,9 @@ export function Settings() {
           }
         }}
       />
-      <div className="lg:hidden"><Login /></div>
+      <div className="lg:hidden">
+        <Login />
+      </div>
       <div className="h-4" />
       <TextInputSetting
         atom={constellationURLAtom}
@@ -61,8 +66,33 @@ export function Settings() {
         description={"Customize the Slingshot instance to be used by Red Dwarf"}
         init={defaultVideoCDN}
       />
-      <p className="text-gray-500 dark:text-gray-400 py-4 px-6 text-sm">please restart/refresh the app if changes arent applying correctly</p>
+
+      <Hue />
+      <p className="text-gray-500 dark:text-gray-400 py-4 px-6 text-sm">
+        please restart/refresh the app if changes arent applying correctly
+      </p>
     </>
+  );
+}
+function Hue() {
+  const [hue, setHue] = useAtom(hueAtom);
+  return (
+    <div className="flex flex-col px-4 mt-4 ">
+      <span className="z-10">Hue</span>
+      <div className="flex flex-row items-center gap-4">
+        <SliderComponent
+          atom={hueAtom}
+          max={360}
+        />
+        <button
+          onClick={() => setHue(defaulthue ?? 28)}
+          className="px-6 py-2 h-12 rounded-full bg-gray-100 dark:bg-gray-800 
+                     text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -95,7 +125,12 @@ export function TextInputSetting({
 
       <div className="flex flex-row gap-2 items-center">
         <div className="m3input-field m3input-label m3input-border size-md flex-1">
-          <input type="text" placeholder=" " value={value} onChange={(e) => setValue(e.target.value)}/>
+          <input
+            type="text"
+            placeholder=" "
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
           <label>{title}</label>
         </div>
         {/* <input
@@ -118,3 +153,37 @@ export function TextInputSetting({
     </div>
   );
 }
+
+
+interface SliderProps {
+  atom: typeof hueAtom;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export const SliderComponent: React.FC<SliderProps> = ({
+  atom,
+  min = 0,
+  max = 100,
+  step = 1,
+}) => {
+
+  const [value, setValue] = useAtom(atom)
+
+  return (
+    <Slider.Root
+      className="relative flex items-center w-full h-4"
+      value={[value]}
+      min={min}
+      max={max}
+      step={step}
+      onValueChange={(v: number[]) => setValue(v[0])}
+    >
+      <Slider.Track className="relative flex-grow h-4 bg-gray-300 dark:bg-gray-700 rounded-full">
+        <Slider.Range className="absolute h-full bg-gray-500 dark:bg-gray-400 rounded-l-full rounded-r-none" />
+      </Slider.Track>
+      <Slider.Thumb className="shadow-[0_0_0_8px_var(--color-white)] dark:shadow-[0_0_0_8px_var(--color-gray-950)] block w-[3px] h-12 bg-gray-500 dark:bg-gray-400 rounded-md focus:outline-none" />
+    </Slider.Root>
+  );
+};

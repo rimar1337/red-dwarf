@@ -20,8 +20,9 @@ import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
+import { FluentEmojiHighContrastGlowingStar } from "~/components/Star";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
-import { composerAtom } from "~/utils/atoms";
+import { composerAtom, hueAtom, useAtomCssVar } from "~/utils/atoms";
 import { seo } from "~/utils/seo";
 
 export const Route = createRootRouteWithContext<{
@@ -87,6 +88,7 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  useAtomCssVar(hueAtom, "--tw-gray-hue");
   const location = useLocation();
   const navigate = useNavigate();
   const { agent } = useAuth();
@@ -128,7 +130,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950">
         <nav className="hidden lg:flex h-screen w-[250px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
-            <img src="/redstar.png" alt="Red Dwarf Logo" className="w-8 h-8" />
+            <FluentEmojiHighContrastGlowingStar className="h-8 w-8" style={{color: "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))"}} />
             <span className="font-extrabold text-2xl tracking-tight text-gray-900 dark:text-gray-100">
               Red Dwarf{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -367,7 +369,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
         <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-2 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
-            <img src="/redstar.png" alt="Red Dwarf Logo" className="w-8 h-8" />
+            <FluentEmojiHighContrastGlowingStar className="h-8 w-8" style={{color: "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))"}} />
           </div>
           <MaterialNavItem
             small
@@ -676,7 +678,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-0 shadow border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 z-10">
           <div className="flex items-center gap-2">
-            <img src="/redstar.png" alt="Red Dwarf Logo" className="w-6 h-6" />
+            <FluentEmojiHighContrastGlowingStar className="h-6 w-6" style={{color: "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))"}} />
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
               Red Dwarf{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">

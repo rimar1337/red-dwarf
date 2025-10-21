@@ -14,6 +14,8 @@ import reportWebVitals from "./reportWebVitals.ts";
 import { routeTree } from "./routeTree.gen";
 import { isAtTopAtom } from "./utils/atoms.ts";
 
+//initAtomToCssVar(hueAtom, "--tw-gray-hue")
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

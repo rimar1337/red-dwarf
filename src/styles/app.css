@@ -15,18 +15,22 @@
   --color-gray-950: oklch(0.129 0.050 222.000);
 } */
 
+:root {
+  --safe-hue: var(--tw-gray-hue, 28)
+}
+
 @theme {
-  --color-gray-50: oklch(0.984 0.012 28);
-  --color-gray-100: oklch(0.968 0.017 28);
-  --color-gray-200: oklch(0.929 0.025 28);
-  --color-gray-300: oklch(0.869 0.035 28);
-  --color-gray-400: oklch(0.704 0.05 28);
-  --color-gray-500: oklch(0.554 0.06 28);
-  --color-gray-600: oklch(0.446 0.058 28);
-  --color-gray-700: oklch(0.372 0.058 28);
-  --color-gray-800: oklch(0.279 0.055 28);
-  --color-gray-900: oklch(0.208 0.055 28);
-  --color-gray-950: oklch(0.129 0.055 28);
+  --color-gray-50: oklch(0.984 0.012 var(--safe-hue));
+  --color-gray-100: oklch(0.968 0.017 var(--safe-hue));
+  --color-gray-200: oklch(0.929 0.025 var(--safe-hue));
+  --color-gray-300: oklch(0.869 0.035 var(--safe-hue));
+  --color-gray-400: oklch(0.704 0.05 var(--safe-hue));
+  --color-gray-500: oklch(0.554 0.06 var(--safe-hue));
+  --color-gray-600: oklch(0.446 0.058 var(--safe-hue));
+  --color-gray-700: oklch(0.372 0.058 var(--safe-hue));
+  --color-gray-800: oklch(0.279 0.055 var(--safe-hue));
+  --color-gray-900: oklch(0.208 0.055 var(--safe-hue));
+  --color-gray-950: oklch(0.129 0.055 var(--safe-hue));
 }
 
 @layer base {
