@@ -1,8 +1,9 @@
 // src/components/Login.tsx
-import { Agent } from "@atproto/api";
+import AtpAgent, { Agent } from "@atproto/api";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { useQueryIdentity, useQueryProfile } from "~/utils/useQuery";
 
 // --- 1. The Main Component (Orchestrator with `compact` prop) ---
 export default function Login({
@@ -110,7 +111,7 @@ export function UnifiedLoginForm() {
 // --- 3. Helper components for layouts, forms, and UI ---
 
 // A new component to contain the logic for the compact dropdown
-const CompactLoginButton = ({popup}:{popup?: boolean}) => {
+const CompactLoginButton = ({ popup }: { popup?: boolean }) => {
   const [showForm, setShowForm] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -137,7 +138,9 @@ const CompactLoginButton = ({popup}:{popup?: boolean}) => {
         Log in
       </button>
       {showForm && (
-        <div className={`absolute ${popup ? `bottom-[calc(100%)]` :`top-full`} right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50`}>
+        <div
+          className={`absolute ${popup ? `bottom-[calc(100%)]` : `top-full`} right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50`}
+        >
           <UnifiedLoginForm />
         </div>
       )}
@@ -268,29 +271,27 @@ const PasswordForm = () => {
 
 // --- Profile Component (now supports a `large` prop for styling) ---
 export const ProfileThing = ({
-  agent,
+  agent: _unused,
   large = false,
 }: {
-  agent: Agent | null;
+  agent?: Agent | null;
   large?: boolean;
 }) => {
-  const [profile, setProfile] = useState<any>(null);
+  const { agent } = useAuth();
+  const did = ((agent as AtpAgent).session?.did ?? (agent as AtpAgent)?.assertDid ?? agent?.did) as
+    | string
+    | undefined;
+  const { data: identity } = useQueryIdentity(did);
+  const { data: profiledata } = useQueryProfile(`at://${did}/app.bsky.actor.profile/self`);
+  const profile = profiledata?.value;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const did = (agent as any)?.session?.did ?? (agent as any)?.assertDid;
-      if (!did) return;
-      try {
-        const res = await agent!.getProfile({ actor: did });
-        setProfile(res.data);
-      } catch (e) {
-        console.error("Failed to fetch profile", e);
-      }
-    };
-    if (agent) fetchUser();
-  }, [agent]);
+  function getAvatarUrl(p: typeof profile) {
+    const link = p?.avatar?.ref?.["$link"];
+    if (!link || !did) return null;
+    return `https://cdn.bsky.app/img/avatar/plain/${did}/${link}@jpeg`;
+  }
 
-  if (!profile) {
+  if (!profiledata) {
     return (
       // Skeleton loader
       <div
@@ -316,7 +317,7 @@ export const ProfileThing = ({
       className={`flex flex-row items-center gap-2.5 ${large ? "mb-1" : ""}`}
     >
       <img
-        src={profile?.avatar}
+        src={getAvatarUrl(profile) ?? undefined}
         alt="avatar"
         className={`object-cover rounded-full ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
       />
@@ -329,7 +330,7 @@ export const ProfileThing = ({
         <div
           className={` ${large ? "text-gray-500 dark:text-gray-400 text-sm" : "text-gray-500 dark:text-gray-400 text-xs"}`}
         >
-          @{profile?.handle}
+          @{identity?.handle}
         </div>
       </div>
     </div>
