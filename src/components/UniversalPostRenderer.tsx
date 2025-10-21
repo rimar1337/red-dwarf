@@ -1,10 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
+import { DropdownMenu } from "radix-ui";
 import * as React from "react";
 import { type SVGProps } from "react";
 
-import { likedPostsAtom } from "~/utils/atoms";
+import { composerAtom, likedPostsAtom } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
   useQueryConstellation,
@@ -36,6 +37,7 @@ export interface UniversalPostRendererATURILoaderProps {
   nopics?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
+  isQuote?: boolean;
 }
 
 // export async function cachedGetRecord({
@@ -146,6 +148,7 @@ export function UniversalPostRendererATURILoader({
   nopics,
   lightboxCallback,
   maxReplies,
+  isQuote,
 }: UniversalPostRendererATURILoaderProps) {
   // /*mass comment*/ console.log("atUri", atUri);
   //const { get, set } = usePersistentStore();
@@ -407,7 +410,7 @@ export function UniversalPostRendererATURILoader({
         path: ".reply.parent.uri",
       }
     ),
-    enabled: !!atUri && !!maxReplies,
+    enabled: !!atUri && !!maxReplies && !isQuote,
   });
 
   const {
@@ -419,7 +422,7 @@ export function UniversalPostRendererATURILoader({
 
   // auto-fetch all pages
   useEffect(() => {
-    if (!maxReplies) return;
+    if (!maxReplies || isQuote) return;
     if (
       infinitequeryresults.hasNextPage &&
       !infinitequeryresults.isFetchingNextPage
@@ -443,7 +446,7 @@ export function UniversalPostRendererATURILoader({
   //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
 
   const { oldestOpsReply, oldestOpsReplyElseNewestNonOpsReply } = (() => {
-    if (!replyAturis || replyAturis.length === 0 || !maxReplies)
+    if (isQuote || !replyAturis || replyAturis.length === 0 || !maxReplies)
       return {
         oldestOpsReply: undefined,
         oldestOpsReplyElseNewestNonOpsReply: undefined,
@@ -524,8 +527,9 @@ export function UniversalPostRendererATURILoader({
         nopics={nopics}
         lightboxCallback={lightboxCallback}
         maxReplies={maxReplies}
+        isQuote={isQuote}
       />
-      {oldestOpsReplyElseNewestNonOpsReply && (
+      {!isQuote && oldestOpsReplyElseNewestNonOpsReply && (
         <>
           {/* <span>hello {maxReplies}</span> */}
           <UniversalPostRendererATURILoader
@@ -618,6 +622,7 @@ export function UniversalPostRendererRawRecordShim({
   nopics,
   lightboxCallback,
   maxReplies,
+  isQuote,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -638,6 +643,7 @@ export function UniversalPostRendererRawRecordShim({
   nopics?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
+  isQuote?: boolean;
 }) {
   // /*mass comment*/ console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
@@ -838,6 +844,7 @@ export function UniversalPostRendererRawRecordShim({
         nopics={nopics}
         lightboxCallback={lightboxCallback}
         maxReplies={maxReplies}
+        isQuote={isQuote}
       />
     </>
   );
@@ -1322,6 +1329,7 @@ function UniversalPostRenderer({
   const [hasLiked, setHasLiked] = useState<boolean>(
     post.uri in likedPosts || post.viewer?.like ? true : false
   );
+  const [, setComposerPost] = useAtom(composerAtom);
   const { agent } = useAuth();
   const [likeUri, setLikeUri] = useState<string | undefined>(post.viewer?.like);
   const [retweetUri, setRetweetUri] = useState<string | undefined>(
@@ -1459,7 +1467,11 @@ function UniversalPostRenderer({
               //left: 16 + (42 / 2),
               width: 2,
               //height: "100%",
-              height: isRepost ? "calc(16px + 1rem - 6px)" : topReplyLine ? 8 - 6 : 16 - 6,
+              height: isRepost
+                ? "calc(16px + 1rem - 6px)"
+                : topReplyLine
+                  ? 8 - 6
+                  : 16 - 6,
               // background: theme.textSecondary,
               //opacity: 0.5,
               // no flex here
@@ -1473,7 +1485,13 @@ function UniversalPostRenderer({
             //top: isRepost ? "calc(16px + 1rem)" : 16,
             //left: 16,
             zIndex: 1,
-            top: isRepost ? "calc(16px + 1rem)" : isQuote ? 12 : topReplyLine ? 8 : 16,
+            top: isRepost
+              ? "calc(16px + 1rem)"
+              : isQuote
+                ? 12
+                : topReplyLine
+                  ? 8
+                  : 16,
             left: isQuote ? 12 : 16,
           }}
           onClick={onProfileClick}
@@ -1744,22 +1762,63 @@ function UniversalPostRenderer({
                   }}
                   className="text-gray-500 dark:text-gray-400"
                 >
-                  <span style={btnstyle}>
-                    <MdiCommentOutline />
-                    {post.replyCount}
-                  </span>
                   <HitSlopButton
                     onClick={() => {
-                      repostOrUnrepostPost();
+                      setComposerPost({ kind: "reply", parent: post.uri });
                     }}
                     style={{
                       ...btnstyle,
-                      ...(hasRetweeted ? { color: "#5CEFAA" } : {}),
                     }}
                   >
-                    {hasRetweeted ? <MdiRepeatGreen /> : <MdiRepeat />}
-                    {(post.repostCount || 0) + (hasRetweeted ? 1 : 0)}
+                    <MdiCommentOutline />
+                    {post.replyCount}
                   </HitSlopButton>
+                  <DropdownMenu.Root modal={false}>
+                    <DropdownMenu.Trigger asChild>
+                      <div
+                        style={{
+                          ...btnstyle,
+                          ...(hasRetweeted ? { color: "#5CEFAA" } : {}),
+                        }}
+                        aria-label="Repost or quote post"
+                      >
+                        {hasRetweeted ? <MdiRepeatGreen /> : <MdiRepeat />}
+                        {post.repostCount ?? 0}
+                      </div>
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        align="start"
+                        sideOffset={5}
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-32 z-50 overflow-hidden"
+                      >
+                        <DropdownMenu.Item
+                          onSelect={repostOrUnrepostPost}
+                          className="px-3 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700"
+                        >
+                          <MdiRepeat
+                            className={hasRetweeted ? "text-green-400" : ""}
+                          />
+                          <span>{hasRetweeted ? "Undo Repost" : "Repost"}</span>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onSelect={() => {
+                            setComposerPost({
+                              kind: "quote",
+                              subject: post.uri,
+                            });
+                          }}
+                          className="px-3 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700"
+                        >
+                          {/* You might want a specific quote icon here */}
+                          <MdiCommentOutline />
+                          <span>Quote</span>
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
                   <HitSlopButton
                     onClick={() => {
                       likeOrUnlikePost();

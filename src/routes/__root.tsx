@@ -12,14 +12,16 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { useState } from "react";
+import { useAtom } from "jotai";
 import * as React from "react";
 import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
+import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
+import { composerAtom } from "~/utils/atoms";
 import { seo } from "~/utils/seo";
 
 export const Route = createRootRouteWithContext<{
@@ -117,84 +119,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             ? "profile"
             : "home";
 
-  const [postOpen, setPostOpen] = useState(false);
-  const [postText, setPostText] = useState("");
-  const [posting, setPosting] = useState(false);
-  const [postSuccess, setPostSuccess] = useState(false);
-  const [postError, setPostError] = useState<string | null>(null);
-
-  async function handlePost() {
-    if (!agent) return;
-    setPosting(true);
-    setPostError(null);
-    try {
-      await agent.com.atproto.repo.createRecord({
-        collection: "app.bsky.feed.post",
-        repo: agent.assertDid,
-        record: {
-          $type: "app.bsky.feed.post",
-          text: postText,
-          createdAt: new Date().toISOString(),
-        },
-      });
-      setPostSuccess(true);
-      setPostText("");
-      setTimeout(() => {
-        setPostSuccess(false);
-        setPostOpen(false);
-      }, 1500);
-    } catch (e: any) {
-      setPostError(e?.message || "Failed to post");
-    } finally {
-      setPosting(false);
-    }
-  }
+  const [, setComposerPost] = useAtom(composerAtom);
 
   return (
     <>
-      {postOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              onClick={() => !posting && setPostOpen(false)}
-              disabled={posting}
-              aria-label="Close"
-            >
-              ×
-            </button>
-            <h2 className="text-lg font-bold mb-2">Create Post</h2>
-            {postSuccess ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <span className="text-green-500 text-4xl mb-2">✓</span>
-                <span className="text-green-600">Posted!</span>
-              </div>
-            ) : (
-              <>
-                <textarea
-                  className="w-full border rounded p-2 mb-2 dark:bg-gray-800 dark:border-gray-700"
-                  rows={4}
-                  placeholder="What's on your mind?"
-                  value={postText}
-                  onChange={(e) => setPostText(e.target.value)}
-                  disabled={posting}
-                  autoFocus
-                />
-                {postError && (
-                  <div className="text-red-500 text-sm mb-2">{postError}</div>
-                )}
-                <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-                  onClick={handlePost}
-                  disabled={posting || !postText.trim()}
-                >
-                  {posting ? "Posting..." : "Post"}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <Composer />
 
       <div className="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950">
         <nav className="hidden lg:flex h-screen w-[250px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
@@ -300,7 +229,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               //active={true}
-              onClickCallbback={() => setPostOpen(true)}
+              onClickCallbback={() => setComposerPost({ kind: 'root' })}
               text="Post"
             />
           </div>
@@ -540,7 +469,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               //active={true}
-              onClickCallbback={() => setPostOpen(true)}
+              onClickCallbback={() => setComposerPost({ kind: 'root' })}
               text="Post"
             />
           </div>
@@ -550,7 +479,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <button
             className="lg:hidden fixed bottom-22 right-4 z-50 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-2xl w-14 h-14 flex items-center justify-center transition-all"
             style={{ boxShadow: "0 4px 24px 0 rgba(0,0,0,0.12)" }}
-            onClick={() => setPostOpen(true)}
+            onClick={() => setComposerPost({ kind: 'root' })}
             type="button"
             aria-label="Create Post"
           >

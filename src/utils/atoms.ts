@@ -23,5 +23,12 @@ export const likedPostsAtom = atomWithStorage<Record<string, string>>(
 
 export const isAtTopAtom = atom<boolean>(true);
 
+type ComposerState =
+  | { kind: 'closed' }
+  | { kind: 'root' }
+  | { kind: 'reply'; parent: string }
+  | { kind: 'quote'; subject: string };
+export const composerAtom = atom<ComposerState>({ kind: 'closed' });
+
 export const agentAtom = atom<Agent|null>(null);
 export const authedAtom = atom<boolean>(false);
