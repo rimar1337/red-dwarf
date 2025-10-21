@@ -1,10 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useAtom } from "jotai";
 import React from "react";
 
 import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { imgCDNAtom } from "~/utils/atoms";
 import { toggleFollow, useGetFollowState } from "~/utils/followState";
 import {
   useInfiniteQueryAuthorFeed,
@@ -66,16 +68,18 @@ function ProfileComponent() {
     () => postsData?.pages.flatMap((page) => page.records) ?? [],
     [postsData]
   );
+  
+  const [imgcdn] = useAtom(imgCDNAtom)
 
   function getAvatarUrl(p: typeof profile) {
     const link = p?.avatar?.ref?.["$link"];
     if (!link || !resolvedDid) return null;
-    return `https://cdn.bsky.app/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
+    return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
   }
   function getBannerUrl(p: typeof profile) {
     const link = p?.banner?.ref?.["$link"];
     if (!link || !resolvedDid) return null;
-    return `https://cdn.bsky.app/img/banner/plain/${resolvedDid}/${link}@jpeg`;
+    return `https://${imgcdn}/img/banner/plain/${resolvedDid}/${link}@jpeg`;
   }
 
   const displayName =

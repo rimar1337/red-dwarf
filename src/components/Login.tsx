@@ -1,8 +1,10 @@
 // src/components/Login.tsx
 import AtpAgent, { Agent } from "@atproto/api";
+import { useAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { imgCDNAtom } from "~/utils/atoms";
 import { useQueryIdentity, useQueryProfile } from "~/utils/useQuery";
 
 // --- 1. The Main Component (Orchestrator with `compact` prop) ---
@@ -190,19 +192,30 @@ const OAuthForm = () => {
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Sign in with AT. Your password is never shared.
       </p>
-      <input
+      {/* <input
         type="text"
         placeholder="handle.bsky.social"
         value={handle}
         onChange={(e) => setHandle(e.target.value)}
         className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-      />
-      <button
-        type="submit"
-        className="bg-gray-600 hover:bg-gray-700 text-white rounded-full px-4 py-2 font-medium text-sm transition-colors"
-      >
-        Log in
-      </button>
+      /> */}
+      <div className="flex flex-col gap-3">
+        <div className="m3input-field m3input-label m3input-border size-md flex-1">
+          <input
+            type="text"
+            placeholder=" "
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+          />
+          <label>AT Handle</label>
+        </div>
+        <button
+          type="submit"
+          className="bg-gray-600 hover:bg-gray-700 text-white rounded-full px-4 py-2 font-medium text-sm transition-colors"
+        >
+          Log in
+        </button>
+      </div>
     </form>
   );
 };
@@ -235,7 +248,7 @@ const PasswordForm = () => {
       <p className="text-xs text-red-500 dark:text-red-400">
         Warning: Less secure. Use an App Password.
       </p>
-      <input
+      {/* <input
         type="text"
         placeholder="handle.bsky.social"
         value={user}
@@ -257,7 +270,34 @@ const PasswordForm = () => {
         value={serviceURL}
         onChange={(e) => setServiceURL(e.target.value)}
         className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-      />
+      /> */}
+      <div className="m3input-field m3input-label m3input-border size-md flex-1">
+          <input
+            type="text"
+            placeholder=" "
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+          />
+          <label>AT Handle</label>
+        </div>
+        <div className="m3input-field m3input-label m3input-border size-md flex-1">
+          <input
+            type="text"
+            placeholder=" "
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <label>App Password</label>
+        </div>
+        <div className="m3input-field m3input-label m3input-border size-md flex-1">
+          <input
+            type="text"
+            placeholder=" "
+            value={serviceURL}
+            onChange={(e) => setServiceURL(e.target.value)}
+          />
+          <label>PDS</label>
+        </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <button
         type="submit"
@@ -278,17 +318,21 @@ export const ProfileThing = ({
   large?: boolean;
 }) => {
   const { agent } = useAuth();
-  const did = ((agent as AtpAgent).session?.did ?? (agent as AtpAgent)?.assertDid ?? agent?.did) as
-    | string
-    | undefined;
+  const did = ((agent as AtpAgent).session?.did ??
+    (agent as AtpAgent)?.assertDid ??
+    agent?.did) as string | undefined;
   const { data: identity } = useQueryIdentity(did);
-  const { data: profiledata } = useQueryProfile(`at://${did}/app.bsky.actor.profile/self`);
+  const { data: profiledata } = useQueryProfile(
+    `at://${did}/app.bsky.actor.profile/self`
+  );
   const profile = profiledata?.value;
+
+  const [imgcdn] = useAtom(imgCDNAtom)
 
   function getAvatarUrl(p: typeof profile) {
     const link = p?.avatar?.ref?.["$link"];
     if (!link || !did) return null;
-    return `https://cdn.bsky.app/img/avatar/plain/${did}/${link}@jpeg`;
+    return `https://${imgcdn}/img/avatar/plain/${did}/${link}@jpeg`;
   }
 
   if (!profiledata) {

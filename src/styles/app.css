@@ -106,3 +106,116 @@
   --shadow-opacity: calc(1 - var(--is-top));
   --tw-shadow-header: 0 2px 8px hsl(0 0% 0% / calc(var(--shadow-opacity) * 0.15));
 }
+
+
+/* m3 input */
+:root {
+  --m3input-radius: 6px;
+  --m3input-border-width: .0625rem;
+  --m3input-font-size: 16px;
+  --m3input-transition: 150ms cubic-bezier(.2, .8, .2, 1);
+  /* light theme */
+  --m3input-bg: var(--color-gray-50);
+  --m3input-border-color: var(--color-gray-400);
+  --m3input-label-color: var(--color-gray-500);
+  --m3input-text-color: var(--color-gray-900);
+  --m3input-focus-color: var(--color-gray-600);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --m3input-bg: var(--color-gray-950);
+    --m3input-border-color: var(--color-gray-700);
+    --m3input-label-color: var(--color-gray-400);
+    --m3input-text-color: var(--color-gray-50);
+    --m3input-focus-color: var(--color-gray-400);
+  }
+}
+
+/* reset page *//*
+html,
+body {
+  background: var(--m3input-bg);
+  margin: 0;
+  padding: 1rem;
+  color: var(--m3input-text-color);
+  font-family: system-ui, sans-serif;
+  font-size: var(--m3input-font-size);
+}*/
+
+/* base wrapper */
+.m3input-field.m3input-label.m3input-border {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  /*max-width: 400px;*/
+}
+
+/* size variants */
+.m3input-field.size-sm {
+  --m3input-h: 40px;
+}
+
+.m3input-field.size-md {
+  --m3input-h: 48px;
+}
+
+.m3input-field.size-lg {
+  --m3input-h: 56px;
+}
+
+.m3input-field.size-xl {
+  --m3input-h: 64px;
+}
+
+.m3input-field.m3input-label.m3input-border:not(.size-sm):not(.size-md):not(.size-lg):not(.size-xl) {
+  --m3input-h: 48px;
+}
+
+/* outlined input */
+.m3input-field.m3input-label.m3input-border input {
+  width: 100%;
+  height: var(--m3input-h);
+  border: var(--m3input-border-width) solid var(--m3input-border-color);
+  border-radius: var(--m3input-radius);
+  background: var(--m3input-bg);
+  color: var(--m3input-text-color);
+  font-size: var(--m3input-font-size);
+  padding: 0 12px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color var(--m3input-transition), box-shadow var(--m3input-transition);
+}
+
+/* focus ring */
+.m3input-field.m3input-label.m3input-border input:focus {
+  border-color: var(--m3input-focus-color);
+  /*box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-color) 20%, transparent);*/
+}
+
+/* label */
+.m3input-field.m3input-label.m3input-border label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--m3input-bg);
+  padding: 0 .25em;
+  color: var(--m3input-label-color);
+  pointer-events: none;
+  transition: all var(--m3input-transition);
+}
+
+/* float on focus or when filled */
+.m3input-field.m3input-label.m3input-border input:focus+label,
+.m3input-field.m3input-label.m3input-border input:not(:placeholder-shown)+label {
+  top: 0;
+  transform: translateY(-50%) scale(.78);
+  left: 0;
+  color: var(--m3input-focus-color);
+}
+
+/* placeholder trick */
+.m3input-field.m3input-label.m3input-border input::placeholder {
+  color: transparent;
+}

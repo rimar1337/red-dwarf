@@ -5,7 +5,7 @@ import { DropdownMenu } from "radix-ui";
 import * as React from "react";
 import { type SVGProps } from "react";
 
-import { composerAtom, constellationURLAtom, likedPostsAtom } from "~/utils/atoms";
+import { composerAtom, constellationURLAtom, imgCDNAtom, likedPostsAtom } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
   useQueryConstellation,
@@ -599,10 +599,10 @@ function MoreReplies({ atUri }: { atUri: string }) {
   );
 }
 
-function getAvatarUrl(opProfile: any, did: string) {
+function getAvatarUrl(opProfile: any, did: string, cdn: string) {
   const link = opProfile?.value?.avatar?.ref?.["$link"];
   if (!link) return null;
-  return `https://cdn.bsky.app/img/avatar/plain/${did}/${link}@jpeg`;
+  return `https://${cdn}/img/avatar/plain/${did}/${link}@jpeg`;
 }
 
 export function UniversalPostRendererRawRecordShim({
@@ -723,6 +723,8 @@ export function UniversalPostRendererRawRecordShim({
     error: embedError,
   } = useHydratedEmbed(postRecord?.value?.embed, resolved?.did);
 
+  const [imgcdn] = useAtom(imgCDNAtom)
+
   const parsedaturi = new AtUri(aturi); //parseAtUri(aturi);
 
   const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(
@@ -734,7 +736,7 @@ export function UniversalPostRendererRawRecordShim({
         did: resolved?.did || "",
         handle: resolved?.handle || "",
         displayName: profileRecord?.value?.displayName || "",
-        avatar: getAvatarUrl(profileRecord, resolved?.did) || "",
+        avatar: getAvatarUrl(profileRecord, resolved?.did, imgcdn) || "",
         viewer: undefined,
         labels: profileRecord?.labels || undefined,
         verification: undefined,
@@ -762,6 +764,7 @@ export function UniversalPostRendererRawRecordShim({
       repliesCount,
       repostsCount,
       likesCount,
+      imgcdn
     ]
   );
 
@@ -886,7 +889,7 @@ export function MdiCommentOutline(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M9 22a1 1 0 0 1-1-1v-3H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6.1l-3.7 3.71c-.2.19-.45.29-.7.29zm1-6v3.08L13.08 16H20V4H4v12z"
       ></path>
     </svg>
@@ -903,7 +906,7 @@ export function MdiRepeat(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M17 17H7v-3l-4 4l4 4v-3h12v-6h-2M7 7h10v3l4-4l-4-4v3H5v6h2z"
       ></path>
     </svg>
@@ -954,7 +957,7 @@ export function MdiCardsHeartOutline(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="m12.1 18.55l-.1.1l-.11-.1C7.14 14.24 4 11.39 4 8.5C4 6.5 5.5 5 7.5 5c1.54 0 3.04 1 3.57 2.36h1.86C13.46 6 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5c0 2.89-3.14 5.74-7.9 10.05M16.5 3c-1.74 0-3.41.81-4.5 2.08C10.91 3.81 9.24 3 7.5 3C4.42 3 2 5.41 2 8.5c0 3.77 3.4 6.86 8.55 11.53L12 21.35l1.45-1.32C18.6 15.36 22 12.27 22 8.5C22 5.41 19.58 3 16.5 3"
       ></path>
     </svg>
@@ -971,7 +974,7 @@ export function MdiShareVariant(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3a3 3 0 0 0-3-3a3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3a3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66c0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"
       ></path>
     </svg>
@@ -988,7 +991,7 @@ export function MdiMoreHoriz(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M16 12a2 2 0 0 1 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2m-6 0a2 2 0 0 1 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2m-6 0a2 2 0 0 1 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2"
       ></path>
     </svg>
@@ -1005,7 +1008,7 @@ export function MdiGlobe(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41a7.984 7.984 0 0 1 2.9 12.8M11 19.93c-3.95-.49-7-3.85-7-7.93c0-.62.08-1.22.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"
       ></path>
     </svg>
@@ -1039,7 +1042,7 @@ export function MdiReply(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M10 9V5l-7 7l7 7v-4.1c5 0 8.5 1.6 11 5.1c-1-5-4-10-11-11"
       ></path>
     </svg>
@@ -1093,7 +1096,7 @@ export function MdiRepost(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M17 17H7v-3l-4 4l4 4v-3h12v-6h-2M7 7h10v3l4-4l-4-4v3H5v6h2z"
       ></path>
     </svg>
@@ -1110,7 +1113,7 @@ export function MdiRepeatVariant(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        fill="oklch(0.704 0.05 28)"
+        fill="var(--color-gray-400)"
         d="M6 5.75L10.25 10H7v6h6.5l2 2H7a2 2 0 0 1-2-2v-6H1.75zm12 12.5L13.75 14H17V8h-6.5l-2-2H17a2 2 0 0 1 2 2v6h3.25z"
       ></path>
     </svg>

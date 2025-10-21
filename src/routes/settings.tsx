@@ -6,8 +6,12 @@ import Login from "~/components/Login";
 import {
   constellationURLAtom,
   defaultconstellationURL,
+  defaultImgCDN,
   defaultslingshotURL,
+  defaultVideoCDN,
+  imgCDNAtom,
   slingshotURLAtom,
+  videoCDNAtom,
 } from "~/utils/atoms";
 
 export const Route = createFileRoute("/settings")({
@@ -27,7 +31,8 @@ export function Settings() {
           }
         }}
       />
-      <Login />
+      <div className="lg:hidden"><Login /></div>
+      <div className="h-4" />
       <TextInputSetting
         atom={constellationURLAtom}
         title={"Constellation"}
@@ -42,7 +47,21 @@ export function Settings() {
         description={"Customize the Slingshot instance to be used by Red Dwarf"}
         init={defaultslingshotURL}
       />
-      <span className="text-gray-500 dark:text-gray-400 py-4 px-6">please restart/refresh the app if changes arent applying correctly</span>
+      <TextInputSetting
+        atom={imgCDNAtom}
+        title={"Image CDN"}
+        description={
+          "Customize the Constellation instance to be used by Red Dwarf"
+        }
+        init={defaultImgCDN}
+      />
+      <TextInputSetting
+        atom={videoCDNAtom}
+        title={"Video CDN"}
+        description={"Customize the Slingshot instance to be used by Red Dwarf"}
+        init={defaultVideoCDN}
+      />
+      <p className="text-gray-500 dark:text-gray-400 py-4 px-6 text-sm">please restart/refresh the app if changes arent applying correctly</p>
     </>
   );
 }
@@ -60,8 +79,8 @@ export function TextInputSetting({
 }) {
   const [value, setValue] = useAtom(atom);
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 ">
-      <div>
+    <div className="flex flex-col gap-2 px-4 py-2">
+      {/* <div>
         {title && (
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
             {title}
@@ -72,10 +91,14 @@ export function TextInputSetting({
             {description}
           </p>
         )}
-      </div>
+      </div> */}
 
       <div className="flex flex-row gap-2 items-center">
-        <input
+        <div className="m3input-field m3input-label m3input-border size-md flex-1">
+          <input type="text" placeholder=" " value={value} onChange={(e) => setValue(e.target.value)}/>
+          <label>{title}</label>
+        </div>
+        {/* <input
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -83,10 +106,10 @@ export function TextInputSetting({
                      text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 
                      focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
           placeholder="Enter value..."
-        />
+        /> */}
         <button
           onClick={() => setValue(init ?? "")}
-          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 
+          className="px-6 py-2 h-12 rounded-full bg-gray-100 dark:bg-gray-800 
                      text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
         >
           Reset

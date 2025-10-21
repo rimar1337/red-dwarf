@@ -31,6 +31,16 @@ export const slingshotURLAtom = atomWithStorage<string>(
   'slingshotURL',
   defaultslingshotURL
 )
+export const defaultImgCDN = 'cdn.bsky.app'
+export const imgCDNAtom = atomWithStorage<string>(
+  'imgcdnurl',
+  defaultImgCDN
+)
+export const defaultVideoCDN = 'video.bsky.app'
+export const videoCDNAtom = atomWithStorage<string>(
+  'videocdnurl',
+  defaultVideoCDN
+)
 
 export const isAtTopAtom = atom<boolean>(true);
 

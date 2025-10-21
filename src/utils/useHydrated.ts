@@ -9,15 +9,14 @@ import {
   AppBskyFeedPost,
   AtUri,
 } from "@atproto/api";
+import { useAtom } from "jotai";
 import { useMemo } from "react";
 
-import { useQueryIdentity,useQueryPost, useQueryProfile } from "./useQuery";
+import { imgCDNAtom, videoCDNAtom } from "./atoms";
+import { useQueryIdentity, useQueryPost, useQueryProfile } from "./useQuery";
 
-type QueryResultData<T extends (...args: any) => any> = ReturnType<T> extends
-  | { data: infer D }
-  | undefined
-  ? D
-  : never;
+type QueryResultData<T extends (...args: any) => any> =
+  ReturnType<T> extends { data: infer D } | undefined ? D : never;
 
 function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
   return obj as $Typed<T>;
@@ -26,6 +25,7 @@ function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
 export function hydrateEmbedImages(
   embed: AppBskyEmbedImages.Main,
   did: string,
+  cdn: string
 ): $Typed<AppBskyEmbedImages.View> {
   return asTyped({
     $type: "app.bsky.embed.images#view" as const,
@@ -34,8 +34,8 @@ export function hydrateEmbedImages(
         const link = img.image.ref?.["$link"];
         if (!link) return null;
         return {
-          thumb: `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${link}@jpeg`,
-          fullsize: `https://cdn.bsky.app/img/feed_fullsize/plain/${did}/${link}@jpeg`,
+          thumb: `https://${cdn}/img/feed_thumbnail/plain/${did}/${link}@jpeg`,
+          fullsize: `https://${cdn}/img/feed_fullsize/plain/${did}/${link}@jpeg`,
           alt: img.alt || "",
           aspectRatio: img.aspectRatio,
         };
@@ -47,6 +47,7 @@ export function hydrateEmbedImages(
 export function hydrateEmbedExternal(
   embed: AppBskyEmbedExternal.Main,
   did: string,
+  cdn: string
 ): $Typed<AppBskyEmbedExternal.View> {
   return asTyped({
     $type: "app.bsky.embed.external#view" as const,
@@ -55,7 +56,7 @@ export function hydrateEmbedExternal(
       title: embed.external.title,
       description: embed.external.description,
       thumb: embed.external.thumb?.ref?.$link
-        ? `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${embed.external.thumb.ref.$link}@jpeg`
+        ? `https://${cdn}/img/feed_thumbnail/plain/${did}/${embed.external.thumb.ref.$link}@jpeg`
         : undefined,
     },
   });
@@ -64,12 +65,13 @@ export function hydrateEmbedExternal(
 export function hydrateEmbedVideo(
   embed: AppBskyEmbedVideo.Main,
   did: string,
+  videocdn: string
 ): $Typed<AppBskyEmbedVideo.View> {
   const videoLink = embed.video.ref.$link;
   return asTyped({
     $type: "app.bsky.embed.video#view" as const,
-    playlist: `https://video.bsky.app/watch/${did}/${videoLink}/playlist.m3u8`,
-    thumbnail: `https://video.bsky.app/watch/${did}/${videoLink}/thumbnail.jpg`,
+    playlist: `https://${videocdn}/watch/${did}/${videoLink}/playlist.m3u8`,
+    thumbnail: `https://${videocdn}/watch/${did}/${videoLink}/thumbnail.jpg`,
     aspectRatio: embed.aspectRatio,
     cid: videoLink,
   });
@@ -80,6 +82,7 @@ function hydrateEmbedRecord(
   quotedPost: QueryResultData<typeof useQueryPost>,
   quotedProfile: QueryResultData<typeof useQueryProfile>,
   quotedIdentity: QueryResultData<typeof useQueryIdentity>,
+  cdn: string
 ): $Typed<AppBskyEmbedRecord.View> | undefined {
   if (!quotedPost || !quotedProfile || !quotedIdentity) {
     return undefined;
@@ -91,7 +94,7 @@ function hydrateEmbedRecord(
     handle: quotedIdentity.handle,
     displayName: quotedProfile.value.displayName ?? quotedIdentity.handle,
     avatar: quotedProfile.value.avatar?.ref?.$link
-      ? `https://cdn.bsky.app/img/avatar/plain/${quotedIdentity.did}/${quotedProfile.value.avatar.ref.$link}@jpeg`
+      ? `https://${cdn}/img/avatar/plain/${quotedIdentity.did}/${quotedProfile.value.avatar.ref.$link}@jpeg`
       : undefined,
     viewer: {},
     labels: [],
@@ -122,12 +125,14 @@ function hydrateEmbedRecordWithMedia(
   quotedPost: QueryResultData<typeof useQueryPost>,
   quotedProfile: QueryResultData<typeof useQueryProfile>,
   quotedIdentity: QueryResultData<typeof useQueryIdentity>,
+  cdn: string
 ): $Typed<AppBskyEmbedRecordWithMedia.View> | undefined {
   const hydratedRecord = hydrateEmbedRecord(
     embed.record,
     quotedPost,
     quotedProfile,
     quotedIdentity,
+    cdn
   );
 
   if (!hydratedRecord) return undefined;
@@ -148,7 +153,7 @@ type HydratedEmbedView =
 
 export function useHydratedEmbed(
   embed: AppBskyFeedPost.Record["embed"],
-  postAuthorDid: string | undefined,
+  postAuthorDid: string | undefined
 ) {
   const recordInfo = useMemo(() => {
     if (AppBskyEmbedRecordWithMedia.isMain(embed)) {
@@ -181,28 +186,37 @@ export function useHydratedEmbed(
     error: profileError,
   } = useQueryProfile(profileUri);
 
+  const [imgcdn] = useAtom(imgCDNAtom);
+  const [videocdn] = useAtom(videoCDNAtom);
+
   const queryidentityresult = useQueryIdentity(quotedAuthorDid);
 
   const hydratedEmbed: HydratedEmbedView | undefined = (() => {
     if (!embed || !postAuthorDid) return undefined;
 
-    if (isRecordType && (!usequerypostresults?.data || !quotedProfile || !queryidentityresult?.data)) {
+    if (
+      isRecordType &&
+      (!usequerypostresults?.data ||
+        !quotedProfile ||
+        !queryidentityresult?.data)
+    ) {
       return undefined;
     }
 
     try {
       if (AppBskyEmbedImages.isMain(embed)) {
-        return hydrateEmbedImages(embed, postAuthorDid);
+        return hydrateEmbedImages(embed, postAuthorDid, imgcdn);
       } else if (AppBskyEmbedExternal.isMain(embed)) {
-        return hydrateEmbedExternal(embed, postAuthorDid);
+        return hydrateEmbedExternal(embed, postAuthorDid, imgcdn);
       } else if (AppBskyEmbedVideo.isMain(embed)) {
-        return hydrateEmbedVideo(embed, postAuthorDid);
+        return hydrateEmbedVideo(embed, postAuthorDid, videocdn);
       } else if (AppBskyEmbedRecord.isMain(embed)) {
         return hydrateEmbedRecord(
           embed,
           usequerypostresults?.data,
           quotedProfile,
           queryidentityresult?.data,
+          imgcdn
         );
       } else if (AppBskyEmbedRecordWithMedia.isMain(embed)) {
         let hydratedMedia:
@@ -212,11 +226,23 @@ export function useHydratedEmbed(
           | undefined;
 
         if (AppBskyEmbedImages.isMain(embed.media)) {
-          hydratedMedia = hydrateEmbedImages(embed.media, postAuthorDid);
+          hydratedMedia = hydrateEmbedImages(
+            embed.media,
+            postAuthorDid,
+            imgcdn
+          );
         } else if (AppBskyEmbedExternal.isMain(embed.media)) {
-          hydratedMedia = hydrateEmbedExternal(embed.media, postAuthorDid);
+          hydratedMedia = hydrateEmbedExternal(
+            embed.media,
+            postAuthorDid,
+            imgcdn
+          );
         } else if (AppBskyEmbedVideo.isMain(embed.media)) {
-          hydratedMedia = hydrateEmbedVideo(embed.media, postAuthorDid);
+          hydratedMedia = hydrateEmbedVideo(
+            embed.media,
+            postAuthorDid,
+            videocdn
+          );
         }
 
         if (hydratedMedia) {
@@ -226,6 +252,7 @@ export function useHydratedEmbed(
             usequerypostresults?.data,
             quotedProfile,
             queryidentityresult?.data,
+            imgcdn
           );
         }
       }
@@ -236,10 +263,13 @@ export function useHydratedEmbed(
   })();
 
   const isLoading = isRecordType
-    ? usequerypostresults?.isLoading || isLoadingProfile || queryidentityresult?.isLoading
+    ? usequerypostresults?.isLoading ||
+      isLoadingProfile ||
+      queryidentityresult?.isLoading
     : false;
 
-  const error = usequerypostresults?.error || profileError || queryidentityresult?.error;
+  const error =
+    usequerypostresults?.error || profileError || queryidentityresult?.error;
 
   return { data: hydratedEmbed, isLoading, error };
 }
