@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAtom } from "jotai";
 import React, { useEffect, useRef,useState } from "react";
 
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { constellationURLAtom } from "~/utils/atoms";
 
 const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
 
@@ -70,14 +72,16 @@ function NotificationsComponent() {
     }
   }
 
+  const [constellationURL] = useAtom(constellationURLAtom)
+
   useEffect(() => {
     if (!did) return;
     setLoading(true);
     setError(null);
     const urls = [
-      `https://constellation.microcosm.blue/links?target=${encodeURIComponent(did)}&collection=app.bsky.feed.post&path=.facets[app.bsky.richtext.facet].features[app.bsky.richtext.facet%23mention].did`,
-      `https://constellation.microcosm.blue/links?target=${encodeURIComponent(did)}&collection=app.bsky.feed.post&path=.facets[].features[app.bsky.richtext.facet%23mention].did`,
-      `https://constellation.microcosm.blue/links?target=${encodeURIComponent(did)}&collection=app.bsky.graph.follow&path=.subject`,
+      `https://${constellationURL}/links?target=${encodeURIComponent(did)}&collection=app.bsky.feed.post&path=.facets[app.bsky.richtext.facet].features[app.bsky.richtext.facet%23mention].did`,
+      `https://${constellationURL}/links?target=${encodeURIComponent(did)}&collection=app.bsky.feed.post&path=.facets[].features[app.bsky.richtext.facet%23mention].did`,
+      `https://${constellationURL}/links?target=${encodeURIComponent(did)}&collection=app.bsky.graph.follow&path=.subject`,
     ];
     let ignore = false;
     Promise.all(

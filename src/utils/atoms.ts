@@ -21,6 +21,17 @@ export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   {}
 );
 
+export const defaultconstellationURL = 'constellation.microcosm.blue'
+export const constellationURLAtom = atomWithStorage<string>(
+  'constellationURL',
+  defaultconstellationURL
+)
+export const defaultslingshotURL = 'slingshot.microcosm.blue'
+export const slingshotURLAtom = atomWithStorage<string>(
+  'slingshotURL',
+  defaultslingshotURL
+)
+
 export const isAtTopAtom = atom<boolean>(true);
 
 type ComposerState =

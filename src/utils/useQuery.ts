@@ -7,13 +7,16 @@ import {
   useQuery,
   type UseQueryResult} from "@tanstack/react-query";
 
+import { constellationURLAtom, slingshotURLAtom, store } from "./atoms";
+
 export function constructIdentityQuery(didorhandle?: string) {
   return queryOptions({
     queryKey: ["identity", didorhandle],
     queryFn: async () => {
       if (!didorhandle) return undefined as undefined
+      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
-        `https://slingshot.microcosm.blue/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`
       );
       if (!res.ok) throw new Error("Failed to fetch post");
       try {
@@ -63,8 +66,9 @@ export function constructPostQuery(uri?: string) {
     queryKey: ["post", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
+      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
-        `https://slingshot.microcosm.blue/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
       let data: any;
       try {
@@ -126,8 +130,9 @@ export function constructProfileQuery(uri?: string) {
     queryKey: ["profile", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
+      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
-        `https://slingshot.microcosm.blue/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
       let data: any;
       try {
@@ -249,8 +254,9 @@ export function constructConstellationQuery(query?:{
       const path = query?.path
       const cursor = query.cursor
       const dids = query?.dids
+      const constellation = store.get(constellationURLAtom);
       const res = await fetch(
-        `https://constellation.microcosm.blue${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`
+        `https://${constellation}${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`
       );
       if (!res.ok) throw new Error("Failed to fetch post");
       try {
@@ -450,8 +456,9 @@ export function constructArbitraryQuery(uri?: string) {
     queryKey: ["arbitrary", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
+      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
-        `https://slingshot.microcosm.blue/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
       let data: any;
       try {
@@ -624,7 +631,7 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
   collection: string
   path: string
 }) {
-  const constellationHost = 'constellation.microcosm.blue'
+  const constellationHost = store.get(constellationURLAtom)
   console.log(
     'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
     query,
