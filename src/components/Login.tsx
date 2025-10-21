@@ -311,14 +311,13 @@ const PasswordForm = () => {
 
 // --- Profile Component (now supports a `large` prop for styling) ---
 export const ProfileThing = ({
-  agent: _unused,
+  agent,
   large = false,
 }: {
-  agent?: Agent | null;
+  agent: Agent | null;
   large?: boolean;
 }) => {
-  const { agent } = useAuth();
-  const did = ((agent as AtpAgent).session?.did ??
+  const did = ((agent as AtpAgent)?.session?.did ??
     (agent as AtpAgent)?.assertDid ??
     agent?.did) as string | undefined;
   const { data: identity } = useQueryIdentity(did);

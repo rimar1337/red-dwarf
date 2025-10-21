@@ -223,3 +223,8 @@ body {
 .m3input-field.m3input-label.m3input-border input::placeholder {
   color: transparent;
 }
+
+/* radix i love you but like cmon man */
+body[data-scroll-locked]{
+  margin-left: var(--removed-body-scroll-bar-size) !important;
+}
