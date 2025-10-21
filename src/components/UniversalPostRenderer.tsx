@@ -532,7 +532,11 @@ export function UniversalPostRendererATURILoader({
             //detailed={detailed}
             atUri={oldestOpsReplyElseNewestNonOpsReply}
             bottomReplyLine={(maxReplies ?? 0) > 0}
-            topReplyLine={(maxReplies ?? 0) > 1}
+            topReplyLine={
+              (!!(maxReplies && maxReplies - 1 === 0) &&
+                !!(replies && replies > 0)) ||
+              !!((maxReplies ?? 0) > 1)
+            }
             bottomBorder={bottomBorder}
             feedviewpost={feedviewpost}
             repostedby={repostedby}
@@ -545,9 +549,9 @@ export function UniversalPostRendererATURILoader({
               maxReplies && maxReplies > 0 ? maxReplies - 1 : undefined
             }
           />
-      {maxReplies && maxReplies - 1 === 0 && (
-        <MoreReplies atUri={oldestOpsReplyElseNewestNonOpsReply} />
-      )}
+          {maxReplies && maxReplies - 1 === 0 && replies && replies > 0 && (
+            <MoreReplies atUri={oldestOpsReplyElseNewestNonOpsReply} />
+          )}
         </>
       )}
     </>
@@ -1414,7 +1418,7 @@ function UniversalPostRenderer({
           paddingLeft: isQuote ? 12 : 16,
           paddingRight: isQuote ? 12 : 16,
           //paddingTop: 16,
-          paddingTop: isRepost ? 10 : isQuote ? 12 : 16,
+          paddingTop: isRepost ? 10 : isQuote ? 12 : topReplyLine ? 8 : 16,
           //paddingBottom: bottomReplyLine ? 0 : 16,
           paddingBottom: 0,
           fontFamily: "system-ui, sans-serif",
@@ -1455,7 +1459,7 @@ function UniversalPostRenderer({
               //left: 16 + (42 / 2),
               width: 2,
               //height: "100%",
-              height: isRepost ? "calc(16px + 1rem - 6px)" : 16 - 6,
+              height: isRepost ? "calc(16px + 1rem - 6px)" : topReplyLine ? 8 - 6 : 16 - 6,
               // background: theme.textSecondary,
               //opacity: 0.5,
               // no flex here
@@ -1469,7 +1473,7 @@ function UniversalPostRenderer({
             //top: isRepost ? "calc(16px + 1rem)" : 16,
             //left: 16,
             zIndex: 1,
-            top: isRepost ? "calc(16px + 1rem)" : isQuote ? 12 : 16,
+            top: isRepost ? "calc(16px + 1rem)" : isQuote ? 12 : topReplyLine ? 8 : 16,
             left: isQuote ? 12 : 16,
           }}
           onClick={onProfileClick}
@@ -1507,7 +1511,7 @@ function UniversalPostRenderer({
             }}
           >
             {/* dummy for later use */}
-            <div style={{ width: 42, height: 42 + 8, minHeight: 42 + 8 }} />
+            <div style={{ width: 42, height: 42 + 6, minHeight: 42 + 6 }} />
             {/* reply line !!!!  bottomReplyLine */}
             {bottomReplyLine && (
               <div
