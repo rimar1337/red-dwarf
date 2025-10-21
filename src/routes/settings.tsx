@@ -30,18 +30,19 @@ export function Settings() {
       <Login />
       <TextInputSetting
         atom={constellationURLAtom}
-        title={"Constellation URL"}
+        title={"Constellation"}
         description={
-          "customize the Constellation instance to be used by Red Dwarf"
+          "Customize the Constellation instance to be used by Red Dwarf"
         }
         init={defaultconstellationURL}
       />
       <TextInputSetting
         atom={slingshotURLAtom}
-        title={"Slingshot URL"}
-        description={"customize the Slingshot instance to be used by Red Dwarf"}
+        title={"Slingshot"}
+        description={"Customize the Slingshot instance to be used by Red Dwarf"}
         init={defaultslingshotURL}
       />
+      <span className="text-gray-500 dark:text-gray-400 py-4 px-6">please restart/refresh the app if changes arent applying correctly</span>
     </>
   );
 }

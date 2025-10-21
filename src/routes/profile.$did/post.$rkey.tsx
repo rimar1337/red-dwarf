@@ -1,10 +1,12 @@
 import { AtUri } from "@atproto/api";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useAtom } from "jotai";
 import React, { useLayoutEffect } from "react";
 
 import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
+import { constellationURLAtom, slingshotURLAtom } from "~/utils/atoms";
 //import { usePersistentStore } from '~/providers/PersistentStoreProvider';
 import {
   constructPostQuery,
@@ -275,9 +277,12 @@ export function ProfilePostComponent({
   //   path: ".reply.parent.uri",
   // });
   // const replies = repliesData?.linking_records.slice(0, 50) ?? [];
+    const [constellationurl] = useAtom(constellationURLAtom)
+  
   const infinitequeryresults = useInfiniteQuery({
     ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
       {
+        constellation: constellationurl,
         method: "/links",
         target: atUri,
         collection: "app.bsky.feed.post",
@@ -386,6 +391,9 @@ export function ProfilePostComponent({
     }
   }, [parents, layoutReady]);
 
+
+  const [slingshoturl] = useAtom(slingshotURLAtom)
+      
   React.useEffect(() => {
     if (parentsLoading) {
       setLayoutReady(false);
@@ -414,7 +422,7 @@ export function ProfilePostComponent({
       while (currentParentUri && safetyCounter < MAX_PARENTS) {
         try {
           const parentPost = await queryClient.fetchQuery(
-            constructPostQuery(currentParentUri)
+            constructPostQuery(currentParentUri, slingshoturl)
           );
           if (!parentPost) break;
           parentChain.push(parentPost);

@@ -5,7 +5,7 @@ import { DropdownMenu } from "radix-ui";
 import * as React from "react";
 import { type SVGProps } from "react";
 
-import { composerAtom, likedPostsAtom } from "~/utils/atoms";
+import { composerAtom, constellationURLAtom, likedPostsAtom } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
   useQueryConstellation,
@@ -401,9 +401,12 @@ export function UniversalPostRendererATURILoader({
   //   path: ".reply.parent.uri",
   // });
 
+  const [constellationurl] = useAtom(constellationURLAtom)
+
   const infinitequeryresults = useInfiniteQuery({
     ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
       {
+        constellation: constellationurl,
         method: "/links",
         target: atUri,
         collection: "app.bsky.feed.post",

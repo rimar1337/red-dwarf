@@ -6,15 +6,15 @@ import {
   useInfiniteQuery,
   useQuery,
   type UseQueryResult} from "@tanstack/react-query";
+import { useAtom } from "jotai";
 
-import { constellationURLAtom, slingshotURLAtom, store } from "./atoms";
+import { constellationURLAtom, slingshotURLAtom } from "./atoms";
 
-export function constructIdentityQuery(didorhandle?: string) {
+export function constructIdentityQuery(didorhandle?: string, slingshoturl?: string) {
   return queryOptions({
     queryKey: ["identity", didorhandle],
     queryFn: async () => {
       if (!didorhandle) return undefined as undefined
-      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`
       );
@@ -58,15 +58,15 @@ export function useQueryIdentity(didorhandle?: string):
       Error
     >
 export function useQueryIdentity(didorhandle?: string) {
-  return useQuery(constructIdentityQuery(didorhandle));
+  const [slingshoturl] = useAtom(slingshotURLAtom)
+  return useQuery(constructIdentityQuery(didorhandle, slingshoturl));
 }
 
-export function constructPostQuery(uri?: string) {
+export function constructPostQuery(uri?: string, slingshoturl?: string) {
   return queryOptions({
     queryKey: ["post", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
-      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
@@ -122,15 +122,15 @@ export function useQueryPost(uri?: string):
       Error
     >
 export function useQueryPost(uri?: string) {
-  return useQuery(constructPostQuery(uri));
+  const [slingshoturl] = useAtom(slingshotURLAtom)
+  return useQuery(constructPostQuery(uri, slingshoturl));
 }
 
-export function constructProfileQuery(uri?: string) {
+export function constructProfileQuery(uri?: string, slingshoturl?: string) {
   return queryOptions({
     queryKey: ["profile", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
-      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
@@ -186,7 +186,8 @@ export function useQueryProfile(uri?: string):
     Error
   >
 export function useQueryProfile(uri?: string) {
-  return useQuery(constructProfileQuery(uri));
+  const [slingshoturl] = useAtom(slingshotURLAtom)
+  return useQuery(constructProfileQuery(uri, slingshoturl));
 }
 
 // export function constructConstellationQuery(
@@ -222,6 +223,7 @@ export function useQueryProfile(uri?: string) {
 //   target: string
 // ): QueryOptions<linksAllResponse, Error>;
 export function constructConstellationQuery(query?:{
+  constellation: string,
   method:
     | "/links"
     | "/links/distinct-dids"
@@ -254,9 +256,8 @@ export function constructConstellationQuery(query?:{
       const path = query?.path
       const cursor = query.cursor
       const dids = query?.dids
-      const constellation = store.get(constellationURLAtom);
       const res = await fetch(
-        `https://${constellation}${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`
+        `https://${query.constellation}${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`
       );
       if (!res.ok) throw new Error("Failed to fetch post");
       try {
@@ -345,8 +346,9 @@ export function useQueryConstellation(query?: {
     >
   | undefined {
   //if (!query) return;
+  const [constellationurl] = useAtom(constellationURLAtom)
   return useQuery(
-    constructConstellationQuery(query)
+    constructConstellationQuery(query && {constellation: constellationurl, ...query})
   );
 }
 
@@ -451,12 +453,11 @@ export function useQueryPreferences(options: {
 
 
 
-export function constructArbitraryQuery(uri?: string) {
+export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
   return queryOptions({
     queryKey: ["arbitrary", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined
-      const slingshoturl = store.get(slingshotURLAtom)
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
       );
@@ -511,7 +512,8 @@ export function useQueryArbitrary(uri?: string): UseQueryResult<
   Error
 >;
 export function useQueryArbitrary(uri?: string) {
-  return useQuery(constructArbitraryQuery(uri));
+  const [slingshoturl] = useAtom(slingshotURLAtom)
+  return useQuery(constructArbitraryQuery(uri, slingshoturl));
 }
 
 export function constructFallbackNothingQuery(){
@@ -626,12 +628,12 @@ export function useInfiniteQueryFeedSkeleton(options: {
 
 
 export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(query?: {
+  constellation: string,
   method: '/links'
   target?: string
   collection: string
   path: string
 }) {
-  const constellationHost = store.get(constellationURLAtom)
   console.log(
     'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
     query,
@@ -657,7 +659,7 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
       const cursor = pageParam
 
       const res = await fetch(
-        `https://${constellationHost}${method}?target=${encodeURIComponent(target)}${
+        `https://${query.constellation}${method}?target=${encodeURIComponent(target)}${
           collection ? `&collection=${encodeURIComponent(collection)}` : ''
         }${path ? `&path=${encodeURIComponent(path)}` : ''}${
           cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
