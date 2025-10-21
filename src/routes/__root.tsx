@@ -500,9 +500,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1"></div>
           <p className="text-xs text-gray-400 dark:text-gray-500 text-justify mx-4 mb-4">
-            Red Dwarf is a bluesky client that uses Constellation and direct PDS
-            queries. Skylite would be a self-hosted bluesky "instance". Stay
-            tuned for the release of Skylite.
+            Red Dwarf is a Bluesky client that does not rely on any Bluesky API App Servers. Instead, it uses Microcosm to fetch records directly from each users' PDS (via Slingshot) and connect them using backlinks (via Constellation)
           </p>
         </aside>
       </div>
