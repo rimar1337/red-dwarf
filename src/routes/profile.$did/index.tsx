@@ -286,23 +286,37 @@ export function Mutual({targetdidorhandle}:{targetdidorhandle: string}) {
   const {agent} = useAuth()
   const {data: identity} = useQueryIdentity(targetdidorhandle);
 
-  const mutualfollows = useGetOneToOneState(agent?.did ? {
+  const theyFollowYouRes = useGetOneToOneState(agent?.did ? {
     target: agent?.did,
     user: identity?.did ?? targetdidorhandle,
     collection: "app.bsky.graph.follow",
     path: ".subject"
   }:undefined);
 
-  const ismutual: boolean = (!!mutualfollows?.length && mutualfollows.length > 0)
+  const youFollowThemRes = useGetFollowState({
+    target: identity?.did ?? targetdidorhandle,
+    user: agent?.did,
+  });
+
+  const theyFollowYou: boolean = (!!theyFollowYouRes?.length && theyFollowYouRes.length > 0)
+  const youFollowThem: boolean = (!!youFollowThemRes?.length && youFollowThemRes.length > 0)
   
   return (
     <>
+      {/* if not self */}
       {identity?.did !== agent?.did ? (
         <>
-          {!(ismutual) ? (
-            <></>
+          {(theyFollowYou) ? (
+            <>
+              {youFollowThem ? (
+                  <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">mutuals</div>
+                ) : (
+                  <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">follows you</div>
+                )
+              }
+            </>
           ) : (
-            <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">mutuals</div>
+            <></>
           )}
         </>
       ) : (
