@@ -7,7 +7,7 @@ import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { imgCDNAtom } from "~/utils/atoms";
-import { toggleFollow, useGetFollowState } from "~/utils/followState";
+import { toggleFollow, useGetFollowState, useGetOneToOneState } from "~/utils/followState";
 import {
   useInfiniteQueryAuthorFeed,
   useQueryIdentity,
@@ -22,17 +22,11 @@ function ProfileComponent() {
   // booo bad this is not always the did it might be a handle, use identity.did instead
   const { did } = Route.useParams();
   const queryClient = useQueryClient();
-  const { agent } = useAuth();
   const {
     data: identity,
     isLoading: isIdentityLoading,
     error: identityError,
   } = useQueryIdentity(did);
-
-  const followRecords = useGetFollowState({
-    target: identity?.did || did,
-    user: agent?.did,
-  });
 
   const resolvedDid = did.startsWith("did:") ? did : identity?.did;
   const resolvedHandle = did.startsWith("did:") ? identity?.handle : did;
@@ -68,8 +62,8 @@ function ProfileComponent() {
     () => postsData?.pages.flatMap((page) => page.records) ?? [],
     [postsData]
   );
-  
-  const [imgcdn] = useAtom(imgCDNAtom)
+
+  const [imgcdn] = useAtom(imgCDNAtom);
 
   function getAvatarUrl(p: typeof profile) {
     const link = p?.avatar?.ref?.["$link"];
@@ -166,43 +160,7 @@ function ProfileComponent() {
             also delay the backfill to be on demand because it would be pretty intense
             also save it persistently
           */}
-          {identity?.did !== agent?.did ? (
-            <>
-              {!(followRecords?.length && followRecords?.length > 0) ? (
-                <button
-                  onClick={() =>
-                    toggleFollow({
-                      agent: agent || undefined,
-                      targetDid: identity?.did,
-                      followRecords: followRecords,
-                      queryClient: queryClient,
-                    })
-                  }
-                  className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]"
-                >
-                  Follow
-                </button>
-              ) : (
-                <button
-                  onClick={() =>
-                    toggleFollow({
-                      agent: agent || undefined,
-                      targetDid: identity?.did,
-                      followRecords: followRecords,
-                      queryClient: queryClient,
-                    })
-                  }
-                  className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]"
-                >
-                  Unfollow
-                </button>
-              )}
-            </>
-          ) : (
-            <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
-              Edit Profile
-            </button>
-          )}
+          <FollowButton targetdidorhandle={did} />
           <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
             ... {/* todo: icon */}
           </button>
@@ -211,7 +169,8 @@ function ProfileComponent() {
         {/* Info Card */}
         <div className="mt-16 pb-2 px-4 text-gray-900 dark:text-gray-100">
           <div className="font-bold text-2xl">{displayName}</div>
-          <div className="text-gray-500 dark:text-gray-400 text-base mb-3">
+          <div className="text-gray-500 dark:text-gray-400 text-base mb-3 flex flex-row gap-1">
+            <Mutual targetdidorhandle={did} /> 
             {handle}
           </div>
           {description && (
@@ -256,6 +215,97 @@ function ProfileComponent() {
           <div className="p-4 text-center text-gray-500">No posts found.</div>
         )}
       </div>
+    </>
+  );
+}
+
+export function FollowButton({targetdidorhandle}:{targetdidorhandle: string}) {
+  const {agent} = useAuth()
+  const {data: identity} = useQueryIdentity(targetdidorhandle);
+  const queryClient = useQueryClient();
+
+  const followRecords = useGetFollowState({
+    target: identity?.did ?? targetdidorhandle,
+    user: agent?.did,
+  });
+  
+  return (
+    <>
+      {identity?.did !== agent?.did ? (
+        <>
+          {!(followRecords?.length && followRecords?.length > 0) ? (
+            <button
+              onClick={(e) =>
+              {
+                e.stopPropagation();
+                toggleFollow({
+                  agent: agent || undefined,
+                  targetDid: identity?.did,
+                  followRecords: followRecords,
+                  queryClient: queryClient,
+                })
+              }
+              }
+              className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+            >
+              Follow
+            </button>
+          ) : (
+            <button
+              onClick={(e) =>
+              {
+                e.stopPropagation();
+                toggleFollow({
+                  agent: agent || undefined,
+                  targetDid: identity?.did,
+                  followRecords: followRecords,
+                  queryClient: queryClient,
+                })
+              }
+              }
+              className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+            >
+              Unfollow
+            </button>
+          )}
+        </>
+      ) : (
+        <button className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]">
+          Edit Profile
+        </button>
+      )}
+    </>
+  );
+}
+
+
+export function Mutual({targetdidorhandle}:{targetdidorhandle: string}) {
+  const {agent} = useAuth()
+  const {data: identity} = useQueryIdentity(targetdidorhandle);
+
+  const mutualfollows = useGetOneToOneState(agent?.did ? {
+    target: agent?.did,
+    user: identity?.did ?? targetdidorhandle,
+    collection: "app.bsky.graph.follow",
+    path: ".subject"
+  }:undefined);
+
+  const ismutual: boolean = (!!mutualfollows?.length && mutualfollows.length > 0)
+  
+  return (
+    <>
+      {identity?.did !== agent?.did ? (
+        <>
+          {!(ismutual) ? (
+            <></>
+          ) : (
+            <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">mutuals</div>
+          )}
+        </>
+      ) : (
+        // lmao can someone be mutuals with themselves ??
+        <></>
+      )}
     </>
   );
 }

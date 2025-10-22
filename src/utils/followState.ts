@@ -128,3 +128,36 @@ export function toggleFollow({
     };
   });
 }
+
+
+
+export function useGetOneToOneState(params?: {
+  target: string;
+  user: string;
+  collection: string;
+  path: string;
+}): string[] | undefined {
+  const { data: arbitrarydata } = useQueryConstellation(
+    params && params.user
+      ? {
+          method: "/links",
+          target: params.target,
+          // @ts-expect-error overloading sucks so much
+          collection: params.collection,
+          path: params.path,
+          dids: [params.user],
+        }
+      : { method: "undefined", target: "whatever" }
+    // overloading sucks so much
+  ) as { data: linksRecordsResponse | undefined };
+  if (!params || !params.user) return undefined;
+  const data = arbitrarydata?.linking_records.slice(0, 50) ?? [];
+
+  if (data.length > 0) {
+    return data.map((linksRecord) => {
+      return `at://${linksRecord.did}/${linksRecord.collection}/${linksRecord.rkey}`;
+    });
+  }
+
+  return undefined;
+}

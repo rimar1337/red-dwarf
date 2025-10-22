@@ -2,10 +2,16 @@ import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
 import { DropdownMenu } from "radix-ui";
+import { HoverCard } from "radix-ui";
 import * as React from "react";
 import { type SVGProps } from "react";
 
-import { composerAtom, constellationURLAtom, imgCDNAtom, likedPostsAtom } from "~/utils/atoms";
+import {
+  composerAtom,
+  constellationURLAtom,
+  imgCDNAtom,
+  likedPostsAtom,
+} from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
   useQueryConstellation,
@@ -403,7 +409,7 @@ export function UniversalPostRendererATURILoader({
   //   path: ".reply.parent.uri",
   // });
 
-  const [constellationurl] = useAtom(constellationURLAtom)
+  const [constellationurl] = useAtom(constellationURLAtom);
 
   const infinitequeryresults = useInfiniteQuery({
     ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
@@ -725,24 +731,39 @@ export function UniversalPostRendererRawRecordShim({
     error: embedError,
   } = useHydratedEmbed(postRecord?.value?.embed, resolved?.did);
 
-  const [imgcdn] = useAtom(imgCDNAtom)
+  const [imgcdn] = useAtom(imgCDNAtom);
 
   const parsedaturi = new AtUri(aturi); //parseAtUri(aturi);
+
+  const fakeprofileviewbasic = React.useMemo<AppBskyActorDefs.ProfileViewBasic>(
+    () => ({
+      did: resolved?.did || "",
+      handle: resolved?.handle || "",
+      displayName: profileRecord?.value?.displayName || "",
+      avatar: getAvatarUrl(profileRecord, resolved?.did, imgcdn) || "",
+      viewer: undefined,
+      labels: profileRecord?.labels || undefined,
+      verification: undefined,
+    }),
+    [imgcdn, profileRecord, resolved?.did, resolved?.handle]
+  );
+
+  const fakeprofileviewdetailed =
+    React.useMemo<AppBskyActorDefs.ProfileViewDetailed>(
+      () => ({
+        ...fakeprofileviewbasic,
+        $type: "app.bsky.actor.defs#profileViewDetailed",
+        description: profileRecord?.value?.description || undefined,
+      }),
+      [fakeprofileviewbasic, profileRecord?.value?.description]
+    );
 
   const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(
     () => ({
       $type: "app.bsky.feed.defs#postView",
       uri: aturi,
       cid: postRecord?.cid || "",
-      author: {
-        did: resolved?.did || "",
-        handle: resolved?.handle || "",
-        displayName: profileRecord?.value?.displayName || "",
-        avatar: getAvatarUrl(profileRecord, resolved?.did, imgcdn) || "",
-        viewer: undefined,
-        labels: profileRecord?.labels || undefined,
-        verification: undefined,
-      },
+      author: fakeprofileviewbasic,
       record: postRecord?.value || {},
       embed: hydratedEmbed ?? undefined,
       replyCount: repliesCount ?? 0,
@@ -759,14 +780,11 @@ export function UniversalPostRendererRawRecordShim({
       postRecord?.cid,
       postRecord?.value,
       postRecord?.labels,
-      resolved?.did,
-      resolved?.handle,
-      profileRecord,
+      fakeprofileviewbasic,
       hydratedEmbed,
       repliesCount,
       repostsCount,
       likesCount,
-      imgcdn
     ]
   );
 
@@ -839,6 +857,7 @@ export function UniversalPostRendererRawRecordShim({
           }
         }}
         post={fakepost}
+        uprrrsauthor={fakeprofileviewdetailed}
         salt={aturi}
         bottomReplyLine={bottomReplyLine}
         topReplyLine={topReplyLine}
@@ -1143,6 +1162,7 @@ export function MdiPlayCircle(props: SVGProps<SVGSVGElement>) {
 //import Masonry from "@mui/lab/Masonry";
 import {
   type $Typed,
+  AppBskyActorDefs,
   AppBskyEmbedDefs,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
@@ -1172,6 +1192,7 @@ import ReactPlayer from "react-player";
 
 import defaultpfp from "~/../public/favicon.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { FollowButton, Mutual } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
 // import type {
@@ -1280,6 +1301,7 @@ function randomString(length = 8) {
 
 function UniversalPostRenderer({
   post,
+  uprrrsauthor,
   //setMainItem,
   //isMainItem,
   onPostClick,
@@ -1304,6 +1326,7 @@ function UniversalPostRenderer({
   maxReplies,
 }: {
   post: PostView;
+  uprrrsauthor?: AppBskyActorDefs.ProfileViewDetailed;
   // optional for now because i havent ported every use to this yet
   // setMainItem?: React.Dispatch<
   //   React.SetStateAction<AppBskyFeedDefs.FeedViewPost>
@@ -1487,43 +1510,90 @@ function UniversalPostRenderer({
             className="bg-gray-500 dark:bg-gray-400"
           />
         )}
-        <div
-          style={{
-            position: "absolute",
-            //top: isRepost ? "calc(16px + 1rem)" : 16,
-            //left: 16,
-            zIndex: 1,
-            top: isRepost
-              ? "calc(16px + 1rem)"
-              : isQuote
-                ? 12
-                : topReplyLine
-                  ? 8
-                  : 16,
-            left: isQuote ? 12 : 16,
-          }}
-          onClick={onProfileClick}
-        >
-          <img
-            src={post.author.avatar || defaultpfp}
-            alt="avatar"
-            // transition={{
-            //   type: "spring",
-            //   stiffness: 260,
-            //   damping: 20,
-            // }}
-            style={{
-              borderRadius: "50%",
-              marginRight: 12,
-              objectFit: "cover",
-              //background: theme.border,
-              //border: `1px solid ${theme.border}`,
-              width: isQuote ? 16 : 42,
-              height: isQuote ? 16 : 42,
-            }}
-            className="border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600"
-          />
-        </div>
+        <HoverCard.Root>
+          <HoverCard.Trigger asChild>
+            <div
+              className={`absolute`}
+              style={{
+                top: isRepost
+                  ? "calc(16px + 1rem)"
+                  : isQuote
+                    ? 12
+                    : topReplyLine
+                      ? 8
+                      : 16,
+                left: isQuote ? 12 : 16,
+              }}
+              onClick={onProfileClick}
+            >
+              <img
+                src={post.author.avatar || defaultpfp}
+                alt="avatar"
+                className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
+                style={{
+                  width: isQuote ? 16 : 42,
+                  height: isQuote ? 16 : 42,
+                }}
+              />
+            </div>
+          </HoverCard.Trigger>
+          <HoverCard.Portal>
+            <HoverCard.Content
+              className="rounded-md p-4 w-72 bg-gray-50 dark:bg-gray-900 shadow-lg border border-gray-300 dark:border-gray-800 animate-slide-fade z-50"
+              side={"bottom"}
+              sideOffset={5}
+            >
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-row">
+                  <img
+                    src={post.author.avatar || defaultpfp}
+                    alt="avatar"
+                    className="rounded-full w-[58px] h-[58px] object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600"
+                  />
+                  <div className=" flex-1 flex flex-row align-middle justify-end">
+                    <FollowButton targetdidorhandle={post.author.did} />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <div className="text-gray-900 dark:text-gray-100 font-medium text-md">
+                      {post.author.displayName || post.author.handle}{" "}
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1">
+                      <Mutual targetdidorhandle={post.author.did} />@{post.author.handle}{" "} 
+                    </div>
+                  </div>
+                  {uprrrsauthor?.description && (
+                    <div className="text-gray-700 dark:text-gray-300 text-sm text-left break-words line-clamp-3">
+                      {uprrrsauthor.description}
+                    </div>
+                  )}
+                  {/* <div className="flex gap-4">
+                    <div className="flex gap-1">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        0
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        Following
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        2,900
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        Followers
+                      </div>
+                    </div>
+                  </div> */}
+                </div>
+              </div>
+
+              {/* <HoverCard.Arrow className="fill-gray-50 dark:fill-gray-900" /> */}
+            </HoverCard.Content>
+          </HoverCard.Portal>
+        </HoverCard.Root>
+
         <div style={{ display: "flex", alignItems: "flex-start", zIndex: 2 }}>
           <div
             style={{
