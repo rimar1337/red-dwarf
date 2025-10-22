@@ -518,7 +518,7 @@ export function UniversalPostRendererATURILoader({
             ? true
             : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
               ? false
-              : bottomReplyLine
+              : !(maxReplies && maxReplies === 0 && replies && replies > 0) ? false : bottomReplyLine
         }
         topReplyLine={topReplyLine}
         //bottomBorder={maxReplies&&oldestOpsReplyElseNewestNonOpsReply ? false : bottomBorder}
@@ -540,6 +540,14 @@ export function UniversalPostRendererATURILoader({
         maxReplies={maxReplies}
         isQuote={isQuote}
       />
+      <>
+        {(maxReplies && maxReplies === 0 && replies && replies > 0) ? (
+          <>
+          {/* <div>hello</div> */}
+          <MoreReplies atUri={atUri} />
+          </>
+        ) : (<></>)}
+      </>
       {!isQuote && oldestOpsReplyElseNewestNonOpsReply && (
         <>
           {/* <span>hello {maxReplies}</span> */}
@@ -564,9 +572,6 @@ export function UniversalPostRendererATURILoader({
               maxReplies && maxReplies > 0 ? maxReplies - 1 : undefined
             }
           />
-          {maxReplies && maxReplies - 1 === 0 && replies && replies > 0 && (
-            <MoreReplies atUri={oldestOpsReplyElseNewestNonOpsReply} />
-          )}
         </>
       )}
     </>
