@@ -615,7 +615,7 @@ export function useInfiniteQueryFeedSkeleton(options: {
 }) {
   const { queryKey, queryFn } = constructInfiniteFeedSkeletonQuery(options);
   
-  return useInfiniteQuery({
+  return {...useInfiniteQuery({
     queryKey,
     queryFn,
     initialPageParam: undefined as never,
@@ -623,7 +623,7 @@ export function useInfiniteQueryFeedSkeleton(options: {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     enabled: !!options.feedUri && (options.isAuthed ? !!options.agent && !!options.pdsUrl && !!options.feedServiceDid : true),
-  });
+  }), queryKey: queryKey};
 }
 
 

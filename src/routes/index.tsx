@@ -418,6 +418,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
       {isReadyForAuthedFeed || isReadyForUnauthedFeed ? (
         <InfiniteCustomFeed
+          key={selectedFeed!}
           feedUri={selectedFeed!}
           pdsUrl={identity?.pds}
           feedServiceDid={feedServiceDid}

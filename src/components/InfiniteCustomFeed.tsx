@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 
 //import { useInView } from "react-intersection-observer";
@@ -37,6 +38,7 @@ export function InfiniteCustomFeed({
     isFetchingNextPage,
     refetch,
     isRefetching,
+    queryKey,
   } = useInfiniteQueryFeedSkeleton({
     feedUri: feedUri,
     agent: agent ?? undefined,
@@ -44,10 +46,32 @@ export function InfiniteCustomFeed({
     pdsUrl: pdsUrl,
     feedServiceDid: feedServiceDid,
   });
+  const queryClient = useQueryClient();
+
 
   const handleRefresh = () => {
+    queryClient.removeQueries({queryKey: queryKey});
+    //queryClient.invalidateQueries(["infinite-feed", feedUri] as const);
     refetch();
   };
+
+  const allPosts = React.useMemo(() => {
+    const flattenedPosts = data?.pages.flatMap((page) => page?.feed) ?? [];
+
+    const seenUris = new Set<string>();
+
+    return flattenedPosts.filter((item) => {
+      if (!item?.post) return false;
+
+      if (seenUris.has(item.post)) {
+        return false;
+      }
+
+      seenUris.add(item.post);
+
+      return true;
+    });
+  }, [data]);
 
   //const { ref, inView } = useInView();
 
@@ -67,10 +91,10 @@ export function InfiniteCustomFeed({
     );
   }
 
-  const allPosts =
-    data?.pages.flatMap((page) => {
-      if (page) return page.feed;
-    }) ?? [];
+  // const allPosts =
+  //   data?.pages.flatMap((page) => {
+  //     if (page) return page.feed;
+  //   }) ?? [];
 
   if (!allPosts || typeof allPosts !== "object" || allPosts.length === 0) {
     return (
@@ -116,7 +140,9 @@ export function InfiniteCustomFeed({
         className="sticky lg:bottom-4 bottom-22 ml-4 w-[42px] h-[42px] z-10 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-50 p-[9px] rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-110 disabled:dark:bg-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
         aria-label="Refresh feed"
       >
-        <RefreshIcon className={`h-6 w-6 text-gray-600 dark:text-gray-400 ${isRefetching && "animate-spin"}`} />
+        <RefreshIcon
+          className={`h-6 w-6 text-gray-600 dark:text-gray-400 ${isRefetching && "animate-spin"}`}
+        />
       </button>
     </>
   );
