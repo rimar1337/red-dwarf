@@ -1,4 +1,4 @@
-import { RichText } from "@atproto/api";
+import { AppBskyRichtextFacet, RichText } from "@atproto/api";
 import { useAtom } from "jotai";
 import { Dialog } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
@@ -47,6 +47,21 @@ export function Composer() {
     try {
       const rt = new RichText({ text: postText });
       await rt.detectFacets(agent);
+
+      if (rt.facets?.length) {
+      rt.facets = rt.facets.filter((item) => {
+        if (item.$type !== "app.bsky.richtext.facet") return true;
+        if (!item.features?.length) return true;
+
+        item.features = item.features.filter((feature) => {
+          if (feature.$type !== "app.bsky.richtext.facet#mention") return true;
+          const did = feature.$type === "app.bsky.richtext.facet#mention" ? (feature as AppBskyRichtextFacet.Mention)?.did : undefined;
+          return typeof did === "string" && did.startsWith("did:");
+        });
+
+        return item.features.length > 0;
+      });
+    }
 
       const record: Record<string, unknown> = {
         $type: "app.bsky.feed.post",

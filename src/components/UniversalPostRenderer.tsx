@@ -2649,7 +2649,7 @@ function extractFacetRanges(text: string, facets: Facet[]): FacetRange[] {
     return { start, end, feature: f.features[0] };
   });
 }
-function renderTextWithFacets({
+export function renderTextWithFacets({
   text,
   facets,
   navigate,

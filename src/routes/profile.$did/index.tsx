@@ -1,10 +1,11 @@
+import { RichText } from "@atproto/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
-import React from "react";
+import React, { type ReactNode,useEffect, useState } from "react";
 
 import { Header } from "~/components/Header";
-import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
+import { renderTextWithFacets, UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { imgCDNAtom } from "~/utils/atoms";
 import { toggleFollow, useGetFollowState, useGetOneToOneState } from "~/utils/followState";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/profile/$did/")({
 function ProfileComponent() {
   // booo bad this is not always the did it might be a handle, use identity.did instead
   const { did } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
     data: identity,
@@ -175,7 +177,8 @@ function ProfileComponent() {
           </div>
           {description && (
             <div className="text-base leading-relaxed text-gray-800 dark:text-gray-300 mb-5 whitespace-pre-wrap break-words text-[15px]">
-              {description}
+              {/* {description} */}
+              <RichTextRenderer key={did} description={description}/>
             </div>
           )}
         </div>
@@ -308,4 +311,45 @@ export function Mutual({targetdidorhandle}:{targetdidorhandle: string}) {
       )}
     </>
   );
+}
+
+export function RichTextRenderer({ description }: { description: string }) {
+  const [richDescription, setRichDescription] = useState<string | ReactNode[]>(description);
+  const { agent } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+
+    // setRichDescription(description);
+
+    async function processRichText() {
+      try {
+        if (!agent?.did) return;
+        const rt = new RichText({ text: description });
+        await rt.detectFacets(agent);
+
+        if (!mounted) return;
+
+        if (rt.facets) {
+          setRichDescription(renderTextWithFacets({ text: rt.text, facets: rt.facets, navigate }));
+        } else {
+          setRichDescription(rt.text);
+        }
+      } catch (error) {
+        console.error("Failed to detect facets:", error);
+        if (mounted) {
+          setRichDescription(description);
+        }
+      }
+    }
+
+    processRichText();
+
+    return () => {
+      mounted = false;
+    };
+  }, [description, agent, navigate]);
+
+  return <>{richDescription}</>;
 }
