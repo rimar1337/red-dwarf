@@ -18,6 +18,7 @@ import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
 import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
+import { Import } from "~/components/Import";
 import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import { FluentEmojiHighContrastGlowingStar } from "~/components/Star";
@@ -154,6 +155,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
 
           <MaterialNavItem
+            InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+            ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+            active={locationEnum === "search"}
+            onClickCallbback={() =>
+              navigate({
+                to: "/search",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Explore"
+          />
+          <MaterialNavItem
             InactiveIcon={
               <IconMaterialSymbolsNotificationsOutline className="w-6 h-6" />
             }
@@ -180,18 +193,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               })
             }
             text="Feeds"
-          />
-          <MaterialNavItem
-            InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-            ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-            active={locationEnum === "search"}
-            onClickCallbback={() =>
-              navigate({
-                to: "/search",
-                //params: { did: agent.assertDid },
-              })
-            }
-            text="Search"
           />
           <MaterialNavItem
             InactiveIcon={
@@ -389,6 +390,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
           <MaterialNavItem
             small
+            InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+            ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+            active={locationEnum === "search"}
+            onClickCallbback={() =>
+              navigate({
+                to: "/search",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Explore"
+          />
+          <MaterialNavItem
+            small
             InactiveIcon={
               <IconMaterialSymbolsNotificationsOutline className="w-6 h-6" />
             }
@@ -416,19 +430,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               })
             }
             text="Feeds"
-          />
-          <MaterialNavItem
-            small
-            InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-            ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
-            active={locationEnum === "search"}
-            onClickCallbback={() =>
-              navigate({
-                to: "/search",
-                //params: { did: agent.assertDid },
-              })
-            }
-            text="Search"
           />
           <MaterialNavItem
             small
@@ -498,6 +499,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         </main>
 
         <aside className="hidden lg:flex h-screen w-[250px] sticky top-0 self-start flex-col">
+          <div className="px-4 pt-4"><Import /></div>
           <Login />
 
           <div className="flex-1"></div>
@@ -551,7 +553,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   //params: { did: agent.assertDid },
                 })
               }
-              text="Search"
+              text="Explore"
             />
             {/* <Link
               to="/search"
