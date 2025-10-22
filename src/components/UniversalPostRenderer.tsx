@@ -1542,6 +1542,7 @@ function UniversalPostRenderer({
               className="rounded-md p-4 w-72 bg-gray-50 dark:bg-gray-900 shadow-lg border border-gray-300 dark:border-gray-800 animate-slide-fade z-50"
               side={"bottom"}
               sideOffset={5}
+              onClick={onProfileClick}
             >
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row">

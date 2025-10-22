@@ -2,13 +2,20 @@ import { RichText } from "@atproto/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
-import React, { type ReactNode,useEffect, useState } from "react";
+import React, { type ReactNode, useEffect, useState } from "react";
 
 import { Header } from "~/components/Header";
-import { renderTextWithFacets, UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
+import {
+  renderTextWithFacets,
+  UniversalPostRendererATURILoader,
+} from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { imgCDNAtom } from "~/utils/atoms";
-import { toggleFollow, useGetFollowState, useGetOneToOneState } from "~/utils/followState";
+import {
+  toggleFollow,
+  useGetFollowState,
+  useGetOneToOneState,
+} from "~/utils/followState";
 import {
   useInfiniteQueryAuthorFeed,
   useQueryIdentity,
@@ -172,13 +179,13 @@ function ProfileComponent() {
         <div className="mt-16 pb-2 px-4 text-gray-900 dark:text-gray-100">
           <div className="font-bold text-2xl">{displayName}</div>
           <div className="text-gray-500 dark:text-gray-400 text-base mb-3 flex flex-row gap-1">
-            <Mutual targetdidorhandle={did} /> 
+            <Mutual targetdidorhandle={did} />
             {handle}
           </div>
           {description && (
             <div className="text-base leading-relaxed text-gray-800 dark:text-gray-300 mb-5 whitespace-pre-wrap break-words text-[15px]">
               {/* {description} */}
-              <RichTextRenderer key={did} description={description}/>
+              <RichTextRenderer key={did} description={description} />
             </div>
           )}
         </div>
@@ -222,50 +229,50 @@ function ProfileComponent() {
   );
 }
 
-export function FollowButton({targetdidorhandle}:{targetdidorhandle: string}) {
-  const {agent} = useAuth()
-  const {data: identity} = useQueryIdentity(targetdidorhandle);
+export function FollowButton({
+  targetdidorhandle,
+}: {
+  targetdidorhandle: string;
+}) {
+  const { agent } = useAuth();
+  const { data: identity } = useQueryIdentity(targetdidorhandle);
   const queryClient = useQueryClient();
 
   const followRecords = useGetFollowState({
     target: identity?.did ?? targetdidorhandle,
     user: agent?.did,
   });
-  
+
   return (
     <>
       {identity?.did !== agent?.did ? (
         <>
           {!(followRecords?.length && followRecords?.length > 0) ? (
             <button
-              onClick={(e) =>
-              {
+              onClick={(e) => {
                 e.stopPropagation();
                 toggleFollow({
                   agent: agent || undefined,
                   targetDid: identity?.did,
                   followRecords: followRecords,
                   queryClient: queryClient,
-                })
-              }
-              }
+                });
+              }}
               className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
             >
               Follow
             </button>
           ) : (
             <button
-              onClick={(e) =>
-              {
+              onClick={(e) => {
                 e.stopPropagation();
                 toggleFollow({
                   agent: agent || undefined,
                   targetDid: identity?.did,
                   followRecords: followRecords,
                   queryClient: queryClient,
-                })
-              }
-              }
+                });
+              }}
               className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
             >
               Unfollow
@@ -281,39 +288,47 @@ export function FollowButton({targetdidorhandle}:{targetdidorhandle: string}) {
   );
 }
 
+export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
+  const { agent } = useAuth();
+  const { data: identity } = useQueryIdentity(targetdidorhandle);
 
-export function Mutual({targetdidorhandle}:{targetdidorhandle: string}) {
-  const {agent} = useAuth()
-  const {data: identity} = useQueryIdentity(targetdidorhandle);
-
-  const theyFollowYouRes = useGetOneToOneState(agent?.did ? {
-    target: agent?.did,
-    user: identity?.did ?? targetdidorhandle,
-    collection: "app.bsky.graph.follow",
-    path: ".subject"
-  }:undefined);
+  const theyFollowYouRes = useGetOneToOneState(
+    agent?.did
+      ? {
+          target: agent?.did,
+          user: identity?.did ?? targetdidorhandle,
+          collection: "app.bsky.graph.follow",
+          path: ".subject",
+        }
+      : undefined
+  );
 
   const youFollowThemRes = useGetFollowState({
     target: identity?.did ?? targetdidorhandle,
     user: agent?.did,
   });
 
-  const theyFollowYou: boolean = (!!theyFollowYouRes?.length && theyFollowYouRes.length > 0)
-  const youFollowThem: boolean = (!!youFollowThemRes?.length && youFollowThemRes.length > 0)
-  
+  const theyFollowYou: boolean =
+    !!theyFollowYouRes?.length && theyFollowYouRes.length > 0;
+  const youFollowThem: boolean =
+    !!youFollowThemRes?.length && youFollowThemRes.length > 0;
+
   return (
     <>
       {/* if not self */}
       {identity?.did !== agent?.did ? (
         <>
-          {(theyFollowYou) ? (
+          {theyFollowYou ? (
             <>
               {youFollowThem ? (
-                  <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">mutuals</div>
-                ) : (
-                  <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">follows you</div>
-                )
-              }
+                <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">
+                  mutuals
+                </div>
+              ) : (
+                <div className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">
+                  follows you
+                </div>
+              )}
             </>
           ) : (
             <></>
@@ -328,7 +343,9 @@ export function Mutual({targetdidorhandle}:{targetdidorhandle: string}) {
 }
 
 export function RichTextRenderer({ description }: { description: string }) {
-  const [richDescription, setRichDescription] = useState<string | ReactNode[]>(description);
+  const [richDescription, setRichDescription] = useState<string | ReactNode[]>(
+    description
+  );
   const { agent } = useAuth();
   const navigate = useNavigate();
 
@@ -346,7 +363,9 @@ export function RichTextRenderer({ description }: { description: string }) {
         if (!mounted) return;
 
         if (rt.facets) {
-          setRichDescription(renderTextWithFacets({ text: rt.text, facets: rt.facets, navigate }));
+          setRichDescription(
+            renderTextWithFacets({ text: rt.text, facets: rt.facets, navigate })
+          );
         } else {
           setRichDescription(rt.text);
         }
