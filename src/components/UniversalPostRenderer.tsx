@@ -518,7 +518,7 @@ export function UniversalPostRendererATURILoader({
             ? true
             : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
               ? false
-              : !!maxReplies && !(maxReplies && maxReplies === 0 && replies && replies > 0) ? false : bottomReplyLine
+              : (maxReplies === 0 && (!replies || (!!replies && replies === 0))) ? false : bottomReplyLine
         }
         topReplyLine={topReplyLine}
         //bottomBorder={maxReplies&&oldestOpsReplyElseNewestNonOpsReply ? false : bottomBorder}
