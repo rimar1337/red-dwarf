@@ -46,7 +46,7 @@ function handleImport({
   // parse text
   /**
    * text might be
-   * 1. bsky dot app url (deer.social, reddwarf.whey.party, main.bsky.dev, catskys.social) (reddwarf link segments might be uri encoded,)
+   * 1. bsky dot app url (reddwarf link segments might be uri encoded,)
    * 2. aturi
    * 3. plain handle
    * 4. plain did
@@ -60,6 +60,7 @@ function handleImport({
       "social.daniela.lol",
       "deer.social",
       "reddwarf.whey.party",
+      "reddwarf.app",
       "main.bsky.dev",
       "catsky.social",
       "blacksky.community",

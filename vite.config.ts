@@ -10,7 +10,7 @@ import { defineConfig } from "vite";
 
 import { generateMetadataPlugin } from "./oauthdev.mts";
 
-const PROD_URL = "https://reddwarf.whey.party"
+const PROD_URL = "https://reddwarf.app"
 const DEV_URL = "https://local3768forumtest.whey.party"
 
 function shp(url: string): string {

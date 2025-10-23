@@ -8,7 +8,7 @@ huge thanks to [Microcosm](https://microcosm.blue/) for making this possible
 ## running dev and build
 in the `vite.config.ts` file you should change these values
 ```ts
-const PROD_URL = "https://reddwarf.whey.party"
+const PROD_URL = "https://reddwarf.app"
 const DEV_URL = "https://local3768forumtest.whey.party"
 ```
 the PROD_URL is what will compile your oauth client metadata so it is very important to change that. same for DEV_URL if you are using a tunnel for dev work
