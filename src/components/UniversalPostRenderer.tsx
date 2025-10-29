@@ -2564,6 +2564,7 @@ function PostEmbeds({
   // =
   if (AppBskyEmbedVideo.isView(embed)) {
     // hls playlist
+    if (nopics) return;
     const playlist = embed.playlist;
     return (
       <SmartHLSPlayer

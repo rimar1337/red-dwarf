@@ -234,3 +234,39 @@ body {
 body[data-scroll-locked]{
   margin-left: var(--removed-body-scroll-bar-size) !important;
 }
+
+/* radix tabs */
+
+[data-radix-collection-item] {
+  flex: 1;
+  display: flex;
+  padding: 12px 8px;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  font-weight: 500;
+  &[aria-selected="true"] {
+    color: var(--color-gray-950);
+    &::before{
+      content: "";
+      position: absolute;
+      width: min(80px, 80%);
+      border-radius: 99px 99px 0px 0px ;
+      height: 3px;
+      bottom: 0;
+      background-color: var(--color-gray-400);
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-radix-collection-item] {
+    color: var(--color-gray-400);
+    &[aria-selected="true"] {
+      color: var(--color-gray-50);
+      &::before{
+        background-color: var(--color-gray-500);
+      }
+    }
+  }
+}
