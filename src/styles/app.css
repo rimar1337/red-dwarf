@@ -197,7 +197,9 @@ body {
 
 /* focus ring */
 .m3input-field.m3input-label.m3input-border input:focus {
+  /*border-color: var(--m3input-focus-color);*/
   border-color: var(--m3input-focus-color);
+  box-shadow: 0 0 0 1px var(--m3input-focus-color);
   /*box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-color) 20%, transparent);*/
 }
 
