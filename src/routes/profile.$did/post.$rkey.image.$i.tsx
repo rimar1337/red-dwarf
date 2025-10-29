@@ -85,7 +85,7 @@ export function Lightbox() {
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
           }}
-          className="lightbox-sidebar hidden lg:flex overscroll-none disablegutter border-l dark:border-gray-800 was7 border-gray-300 fixed z-50 top-0 right-0 flex-col max-w-[350px] min-w-[350px] max-h-screen overflow-y-scroll dark:bg-gray-950 bg-white"
+          className="lightbox-sidebar hidden lg:flex overscroll-none disablegutter disablescroll border-l dark:border-gray-800 was7 border-gray-300 fixed z-50 top-0 right-0 flex-col max-w-[350px] min-w-[350px] max-h-screen overflow-y-scroll dark:bg-gray-950 bg-white"
         >
           <ProfilePostComponent
             key={`/profile/${did}/post/${rkey}`}

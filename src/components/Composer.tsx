@@ -140,9 +140,9 @@ export function Composer() {
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 dark:bg-black/50 data-[state=open]:animate-fadeIn" />
+        <Dialog.Overlay className="fixed disablegutter inset-0 z-50 bg-black/40 dark:bg-black/50 data-[state=open]:animate-fadeIn" />
 
-        <Dialog.Content className="fixed overflow-y-scroll inset-0 z-50 flex items-start justify-center py-10 sm:py-20">
+        <Dialog.Content className="fixed gutter overflow-y-scroll inset-0 z-50 flex items-start justify-center pt-10 sm:pt-20 pb-[50dvh] sm:pb-[50dvh]">
           <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl w-full max-w-xl relative mx-4">
             <div className="flex flex-row justify-between p-2">
               <Dialog.Close asChild>

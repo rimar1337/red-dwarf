@@ -52,13 +52,17 @@
   }
 }
 
+.gutter{
+  scrollbar-gutter: stable both-edges;
+}
+
 @media (width >= 64rem /* 1024px */) {
   html:not(:has(.disablegutter)),
   body:not(:has(.disablegutter)) {
     scrollbar-gutter: stable both-edges !important;
   }
-  html:has(.disablegutter),
-  body:has(.disablegutter) {
+  html:has(.disablescroll),
+  body:has(.disablescroll) {
     scrollbar-width: none;
     overflow-y: hidden;
   }
