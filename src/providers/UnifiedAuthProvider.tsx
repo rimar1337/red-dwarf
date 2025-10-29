@@ -1,5 +1,3 @@
-// src/providers/UnifiedAuthProvider.tsx
-// Import both Agent and the (soon to be deprecated) AtpAgent
 import { Agent, AtpAgent, type AtpSessionData } from "@atproto/api";
 import {
   type OAuthSession,
@@ -7,6 +5,7 @@ import {
   TokenRefreshError,
   TokenRevokedError,
 } from "@atproto/oauth-client-browser";
+import { useAtom } from "jotai";
 import React, {
   createContext,
   use,
@@ -15,14 +14,15 @@ import React, {
   useState,
 } from "react";
 
-import { oauthClient } from "../utils/oauthClient"; // Adjust path if needed
+import { quickAuthAtom } from "~/utils/atoms";
 
-// Define the unified status and authentication method
+import { oauthClient } from "../utils/oauthClient";
+
 type AuthStatus = "loading" | "signedIn" | "signedOut";
 type AuthMethod = "password" | "oauth" | null;
 
 interface AuthContextValue {
-  agent: Agent | null; // The agent is typed as the base class `Agent`
+  agent: Agent | null;
   status: AuthStatus;
   authMethod: AuthMethod;
   loginWithPassword: (
@@ -41,47 +41,49 @@ export const UnifiedAuthProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  // The state is typed as the base class `Agent`, which accepts both `Agent` and `AtpAgent` instances.
   const [agent, setAgent] = useState<Agent | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [oauthSession, setOauthSession] = useState<OAuthSession | null>(null);
+  const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
 
-  // Unified Initialization Logic
   const initialize = useCallback(async () => {
-    // --- 1. Try OAuth initialization first ---
     try {
       const oauthResult = await oauthClient.init();
       if (oauthResult) {
         // /*mass comment*/ console.log("OAuth session restored.");
-        const apiAgent = new Agent(oauthResult.session); // Standard Agent
+        const apiAgent = new Agent(oauthResult.session);
         setAgent(apiAgent);
         setOauthSession(oauthResult.session);
         setAuthMethod("oauth");
         setStatus("signedIn");
-        return; // Success
+        setQuickAuth(apiAgent?.did || null);
+        return;
       }
     } catch (e) {
       console.error("OAuth init failed, checking password session.", e);
+      if (!quickAuth) {
+        // quickAuth restoration. if last used method is oauth we immediately call for oauth redo
+        // (and set a persistent atom somewhere to not retry again if it failed)
+      }
     }
 
-    // --- 2. If no OAuth, try password-based session using AtpAgent ---
     try {
       const service = localStorage.getItem("service");
       const sessionString = localStorage.getItem("sess");
 
       if (service && sessionString) {
         // /*mass comment*/ console.log("Resuming password-based session using AtpAgent...");
-        // Use the original, working AtpAgent logic
         const apiAgent = new AtpAgent({ service });
         const session: AtpSessionData = JSON.parse(sessionString);
         await apiAgent.resumeSession(session);
 
         // /*mass comment*/ console.log("Password-based session resumed successfully.");
-        setAgent(apiAgent); // This works because AtpAgent is a subclass of Agent
+        setAgent(apiAgent);
         setAuthMethod("password");
         setStatus("signedIn");
-        return; // Success
+        setQuickAuth(apiAgent?.did || null);
+        return;
       }
     } catch (e) {
       console.error("Failed to resume password-based session.", e);
@@ -89,12 +91,13 @@ export const UnifiedAuthProvider = ({
       localStorage.removeItem("service");
     }
 
-    // --- 3. If neither worked, user is signed out ---
     // /*mass comment*/ console.log("No active session found.");
     setStatus("signedOut");
     setAgent(null);
     setAuthMethod(null);
-  }, []);
+    // do we want to null it here?
+    setQuickAuth(null);
+  }, [quickAuth, setQuickAuth]);
 
   useEffect(() => {
     const handleOAuthSessionDeleted = (
@@ -105,6 +108,7 @@ export const UnifiedAuthProvider = ({
       setOauthSession(null);
       setAuthMethod(null);
       setStatus("signedOut");
+      setQuickAuth(null);
     };
 
     oauthClient.addEventListener("deleted", handleOAuthSessionDeleted as EventListener);
@@ -113,9 +117,8 @@ export const UnifiedAuthProvider = ({
     return () => {
       oauthClient.removeEventListener("deleted", handleOAuthSessionDeleted as EventListener);
     };
-  }, [initialize]);
+  }, [initialize, setQuickAuth]);
 
-  // --- Login Methods ---
   const loginWithPassword = async (
     user: string,
     password: string,
@@ -125,7 +128,6 @@ export const UnifiedAuthProvider = ({
     setStatus("loading");
     try {
       let sessionData: AtpSessionData | undefined;
-      // Use the AtpAgent for its simple login and session persistence
       const apiAgent = new AtpAgent({
         service,
         persistSession: (_evt, sess) => {
@@ -137,9 +139,10 @@ export const UnifiedAuthProvider = ({
       if (sessionData) {
         localStorage.setItem("service", service);
         localStorage.setItem("sess", JSON.stringify(sessionData));
-        setAgent(apiAgent); // Store the AtpAgent instance in our state
+        setAgent(apiAgent);
         setAuthMethod("password");
         setStatus("signedIn");
+        setQuickAuth(apiAgent?.did || null);
         // /*mass comment*/ console.log("Successfully logged in with password.");
       } else {
         throw new Error("Session data not persisted after login.");
@@ -147,6 +150,7 @@ export const UnifiedAuthProvider = ({
     } catch (e) {
       console.error("Password login failed:", e);
       setStatus("signedOut");
+      setQuickAuth(null);
       throw e;
     }
   };
@@ -161,7 +165,6 @@ export const UnifiedAuthProvider = ({
     }
   }, [status]);
 
-  // --- Unified Logout ---
   const logout = useCallback(async () => {
     if (status !== "signedIn" || !agent) return;
     setStatus("loading");
@@ -173,7 +176,6 @@ export const UnifiedAuthProvider = ({
       } else if (authMethod === "password") {
         localStorage.removeItem("service");
         localStorage.removeItem("sess");
-        // AtpAgent has its own logout methods
         await (agent as AtpAgent).com.atproto.server.deleteSession();
         // /*mass comment*/ console.log("Password-based session deleted.");
       }
@@ -184,8 +186,9 @@ export const UnifiedAuthProvider = ({
       setAuthMethod(null);
       setOauthSession(null);
       setStatus("signedOut");
+      setQuickAuth(null);
     }
-  }, [status, authMethod, agent, oauthSession]);
+  }, [status, agent, authMethod, oauthSession, setQuickAuth]);
 
   return (
     <AuthContext

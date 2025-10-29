@@ -1,9 +1,13 @@
-import type Agent from "@atproto/api";
 import { atom, createStore, useAtomValue } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useEffect } from "react";
 
 export const store = createStore();
+
+export const quickAuthAtom = atomWithStorage<string | null>(
+  "quickAuth",
+  null
+);
 
 export const selectedFeedUriAtom = atomWithStorage<string | null>(
   "selectedFeedUri",
@@ -52,8 +56,8 @@ type ComposerState =
   | { kind: "quote"; subject: string };
 export const composerAtom = atom<ComposerState>({ kind: "closed" });
 
-export const agentAtom = atom<Agent | null>(null);
-export const authedAtom = atom<boolean>(false);
+//export const agentAtom = atom<Agent | null>(null);
+//export const authedAtom = atom<boolean>(false);
 
 export function useAtomCssVar(atom: typeof hueAtom, cssVar: string) {
   const value = useAtomValue(atom);

@@ -1,18 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import { Header } from "~/components/Header";
 import { InfiniteCustomFeed } from "~/components/InfiniteCustomFeed";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
-  agentAtom,
-  authedAtom,
   feedScrollPositionsAtom,
   isAtTopAtom,
+  quickAuthAtom,
   selectedFeedUriAtom,
-  store,
 } from "~/utils/atoms";
 //import { usePersistentStore } from "~/providers/PersistentStoreProvider";
 import {
@@ -107,22 +105,23 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   } = useAuth();
   const authed = !!agent?.did;
 
-  useEffect(() => {
-    if (agent?.did) {
-      store.set(authedAtom, true);
-    } else {
-      store.set(authedAtom, false);
-    }
-  }, [status, agent, authed]);
-  useEffect(() => {
-    if (agent) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore is it just me or is the type really weird here it should be Agent not AtpAgent
-      store.set(agentAtom, agent);
-    } else {
-      store.set(agentAtom, null);
-    }
-  }, [status, agent, authed]);
+  // i dont remember why this is even here
+  // useEffect(() => {
+  //   if (agent?.did) {
+  //     store.set(authedAtom, true);
+  //   } else {
+  //     store.set(authedAtom, false);
+  //   }
+  // }, [status, agent, authed]);
+  // useEffect(() => {
+  //   if (agent) {
+  //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //     // @ts-ignore is it just me or is the type really weird here it should be Agent not AtpAgent
+  //     store.set(agentAtom, agent);
+  //   } else {
+  //     store.set(agentAtom, null);
+  //   }
+  // }, [status, agent, authed]);
 
   //const { get, set } = usePersistentStore();
   // const [feed, setFeed] = React.useState<any[]>([]);
@@ -162,12 +161,15 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   // const savedFeeds = savedFeedsPref?.items || [];
 
-  const identityresultmaybe = useQueryIdentity(agent?.did);
+  const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
+  const isAuthRestoring = quickAuth ? status === "loading" : false;
+
+  const identityresultmaybe = useQueryIdentity(!isAuthRestoring ? agent?.did : undefined);
   const identity = identityresultmaybe?.data;
 
   const prefsresultmaybe = useQueryPreferences({
-    agent: agent ?? undefined,
-    pdsUrl: identity?.pds,
+    agent: !isAuthRestoring ? (agent ?? undefined) : undefined,
+    pdsUrl: !isAuthRestoring ? (identity?.pds) : undefined,
   });
   const prefs = prefsresultmaybe?.data;
 
@@ -178,11 +180,8 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     return savedFeedsPref?.items || [];
   }, [prefs]);
 
-  const [persistentSelectedFeed, setPersistentSelectedFeed] =
-    useAtom(selectedFeedUriAtom); // React.useState<string | null>(null);
-  const [unauthedSelectedFeed, setUnauthedSelectedFeed] = React.useState(
-    persistentSelectedFeed
-  ); // React.useState<string | null>(null);
+  const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
+  const [unauthedSelectedFeed, setUnauthedSelectedFeed] = useState(persistentSelectedFeed);
   const selectedFeed = agent?.did
     ? persistentSelectedFeed
     : unauthedSelectedFeed;
@@ -306,14 +305,15 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   }, [scrollPositions]);
 
   useLayoutEffect(() => {
+    if (isAuthRestoring) return;
     const savedPosition = scrollPositions[selectedFeed ?? "null"] ?? 0;
 
     window.scrollTo({ top: savedPosition, behavior: "instant" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFeed]);
+  }, [selectedFeed, isAuthRestoring]);
 
   useLayoutEffect(() => {
-    if (!selectedFeed) return;
+    if (!selectedFeed || isAuthRestoring) return;
 
     const handleScroll = () => {
       scrollPositionsRef.current = {
@@ -328,10 +328,10 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
       setScrollPositions(scrollPositionsRef.current);
     };
-  }, [selectedFeed, setScrollPositions]);
+  }, [isAuthRestoring, selectedFeed, setScrollPositions]);
 
-  const feedGengetrecordquery = useQueryArbitrary(selectedFeed ?? undefined);
-  const feedServiceDid = (feedGengetrecordquery?.data?.value as any)?.did;
+  const feedGengetrecordquery = useQueryArbitrary(!isAuthRestoring ? selectedFeed ?? undefined : undefined);
+  const feedServiceDid = !isAuthRestoring ? (feedGengetrecordquery?.data?.value as any)?.did as string | undefined : undefined;
 
   // const {
   //   data: feedData,
@@ -347,9 +347,8 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   // const feed = feedData?.feed || [];
 
-  const isReadyForAuthedFeed =
-    authed && agent && identity?.pds && feedServiceDid;
-  const isReadyForUnauthedFeed = !authed && selectedFeed;
+  const isReadyForAuthedFeed = !isAuthRestoring && authed && agent && identity?.pds && feedServiceDid;
+  const isReadyForUnauthedFeed = !isAuthRestoring && !authed && selectedFeed;
 
 
   const [isAtTop] = useAtom(isAtTopAtom);
@@ -358,7 +357,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     <div
       className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"}`}
     >
-      {savedFeeds.length > 0 ? (
+      {!isAuthRestoring && savedFeeds.length > 0 ? (
         <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
           {savedFeeds.map((item: any, idx: number) => {
             const label = item.value.split("/").pop() || item.value;
@@ -410,13 +409,13 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
         />
       ))} */}
 
-      {authed && (!identity?.pds || !feedServiceDid) && (
+      {isAuthRestoring || authed && (!identity?.pds || !feedServiceDid) && (
         <div className="p-4 text-center text-gray-500">
           Preparing your feed...
         </div>
       )}
 
-      {isReadyForAuthedFeed || isReadyForUnauthedFeed ? (
+      {!isAuthRestoring && (isReadyForAuthedFeed || isReadyForUnauthedFeed) ? (
         <InfiniteCustomFeed
           key={selectedFeed!}
           feedUri={selectedFeed!}
@@ -425,7 +424,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
         />
       ) : (
         <div className="p-4 text-center text-gray-500">
-          Select a feed to get started.
+          Loading.......
         </div>
       )}
       {/* {false && restoringScrollPosition && (
