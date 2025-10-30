@@ -88,8 +88,8 @@ export default function NotificationsTabs() {
         //console.log(wow);
         return wow;
       });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -103,12 +103,15 @@ export default function NotificationsTabs() {
       >
         <TabsPrimitive.Trigger
           value="mentions"
+          className="m3tab"
           // styling is in app.css
         >
           Mentions
         </TabsPrimitive.Trigger>
-        <TabsPrimitive.Trigger value="follows">Follows</TabsPrimitive.Trigger>
-        <TabsPrimitive.Trigger value="postInteractions">
+        <TabsPrimitive.Trigger value="follows" className="m3tab">
+          Follows
+        </TabsPrimitive.Trigger>
+        <TabsPrimitive.Trigger value="postInteractions" className="m3tab">
           Post Interactions
         </TabsPrimitive.Trigger>
       </TabsPrimitive.List>
