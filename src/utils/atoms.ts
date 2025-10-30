@@ -21,6 +21,15 @@ export const feedScrollPositionsAtom = atomWithStorage<Record<string, number>>(
   {}
 );
 
+type NotificationsScrollState = {
+  activeTab: string;
+  scrollPositions: Record<string, number>;
+};
+export const notificationsScrollAtom = atom<NotificationsScrollState>({
+  activeTab: "mentions",
+  scrollPositions: {},
+});
+
 export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   "likedPosts",
   {}

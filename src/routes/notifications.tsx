@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
+import { useEffect, useLayoutEffect } from "react";
 
 import defaultpfp from "~/../public/favicon.png";
 import { Header } from "~/components/Header";
@@ -14,7 +15,12 @@ import {
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { constellationURLAtom, imgCDNAtom, isAtTopAtom } from "~/utils/atoms";
+import {
+  constellationURLAtom,
+  imgCDNAtom,
+  isAtTopAtom,
+  notificationsScrollAtom,
+} from "~/utils/atoms";
 import {
   useInfiniteQueryAuthorFeed,
   useQueryConstellation,
@@ -49,20 +55,42 @@ export const Route = createFileRoute("/notifications")({
 });
 
 export default function NotificationsTabs() {
-  const [activeTab, setActiveTab] = React.useState("mentions");
+  const [notifState, setNotifState] = useAtom(notificationsScrollAtom);
+  const activeTab = notifState.activeTab;
   const [isAtTop] = useAtom(isAtTopAtom);
 
-  const scrollPositions = React.useRef<Record<string, number>>({});
-
   const handleValueChange = (newTab: string) => {
-    scrollPositions.current[activeTab] = window.scrollY;
-    setActiveTab(newTab);
+    console.log(newTab);
+    setNotifState((prev) => {
+      const wow = {
+        ...prev,
+        scrollPositions: {
+          ...prev.scrollPositions,
+          [prev.activeTab]: window.scrollY,
+        },
+        activeTab: newTab,
+      };
+      //console.log(wow);
+      return wow;
+    });
   };
 
-  React.useEffect(() => {
-    const savedY = scrollPositions.current[activeTab] ?? 0;
-    window.scrollTo(0, savedY);
-  }, [activeTab]);
+  useLayoutEffect(() => {
+    return () => {
+      setNotifState((prev) => {
+        const wow = {
+          ...prev,
+          scrollPositions: {
+            ...prev.scrollPositions,
+            [activeTab]: window.scrollY,
+          },
+        };
+        //console.log(wow);
+        return wow;
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <TabsPrimitive.Root
@@ -138,6 +166,13 @@ function MentionsTab() {
     );
   }, [infiniteMentionsData]);
 
+  const [notifState] = useAtom(notificationsScrollAtom);
+  const activeTab = notifState.activeTab;
+  useEffect(() => {
+    const savedY = notifState.scrollPositions[activeTab] ?? 0;
+    window.scrollTo(0, savedY);
+  }, [activeTab, notifState.scrollPositions]);
+
   if (isLoading) return <LoadingState text="Loading mentions..." />;
   if (isError) return <ErrorState error={error} />;
 
@@ -200,6 +235,13 @@ function FollowsTab() {
     );
   }, [infiniteFollowsData]);
 
+  const [notifState] = useAtom(notificationsScrollAtom);
+  const activeTab = notifState.activeTab;
+  useEffect(() => {
+    const savedY = notifState.scrollPositions[activeTab] ?? 0;
+    window.scrollTo(0, savedY);
+  }, [activeTab, notifState.scrollPositions]);
+
   if (isLoading) return <LoadingState text="Loading mentions..." />;
   if (isError) return <ErrorState error={error} />;
 
@@ -252,6 +294,13 @@ function PostInteractionsTab() {
     () => postsData?.pages.flatMap((page) => page.records) ?? [],
     [postsData]
   );
+
+  const [notifState] = useAtom(notificationsScrollAtom);
+  const activeTab = notifState.activeTab;
+  useEffect(() => {
+    const savedY = notifState.scrollPositions[activeTab] ?? 0;
+    window.scrollTo(0, savedY);
+  }, [activeTab, notifState.scrollPositions]);
 
   return (
     <>
