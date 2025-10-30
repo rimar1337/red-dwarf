@@ -442,9 +442,16 @@ function InteractionsButton({
       ) : (
         <></>
       )}
-      {type}
-      {/* bad grammar replys */}
-      {count > 1 ? "s" : ""} <div className="flex-1" /> {count}
+      {type === "like"
+        ? "likes"
+        : type === "reply"
+          ? "replies"
+          : type === "quote"
+            ? "quotes"
+            : type === "repost"
+              ? "reposts"
+              : ""}
+      <div className="flex-1" /> {count}
     </Link>
   );
 }
