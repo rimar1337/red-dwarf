@@ -1,7 +1,7 @@
 import { AtUri } from "@atproto/api";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
 
@@ -47,7 +47,6 @@ export function NotificationsComponent() {
 export const Route = createFileRoute("/notifications")({
   component: NotificationsComponent,
 });
-
 
 export default function NotificationsTabs() {
   const [activeTab, setActiveTab] = React.useState("mentions");
@@ -225,7 +224,6 @@ function FollowsTab() {
   );
 }
 
-
 function PostInteractionsTab() {
   const { agent } = useAuth();
   const { data: identity } = useQueryIdentity(agent?.did);
@@ -274,58 +272,75 @@ function PostInteractionsTab() {
   );
 }
 
+const ORDER: ("like" | "repost" | "reply" | "quote")[] = [
+  "like",
+  "repost",
+  "reply",
+  "quote",
+];
+
 function PostInteractionsItem({ uri }: { uri: string }) {
   const { data: links } = useQueryConstellation({
     method: "/links/all",
     target: uri,
   });
 
-  const interactions = React.useMemo(() => {
-    const likes =
-      links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0;
-    const replies =
-      links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]?.records || 0;
-    const reposts =
-      links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records || 0;
-    const quotes1 =
-      links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]?.records || 0;
-    const quotes2 =
-      links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]
-        ?.records || 0;
+  const likes =
+    links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0;
+  const replies =
+    links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]?.records || 0;
+  const reposts =
+    links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records || 0;
+  const quotes1 =
+    links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]?.records || 0;
+  const quotes2 =
+    links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]
+      ?.records || 0;
+  const quotes = quotes1 + quotes2;
 
-    const totals = {
-      likes,
-      replies,
-      reposts,
-      quotes: quotes1 + quotes2,
-    };
-
-    const list = (
-      [
-        ["reply", totals.replies],
-        ["repost", totals.reposts],
-        ["like", totals.likes],
-        ["quote", totals.quotes],
-      ] as const
-    ).filter(([, count]) => count > 0);
-
-    return { totals, list };
-  }, [links]);
+  const all = likes + replies + reposts + quotes;
 
   return (
-    <div className="flex flex-col border-b pb-8">
-      <div className="border rounded-xl mx-4 mt-4 ">
+    <div className="flex flex-col">
+      <div className="border rounded-xl mx-4 mt-4 overflow-hidden">
         <UniversalPostRendererATURILoader
           isQuote
           key={uri}
           atUri={uri}
-          nopics
+          nopics={true}
+          concise={true}
         />
-      </div>
-      <div className="flex flex-col">
-        {interactions.list.map(([type, count]) => (
-          <InteractionsButton key={type} type={type} uri={uri} count={count} />
-        ))}
+        <div className="flex flex-col divide-x">
+          <InteractionsButton
+            key={likes}
+            type={"like"}
+            uri={uri}
+            count={likes}
+          />
+          <InteractionsButton
+            key={reposts}
+            type={"repost"}
+            uri={uri}
+            count={reposts}
+          />
+          <InteractionsButton
+            key={replies}
+            type={"reply"}
+            uri={uri}
+            count={replies}
+          />
+          <InteractionsButton
+            key={quotes}
+            type={"quote"}
+            uri={uri}
+            count={quotes}
+          />
+          {!all && (
+            <div className="text-center text-gray-500 dark:text-gray-400 pb-3 pt-2 border-t">
+              No interactions yet.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -340,25 +355,49 @@ function InteractionsButton({
   uri: string;
   count: number;
 }) {
+  if (!count) return <></>;
+  const aturi = new AtUri(uri);
   return (
-    <div className="flex-1 border-t py-2 px-4 flex flex-row items-center gap-2">
+    <Link
+      to={
+        `/profile/$did/post/$rkey` +
+        (type === "like"
+          ? "/liked-by"
+          : type === "repost"
+            ? "/reposted-by"
+            : type === "quote"
+              ? "/quotes"
+              : "")
+      }
+      params={{
+        did: aturi.host,
+        rkey: aturi.rkey,
+      }}
+      className="flex-1 border-t py-2 px-4 flex flex-row items-center gap-2 transition-colors hover:bg-gray-100 hover:dark:bg-gray-800"
+    >
       {type === "like" ? (
         <MdiCardsHeartOutline height={22} width={22} />
       ) : type === "repost" ? (
         <MdiRepeat height={22} width={22} />
       ) : type === "reply" ? (
         <MdiCommentOutline height={22} width={22} />
+      ) : type === "quote" ? (
+        <IconMdiMessageReplyTextOutline
+          height={22}
+          width={22}
+          className=" text-gray-400"
+        />
       ) : (
         <></>
       )}
       {type}
       {/* bad grammar replys */}
       {count > 1 ? "s" : ""} <div className="flex-1" /> {count}
-    </div>
+    </Link>
   );
 }
 
-function NotificationItem({ notification }: { notification: string }) {
+export function NotificationItem({ notification }: { notification: string }) {
   const aturi = new AtUri(notification);
   const navigate = useNavigate();
   const { data: identity } = useQueryIdentity(aturi.host);
@@ -381,7 +420,7 @@ function NotificationItem({ notification }: { notification: string }) {
 
   return (
     <div
-      className="flex items-center gap-3 p-4 cursor-pointer border-b flex-row"
+      className="flex items-center p-4 cursor-pointer gap-3 justify-around border-b flex-row"
       onClick={() =>
         aturi &&
         navigate({
@@ -390,13 +429,15 @@ function NotificationItem({ notification }: { notification: string }) {
         })
       }
     >
-      <div>
+      {/* <div>
         {aturi.collection === "app.bsky.graph.follow" ? (
           <IconMdiAccountPlus />
+        ) : aturi.collection === "app.bsky.feed.like" ? (
+          <MdiCardsHeart />
         ) : (
           <></>
         )}
-      </div>
+      </div> */}
       {profile ? (
         <img
           src={avatar || defaultpfp}
@@ -406,12 +447,12 @@ function NotificationItem({ notification }: { notification: string }) {
       ) : (
         <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700" />
       )}
-      <div className="flex flex-col">
-        <div className="flex flex-row gap-2">
-          <span className="font-medium text-gray-900 dark:text-gray-100">
+      <div className="flex flex-col min-w-0">
+        <div className="flex flex-row gap-2 overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+          <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
             {profile?.displayName || identity?.handle || "Someone"}
           </span>
-          <span className="text-gray-700 dark:text-gray-400">
+          <span className="text-gray-700 dark:text-gray-400 truncate">
             @{identity?.handle}
           </span>
         </div>
@@ -428,20 +469,19 @@ function NotificationItem({ notification }: { notification: string }) {
   );
 }
 
-
-const EmptyState = ({ text }: { text: string }) => (
+export const EmptyState = ({ text }: { text: string }) => (
   <div className="py-10 text-center text-gray-500 dark:text-gray-400">
     {text}
   </div>
 );
 
-const LoadingState = ({ text }: { text: string }) => (
+export const LoadingState = ({ text }: { text: string }) => (
   <div className="py-10 text-center text-gray-500 dark:text-gray-400 italic">
     {text}
   </div>
 );
 
-const ErrorState = ({ error }: { error: unknown }) => (
+export const ErrorState = ({ error }: { error: unknown }) => (
   <div className="py-10 text-center text-red-600 dark:text-red-400">
     Error: {(error as Error)?.message || "Something went wrong."}
   </div>

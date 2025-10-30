@@ -41,6 +41,7 @@ export interface UniversalPostRendererATURILoaderProps {
   ref?: React.Ref<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
+  concise?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
   isQuote?: boolean;
@@ -152,6 +153,7 @@ export function UniversalPostRendererATURILoader({
   ref,
   dataIndexPropPass,
   nopics,
+  concise,
   lightboxCallback,
   maxReplies,
   isQuote,
@@ -536,6 +538,7 @@ export function UniversalPostRendererATURILoader({
         ref={ref}
         dataIndexPropPass={dataIndexPropPass}
         nopics={nopics}
+        concise={concise}
         lightboxCallback={lightboxCallback}
         maxReplies={maxReplies}
         isQuote={isQuote}
@@ -567,6 +570,7 @@ export function UniversalPostRendererATURILoader({
             ref={ref}
             dataIndexPropPass={dataIndexPropPass}
             nopics={nopics}
+            concise={concise}
             lightboxCallback={lightboxCallback}
             maxReplies={
               maxReplies && maxReplies > 0 ? maxReplies - 1 : undefined
@@ -636,6 +640,7 @@ export function UniversalPostRendererRawRecordShim({
   ref,
   dataIndexPropPass,
   nopics,
+  concise,
   lightboxCallback,
   maxReplies,
   isQuote,
@@ -657,6 +662,7 @@ export function UniversalPostRendererRawRecordShim({
   ref?: React.Ref<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
+  concise?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
   isQuote?: boolean;
@@ -874,6 +880,7 @@ export function UniversalPostRendererRawRecordShim({
         ref={ref}
         dataIndexPropPass={dataIndexPropPass}
         nopics={nopics}
+        concise={concise}
         lightboxCallback={lightboxCallback}
         maxReplies={maxReplies}
         isQuote={isQuote}
@@ -1327,6 +1334,7 @@ function UniversalPostRenderer({
   ref,
   dataIndexPropPass,
   nopics,
+  concise,
   lightboxCallback,
   maxReplies,
 }: {
@@ -1353,6 +1361,7 @@ function UniversalPostRenderer({
   ref?: React.Ref<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
+  concise?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
 }) {
@@ -1759,12 +1768,17 @@ function UniversalPostRenderer({
             <div
               style={{
                 fontSize: 16,
-                marginBottom: !post.embed /*|| depth > 0*/ ? 0 : 8,
+                marginBottom: !post.embed || concise ? 0 : 8,
                 whiteSpace: "pre-wrap",
                 textAlign: "left",
                 overflowWrap: "anywhere",
                 wordBreak: "break-word",
-                //color: theme.text,
+                ...(concise && {
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: 2,
+                  overflow: "hidden",
+                }),
               }}
               className="text-gray-900 dark:text-gray-100"
             >
@@ -1787,7 +1801,7 @@ function UniversalPostRenderer({
                 </>
               )}
             </div>
-            {post.embed && depth < 1 ? (
+            {post.embed && depth < 1 && !concise ? (
               <PostEmbeds
                 embed={post.embed}
                 //moderation={moderation}
@@ -1809,7 +1823,7 @@ function UniversalPostRenderer({
                 </div>
               </>
             )}
-            <div style={{ paddingTop: post.embed && depth < 1 ? 4 : 0 }}>
+            <div style={{ paddingTop: post.embed && !concise && depth < 1 ? 4 : 0 }}>
               <>
                 {expanded && (
                   <div

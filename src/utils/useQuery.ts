@@ -352,7 +352,7 @@ export function useQueryConstellation(query?: {
   );
 }
 
-type linksRecord = {
+export type linksRecord = {
   did: string;
   collection: string;
   rkey: string;
@@ -634,10 +634,10 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
   collection: string
   path: string
 }) {
-  console.log(
-    'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
-    query,
-  )
+  // console.log(
+  //   'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
+  //   query,
+  // )
 
   return infiniteQueryOptions({
     enabled: !!query?.target,

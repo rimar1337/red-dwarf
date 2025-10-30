@@ -1,6 +1,6 @@
 import { AtUri } from "@atproto/api";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import React, { useLayoutEffect } from "react";
 
@@ -52,6 +52,9 @@ export function ProfilePostComponent({
   nopics?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
 }) {
+  const matchRoute = useMatchRoute()
+  const showMainPostRoute = !!matchRoute({ to: '/profile/$did/post/$rkey' }) || !!matchRoute({ to: '/profile/$did/post/$rkey/image/$i' })
+
   //const { get, set } = usePersistentStore();
   const queryClient = useQueryClient();
   // const [resolvedDid, setResolvedDid] = React.useState<string | null>(null);
@@ -190,19 +193,19 @@ export function ProfilePostComponent({
     data: identity,
     isLoading: isIdentityLoading,
     error: identityError,
-  } = useQueryIdentity(did);
+  } = useQueryIdentity(showMainPostRoute ? did : undefined);
 
   const resolvedDid = did.startsWith("did:") ? did : identity?.did;
 
   const atUri = React.useMemo(
     () =>
-      resolvedDid
+      resolvedDid && showMainPostRoute
         ? `at://${decodeURIComponent(resolvedDid)}/app.bsky.feed.post/${rkey}`
         : undefined,
-    [resolvedDid, rkey]
+    [resolvedDid, rkey, showMainPostRoute]
   );
 
-  const { data: mainPost } = useQueryPost(atUri);
+  const { data: mainPost } = useQueryPost(showMainPostRoute ? atUri : undefined);
 
   console.log("atUri",atUri)
   
@@ -215,7 +218,7 @@ export function ProfilePostComponent({
   );
 
   // @ts-expect-error i hate overloads
-  const { data: links } = useQueryConstellation(atUri?{
+  const { data: links } = useQueryConstellation(atUri&&showMainPostRoute?{
     method: "/links/all",
     target: atUri,
   } : {
@@ -248,7 +251,7 @@ export function ProfilePostComponent({
   }, [links]);
 
   const { data: opreplies } = useQueryConstellation(
-    !!opdid && replyCount && replyCount >= 25
+    showMainPostRoute && !!opdid && replyCount && replyCount >= 25
       ? {
           method: "/links",
           target: atUri,
@@ -289,7 +292,7 @@ export function ProfilePostComponent({
         path: ".reply.parent.uri",
       }
     ),
-    enabled: !!atUri,
+    enabled: !!atUri && showMainPostRoute,
   });
 
   const {
@@ -371,6 +374,7 @@ export function ProfilePostComponent({
   const [layoutReady, setLayoutReady] = React.useState(false);
 
   useLayoutEffect(() => {
+    if (!showMainPostRoute) return
     if (parents.length > 0 && !layoutReady && mainPostRef.current) {
       const mainPostElement = mainPostRef.current;
 
@@ -389,13 +393,13 @@ export function ProfilePostComponent({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLayoutReady(true);
     }
-  }, [parents, layoutReady]);
+  }, [parents, layoutReady, showMainPostRoute]);
 
 
   const [slingshoturl] = useAtom(slingshotURLAtom)
       
   React.useEffect(() => {
-    if (parentsLoading) {
+    if (parentsLoading || !showMainPostRoute) {
       setLayoutReady(false);
     }
 
@@ -403,7 +407,7 @@ export function ProfilePostComponent({
       setLayoutReady(true);
       hasPerformedInitialLayout.current = true;
     }
-  }, [parentsLoading, mainPost]);
+  }, [parentsLoading, mainPost, showMainPostRoute]);
 
   React.useEffect(() => {
     if (!mainPost?.value?.reply?.parent?.uri) {
@@ -444,103 +448,105 @@ export function ProfilePostComponent({
     return () => {
       ignore = true;
     };
-  }, [mainPost, queryClient]);
+  }, [mainPost, queryClient, slingshoturl]);
 
-  if (!did || !rkey) return <div>Invalid post URI</div>;
-  if (isIdentityLoading) return <div>Resolving handle...</div>;
-  if (identityError)
+  if ((!did || !rkey) && showMainPostRoute) return <div>Invalid post URI</div>;
+  if (isIdentityLoading && showMainPostRoute) return <div>Resolving handle...</div>;
+  if (identityError && showMainPostRoute)
     return <div style={{ color: "red" }}>{identityError.message}</div>;
-  if (!atUri) return <div>Could not construct post URI.</div>;
+  if (!atUri && showMainPostRoute) return <div>Could not construct post URI.</div>;
 
   return (
     <>
       <Outlet />
-      <Header
-        title={`Post`}
-        backButtonCallback={() => {
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            window.location.assign("/");
-          }
-        }}
-      />
-
-      {parentsLoading && (
-        <div className="text-center text-gray-500 dark:text-gray-400 flex flex-row">
-          <div className="ml-4 w-[42px] flex justify-center">
-            <div
-              style={{ width: 2, height: "100%", opacity: 0.5 }}
-              className="bg-gray-500 dark:bg-gray-400"
-            ></div>
-          </div>
-          Loading conversation...
-        </div>
-      )}
-
-      {/* we should use the reply lines here thats provided by UPR*/}
-      <div style={{ maxWidth: 600, padding: 0 }}>
-        {parents.map((parent, index) => (
-          <UniversalPostRendererATURILoader
-            key={parent.uri}
-            atUri={parent.uri}
-            topReplyLine={index > 0}
-            bottomReplyLine={true}
-            bottomBorder={false}
-          />
-        ))}
-      </div>
-      <div ref={mainPostRef}>
-        <UniversalPostRendererATURILoader
-          atUri={atUri}
-          detailed={true}
-          topReplyLine={parentsLoading || parents.length > 0}
-          nopics={!!nopics}
-          lightboxCallback={lightboxCallback}
+      {showMainPostRoute && (<>
+        <Header
+          title={`Post`}
+          backButtonCallback={() => {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.assign("/");
+            }
+          }}
         />
-      </div>
-      <div
-        style={{
-          maxWidth: 600,
-          //margin: "0px auto 0",
-          padding: 0,
-          minHeight: "80dvh",
-          paddingBottom: "20dvh",
-        }}
-      >
+
+        {parentsLoading && (
+          <div className="text-center text-gray-500 dark:text-gray-400 flex flex-row">
+            <div className="ml-4 w-[42px] flex justify-center">
+              <div
+                style={{ width: 2, height: "100%", opacity: 0.5 }}
+                className="bg-gray-500 dark:bg-gray-400"
+              ></div>
+            </div>
+            Loading conversation...
+          </div>
+        )}
+
+        {/* we should use the reply lines here thats provided by UPR*/}
+        <div style={{ maxWidth: 600, padding: 0 }}>
+          {parents.map((parent, index) => (
+            <UniversalPostRendererATURILoader
+              key={parent.uri}
+              atUri={parent.uri}
+              topReplyLine={index > 0}
+              bottomReplyLine={true}
+              bottomBorder={false}
+            />
+          ))}
+        </div>
+        <div ref={mainPostRef}>
+          <UniversalPostRendererATURILoader
+            atUri={atUri!}
+            detailed={true}
+            topReplyLine={parentsLoading || parents.length > 0}
+            nopics={!!nopics}
+            lightboxCallback={lightboxCallback}
+          />
+        </div>
         <div
-          className="text-gray-500 dark:text-gray-400 text-sm font-bold"
           style={{
-            fontSize: 18,
-            margin: "12px 16px 12px 16px",
-            fontWeight: 600,
+            maxWidth: 600,
+            //margin: "0px auto 0",
+            padding: 0,
+            minHeight: "80dvh",
+            paddingBottom: "20dvh",
           }}
         >
-          Replies
+          <div
+            className="text-gray-500 dark:text-gray-400 text-sm font-bold"
+            style={{
+              fontSize: 18,
+              margin: "12px 16px 12px 16px",
+              fontWeight: 600,
+            }}
+          >
+            Replies
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {replyAturis.length > 0 &&
+              replyAturis.map((reply) => {
+                //const replyAtUri = `at://${reply.did}/app.bsky.feed.post/${reply.rkey}`;
+                return (
+                  <UniversalPostRendererATURILoader
+                    key={reply}
+                    atUri={reply}
+                    maxReplies={4}
+                  />
+                );
+              })}
+              {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold disabled:opacity-50"
+              >
+                {isFetchingNextPage ? "Loading..." : "Load More"}
+              </button>
+            )}
+          </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          {replyAturis.length > 0 &&
-            replyAturis.map((reply) => {
-              //const replyAtUri = `at://${reply.did}/app.bsky.feed.post/${reply.rkey}`;
-              return (
-                <UniversalPostRendererATURILoader
-                  key={reply}
-                  atUri={reply}
-                  maxReplies={4}
-                />
-              );
-            })}
-            {hasNextPage && (
-            <button
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold disabled:opacity-50"
-            >
-              {isFetchingNextPage ? "Loading..." : "Load More"}
-            </button>
-          )}
-        </div>
-      </div>
+      </>)}
     </>
   );
 }
