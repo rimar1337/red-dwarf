@@ -359,39 +359,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     >
       {!isAuthRestoring && savedFeeds.length > 0 ? (
         <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
-          {savedFeeds.map((item: any, idx: number) => {
-            const label = item.value.split("/").pop() || item.value;
-            const isActive = selectedFeed === item.value;
-            return (
-              <button
-                key={item.value || idx}
-                className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${
-                  isActive
-                    ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
-                  // ? "bg-gray-500 text-white"
-                  // : item.pinned
-                  //   ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                  //   : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                }`}
-                onClick={() => setSelectedFeed(item.value)}
-                title={item.value}
-              >
-                {label}
-                {item.pinned && (
-                  <span
-                    className={`ml-1 text-xs ${
-                      isActive
-                        ? "text-gray-900 dark:text-gray-100"
-                        : "text-gray-600 dark:text-gray-400"
-                    }`}
-                  >
-                    ★
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          {savedFeeds.map((item: any, idx: number) => {return <FeedTabOnTop key={item} item={item} idx={idx} />})}
         </div>
       ) : (
         // <span className="text-xl font-bold ml-2">Home</span>
@@ -435,6 +403,49 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     </div>
   );
 }
+
+
+// todo please use types this is dangerous very dangerous.
+// todo fix this whenever proper preferences is handled
+function FeedTabOnTop({item, idx}:{item: any, idx: number}) {
+  const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
+  const selectedFeed = persistentSelectedFeed
+  const setSelectedFeed = setPersistentSelectedFeed
+  const rkey = item.value.split("/").pop() || item.value;
+  const isActive = selectedFeed === item.value;
+  const { data: feedrecord } = useQueryArbitrary(item.value)
+  const label = feedrecord?.value?.displayName || rkey
+  return (
+    <button
+      key={item.value || idx}
+      className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${
+        isActive
+          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+        // ? "bg-gray-500 text-white"
+        // : item.pinned
+        //   ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+        //   : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+      }`}
+      onClick={() => setSelectedFeed(item.value)}
+      title={item.value}
+    >
+      {label}
+      {item.pinned && (
+        <span
+          className={`ml-1 text-xs ${
+            isActive
+              ? "text-gray-900 dark:text-gray-100"
+              : "text-gray-600 dark:text-gray-400"
+          }`}
+        >
+          ★
+        </span>
+      )}
+    </button>
+  );
+}
+
 // not even used lmaooo
 
 // export async function cachedResolveDIDWEBDOC({
