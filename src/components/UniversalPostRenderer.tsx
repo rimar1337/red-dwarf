@@ -1204,7 +1204,7 @@ import ReactPlayer from "react-player";
 
 import defaultpfp from "~/../public/favicon.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { FollowButton, Mutual } from "~/routes/profile.$did";
+import { FeedItemRenderAturiLoader, FollowButton, Mutual } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
 // import type {
@@ -2179,6 +2179,10 @@ function PostEmbeds({
   }
 
   if (AppBskyEmbedRecord.isView(embed)) {
+    // hey im really lazy and im gonna do it the bad way
+    const reallybaduri = (embed?.record as any)?.uri as string | undefined;
+    const reallybadaturi = reallybaduri ? new AtUri(reallybaduri) : undefined;
+
     // custom feed embed (i.e. generator view)
     if (AppBskyFeedDefs.isGeneratorView(embed.record)) {
       // stopgap sorry
@@ -2188,6 +2192,8 @@ function PostEmbeds({
       //     <MaybeFeedCard view={embed.record} />
       //   </div>
       // )
+    } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.feed.generator") {
+      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder/></div>
     }
 
     // list embed
@@ -2199,6 +2205,8 @@ function PostEmbeds({
       //     <MaybeListCard view={embed.record} />
       //   </div>
       // )
+    } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.graph.list") {
+      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode /></div>
     }
 
     // starter pack embed
@@ -2210,6 +2218,8 @@ function PostEmbeds({
       //     <StarterPackCard starterPack={embed.record} />
       //   </div>
       // )
+    } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.graph.starterpack") {
+      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode /></div>
     }
 
     // quote post
@@ -2269,6 +2279,7 @@ function PostEmbeds({
         </div>
       );
     } else {
+      console.log("what the hell is a ", embed);
       return <>sorry</>;
     }
     //return <QuotePostRenderer record={embed.record} moderation={moderation} />;

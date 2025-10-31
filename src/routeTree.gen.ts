@@ -21,6 +21,7 @@ import { Route as ProfileDidIndexRouteImport } from './routes/profile.$did/index
 import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
 import { Route as PathlessLayoutNestedLayoutRouteARouteImport } from './routes/_pathlessLayout/_nested-layout/route-a'
 import { Route as ProfileDidPostRkeyRouteImport } from './routes/profile.$did/post.$rkey'
+import { Route as ProfileDidFeedRkeyRouteImport } from './routes/profile.$did/feed.$rkey'
 import { Route as ProfileDidPostRkeyRepostedByRouteImport } from './routes/profile.$did/post.$rkey.reposted-by'
 import { Route as ProfileDidPostRkeyQuotesRouteImport } from './routes/profile.$did/post.$rkey.quotes'
 import { Route as ProfileDidPostRkeyLikedByRouteImport } from './routes/profile.$did/post.$rkey.liked-by'
@@ -87,6 +88,11 @@ const ProfileDidPostRkeyRoute = ProfileDidPostRkeyRouteImport.update({
   path: '/profile/$did/post/$rkey',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileDidFeedRkeyRoute = ProfileDidFeedRkeyRouteImport.update({
+  id: '/profile/$did/feed/$rkey',
+  path: '/profile/$did/feed/$rkey',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileDidPostRkeyRepostedByRoute =
   ProfileDidPostRkeyRepostedByRouteImport.update({
     id: '/reposted-by',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did': typeof ProfileDidIndexRoute
+  '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
   '/profile/$did/post/$rkey/liked-by': typeof ProfileDidPostRkeyLikedByRoute
   '/profile/$did/post/$rkey/quotes': typeof ProfileDidPostRkeyQuotesRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did': typeof ProfileDidIndexRoute
+  '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
   '/profile/$did/post/$rkey/liked-by': typeof ProfileDidPostRkeyLikedByRoute
   '/profile/$did/post/$rkey/quotes': typeof ProfileDidPostRkeyQuotesRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/_pathlessLayout/_nested-layout/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/_pathlessLayout/_nested-layout/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did/': typeof ProfileDidIndexRoute
+  '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
   '/profile/$did/post/$rkey/liked-by': typeof ProfileDidPostRkeyLikedByRoute
   '/profile/$did/post/$rkey/quotes': typeof ProfileDidPostRkeyQuotesRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/route-a'
     | '/route-b'
     | '/profile/$did'
+    | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
     | '/profile/$did/post/$rkey/liked-by'
     | '/profile/$did/post/$rkey/quotes'
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/route-a'
     | '/route-b'
     | '/profile/$did'
+    | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
     | '/profile/$did/post/$rkey/liked-by'
     | '/profile/$did/post/$rkey/quotes'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/_pathlessLayout/_nested-layout/route-a'
     | '/_pathlessLayout/_nested-layout/route-b'
     | '/profile/$did/'
+    | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
     | '/profile/$did/post/$rkey/liked-by'
     | '/profile/$did/post/$rkey/quotes'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   CallbackIndexRoute: typeof CallbackIndexRoute
   ProfileDidIndexRoute: typeof ProfileDidIndexRoute
+  ProfileDidFeedRkeyRoute: typeof ProfileDidFeedRkeyRoute
   ProfileDidPostRkeyRoute: typeof ProfileDidPostRkeyRouteWithChildren
 }
 
@@ -314,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileDidPostRkeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$did/feed/$rkey': {
+      id: '/profile/$did/feed/$rkey'
+      path: '/profile/$did/feed/$rkey'
+      fullPath: '/profile/$did/feed/$rkey'
+      preLoaderRoute: typeof ProfileDidFeedRkeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/$did/post/$rkey/reposted-by': {
       id: '/profile/$did/post/$rkey/reposted-by'
       path: '/reposted-by'
@@ -401,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   CallbackIndexRoute: CallbackIndexRoute,
   ProfileDidIndexRoute: ProfileDidIndexRoute,
+  ProfileDidFeedRkeyRoute: ProfileDidFeedRkeyRoute,
   ProfileDidPostRkeyRoute: ProfileDidPostRkeyRouteWithChildren,
 }
 export const routeTree = rootRouteImport

@@ -573,8 +573,10 @@ export function constructInfiniteFeedSkeletonQuery(options: {
   isAuthed: boolean;
   pdsUrl?: string;
   feedServiceDid?: string;
+  // todo the hell is a unauthedfeedurl
+  unauthedfeedurl?: string;
 }) {
-  const { feedUri, agent, isAuthed, pdsUrl, feedServiceDid } = options;
+  const { feedUri, agent, isAuthed, pdsUrl, feedServiceDid, unauthedfeedurl } = options;
   
   return queryOptions({
     queryKey: ["feedSkeleton", feedUri, { isAuthed, did: agent?.did }],
@@ -582,7 +584,7 @@ export function constructInfiniteFeedSkeletonQuery(options: {
     queryFn: async ({ pageParam }: QueryFunctionContext): Promise<FeedSkeletonPage> => {
       const cursorParam = pageParam ? `&cursor=${pageParam}` : "";
       
-      if (isAuthed) {
+      if (isAuthed && !unauthedfeedurl) {
         if (!agent || !pdsUrl || !feedServiceDid) {
           throw new Error("Missing required info for authenticated feed fetch.");
         }
@@ -597,7 +599,7 @@ export function constructInfiniteFeedSkeletonQuery(options: {
         if (!res.ok) throw new Error(`Authenticated feed fetch failed: ${res.statusText}`);
         return (await res.json()) as FeedSkeletonPage;
       } else {
-        const url = `https://discover.bsky.app/xrpc/app.bsky.feed.getFeedSkeleton?feed=${encodeURIComponent(feedUri)}${cursorParam}`;
+        const url = `https://${unauthedfeedurl ? unauthedfeedurl : "discover.bsky.app"}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${encodeURIComponent(feedUri)}${cursorParam}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Public feed fetch failed: ${res.statusText}`);
         return (await res.json()) as FeedSkeletonPage;
@@ -612,6 +614,7 @@ export function useInfiniteQueryFeedSkeleton(options: {
   isAuthed: boolean;
   pdsUrl?: string;
   feedServiceDid?: string;
+  unauthedfeedurl?: string;
 }) {
   const { queryKey, queryFn } = constructInfiniteFeedSkeletonQuery(options);
   
@@ -622,7 +625,7 @@ export function useInfiniteQueryFeedSkeleton(options: {
     getNextPageParam: (lastPage) => lastPage.cursor as null | undefined,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    enabled: !!options.feedUri && (options.isAuthed ? !!options.agent && !!options.pdsUrl && !!options.feedServiceDid : true),
+    enabled: !!options.feedUri && (options.isAuthed ? (!!options.agent && !!options.pdsUrl || !!options.unauthedfeedurl) && !!options.feedServiceDid : true),
   }), queryKey: queryKey};
 }
 

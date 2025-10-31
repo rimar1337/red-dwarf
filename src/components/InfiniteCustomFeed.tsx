@@ -14,15 +14,19 @@ interface InfiniteCustomFeedProps {
   feedUri: string;
   pdsUrl?: string;
   feedServiceDid?: string;
+  authedOverride?: boolean;
+  unauthedfeedurl?: string;
 }
 
 export function InfiniteCustomFeed({
   feedUri,
   pdsUrl,
   feedServiceDid,
+  authedOverride,
+  unauthedfeedurl,
 }: InfiniteCustomFeedProps) {
   const { agent } = useAuth();
-  const authed = !!agent?.did;
+  const authed = authedOverride || !!agent?.did;
 
   // const identityresultmaybe = useQueryIdentity(agent?.did);
   // const identity = identityresultmaybe?.data;
@@ -45,6 +49,7 @@ export function InfiniteCustomFeed({
     isAuthed: authed ?? false,
     pdsUrl: pdsUrl,
     feedServiceDid: feedServiceDid,
+    unauthedfeedurl: unauthedfeedurl,
   });
   const queryClient = useQueryClient();
 

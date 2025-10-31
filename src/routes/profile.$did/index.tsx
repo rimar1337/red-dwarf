@@ -1,7 +1,7 @@
 import { RichText } from "@atproto/api";
 import * as ATPAPI from "@atproto/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import React, { type ReactNode, useEffect, useState } from "react";
 
@@ -24,6 +24,7 @@ import {
 } from "~/utils/followState";
 import {
   useInfiniteQueryAuthorFeed,
+  useQueryArbitrary,
   useQueryConstellation,
   useQueryIdentity,
   useQueryProfile,
@@ -403,16 +404,41 @@ function FeedsTab({ did }: { did: string }) {
   );
 }
 
-function FeedItemRender({
-  feed,
-  listmode
+export function FeedItemRenderAturiLoader({
+  aturi,
+  listmode,
+  disableBottomBorder,
 }: {
-  feed: { uri: string; cid: string; value: ATPAPI.AppBskyFeedGenerator.Record };
+  aturi: string;
   listmode?: boolean;
+  disableBottomBorder?: boolean;
 }) {
-  const name = listmode ? feed.value?.name as string : feed.value?.displayName as string;
+  const { data: record } = useQueryArbitrary(aturi);
+
+  if (!record) return;
+  return (
+    <FeedItemRender
+      listmode={listmode}
+      feed={record}
+      disableBottomBorder={disableBottomBorder}
+    />
+  );
+}
+
+export function FeedItemRender({
+  feed,
+  listmode,
+  disableBottomBorder,
+}: {
+  feed: { uri: string; cid: string; value: any };
+  listmode?: boolean;
+  disableBottomBorder?: boolean;
+}) {
+  const name = listmode
+    ? (feed.value?.name as string)
+    : (feed.value?.displayName as string);
   const aturi = new ATPAPI.AtUri(feed.uri);
-  const {data: identity} = useQueryIdentity(aturi.host);
+  const { data: identity } = useQueryIdentity(aturi.host);
   const resolvedDid = identity?.did;
   const [imgcdn] = useAtom(imgCDNAtom);
 
@@ -422,33 +448,49 @@ function FeedItemRender({
     return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
   }
 
+  const { data: likes } = useQueryConstellation(
   // @ts-expect-error overloads sucks
-  const {data: likes} = useQueryConstellation(!listmode ? {
-    target: feed.uri,
-    method: "/links/count",
-    collection: "app.bsky.feed.like",
-    path: ".subject.uri"
-  } : undefined)
+    !listmode
+      ? {
+          target: feed.uri,
+          method: "/links/count",
+          collection: "app.bsky.feed.like",
+          path: ".subject.uri",
+        }
+      : undefined
+  );
 
   return (
-    <div className="px-4 py-4 border-b flex flex-col gap-1">
+    <Link
+      className={`px-4 py-4 ${!disableBottomBorder && "border-b"} flex flex-col gap-1`}
+      to="/profile/$did/feed/$rkey"
+      params={{ did: aturi.host, rkey: aturi.rkey }}
+    >
       <div className="flex flex-row gap-3">
         <div className="min-w-10 min-h-10">
-          <img src={getAvatarThumbnailUrl(feed) || defaultpfp} className="h-10 w-10 rounded border" />
+          <img
+            src={getAvatarThumbnailUrl(feed) || defaultpfp}
+            className="h-10 w-10 rounded border"
+          />
         </div>
         <div className="flex flex-col">
           <span className="">{name}</span>
-          <span className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">{feed.value.did || aturi.rkey}</span>
+          <span className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">
+            {feed.value.did || aturi.rkey}
+          </span>
         </div>
         <div className="flex-1" />
         {/* <div className="button bg-red-500 rounded-full min-w-[60px]" /> */}
       </div>
       <span className=" text-sm">{feed.value?.description}</span>
-      {!listmode && (<span className=" text-sm dark:text-gray-400 text-gray-500">Liked by {(likes as unknown as any)?.total as number || 0} users</span>)}
-    </div>
+      {!listmode && (
+        <span className=" text-sm dark:text-gray-400 text-gray-500">
+          Liked by {((likes as unknown as any)?.total as number) || 0} users
+        </span>
+      )}
+    </Link>
   );
 }
-
 
 function ListsTab({ did }: { did: string }) {
   useReusableTabScrollRestore(`Profile` + did);
@@ -487,7 +529,9 @@ function ListsTab({ did }: { did: string }) {
           if (!feed || !feed?.value) return;
           const feedGenRecord =
             feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
-          return <FeedItemRender listmode={true} feed={feed as any} key={feed.uri} />;
+          return (
+            <FeedItemRender listmode={true} feed={feed as any} key={feed.uri} />
+          );
         })}
       </div>
 
