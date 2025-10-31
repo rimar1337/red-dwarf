@@ -379,7 +379,7 @@ function PostInteractionsItem({ uri }: { uri: string }) {
   const matchesQuotes = filters.quotes && quotes > 0;
 
   const matchesAnything =
-    filters.showAll ||
+    // filters.showAll ||
     matchesLikes ||
     matchesReposts ||
     matchesReplies ||
