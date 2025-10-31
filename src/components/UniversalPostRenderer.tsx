@@ -2206,7 +2206,7 @@ function PostEmbeds({
       //   </div>
       // )
     } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.graph.list") {
-      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode /></div>
+      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode disablePropagation /></div>
     }
 
     // starter pack embed
@@ -2219,7 +2219,7 @@ function PostEmbeds({
       //   </div>
       // )
     } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.graph.starterpack") {
-      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode /></div>
+      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode disablePropagation /></div>
     }
 
     // quote post

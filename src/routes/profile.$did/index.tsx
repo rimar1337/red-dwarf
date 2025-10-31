@@ -408,10 +408,12 @@ export function FeedItemRenderAturiLoader({
   aturi,
   listmode,
   disableBottomBorder,
+  disablePropagation,
 }: {
   aturi: string;
   listmode?: boolean;
   disableBottomBorder?: boolean;
+  disablePropagation?: boolean;
 }) {
   const { data: record } = useQueryArbitrary(aturi);
 
@@ -421,6 +423,7 @@ export function FeedItemRenderAturiLoader({
       listmode={listmode}
       feed={record}
       disableBottomBorder={disableBottomBorder}
+      disablePropagation={disablePropagation}
     />
   );
 }
@@ -429,10 +432,12 @@ export function FeedItemRender({
   feed,
   listmode,
   disableBottomBorder,
+  disablePropagation,
 }: {
   feed: { uri: string; cid: string; value: any };
   listmode?: boolean;
   disableBottomBorder?: boolean;
+  disablePropagation?: boolean;
 }) {
   const name = listmode
     ? (feed.value?.name as string)
@@ -465,6 +470,7 @@ export function FeedItemRender({
       className={`px-4 py-4 ${!disableBottomBorder && "border-b"} flex flex-col gap-1`}
       to="/profile/$did/feed/$rkey"
       params={{ did: aturi.host, rkey: aturi.rkey }}
+      onClick={(e)=>{e.stopPropagation();}}
     >
       <div className="flex flex-row gap-3">
         <div className="min-w-10 min-h-10">
