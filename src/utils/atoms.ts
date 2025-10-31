@@ -25,10 +25,32 @@ type TabRouteScrollState = {
   activeTab: string;
   scrollPositions: Record<string, number>;
 };
+/**
+ * @deprecated should be safe to remove i think
+ */
 export const notificationsScrollAtom = atom<TabRouteScrollState>({
   activeTab: "mentions",
   scrollPositions: {},
 });
+
+export type InteractionFilter = {
+  likes: boolean;
+  reposts: boolean;
+  quotes: boolean;
+  replies: boolean;
+  showAll: boolean;
+};
+const defaultFilters: InteractionFilter = {
+  likes: true,
+  reposts: true,
+  quotes: true,
+  replies: true,
+  showAll: false,
+};
+export const postInteractionsFiltersAtom = atomWithStorage<InteractionFilter>(
+  "postInteractionsFilters",
+  defaultFilters
+);
 
 export const reusableTabRouteScrollAtom = atom<Record<string, TabRouteScrollState | undefined> | undefined>({});
 

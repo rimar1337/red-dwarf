@@ -19,6 +19,7 @@ declare global {
   const IconMaterialSymbolsTag: typeof import('~icons/material-symbols/tag.jsx').default
   const IconMdiAccountCircle: typeof import('~icons/mdi/account-circle.jsx').default
   const IconMdiAccountPlus: typeof import('~icons/mdi/account-plus.jsx').default
+  const IconMdiCheck: typeof import('~icons/mdi/check.jsx').default
   const IconMdiMessageReplyTextOutline: typeof import('~icons/mdi/message-reply-text-outline.jsx').default
   const IconMdiPencilOutline: typeof import('~icons/mdi/pencil-outline.jsx').default
 }
