@@ -359,22 +359,35 @@ function PostInteractionsItem({ uri }: { uri: string }) {
 
   const all = likes + replies + reposts + quotes;
 
-  const failLikes = filters.likes && likes < 1;
-  const failReposts = filters.reposts && reposts < 1;
-  const failReplies = filters.replies && replies < 1;
-  const failQuotes = filters.quotes && quotes < 1;
+  //const failLikes = filters.likes && likes < 1;
+  //const failReposts = filters.reposts && reposts < 1;
+  //const failReplies = filters.replies && replies < 1;
+  //const failQuotes = filters.quotes && quotes < 1;
 
   const showLikes = filters.showAll || filters.likes
   const showReposts = filters.showAll || filters.reposts
   const showReplies = filters.showAll || filters.replies
   const showQuotes = filters.showAll || filters.quotes
 
-  const showNone = !showLikes && !showReposts && !showReplies && !showQuotes;
+  //const showNone = !showLikes && !showReposts && !showReplies && !showQuotes;
 
-  const fail = failLikes || failReposts || failReplies || failQuotes || showNone;
+  //const fail = failLikes || failReposts || failReplies || failQuotes || showNone;
 
+  const matchesLikes = filters.likes && likes > 0;
+  const matchesReposts = filters.reposts && reposts > 0;
+  const matchesReplies = filters.replies && replies > 0;
+  const matchesQuotes = filters.quotes && quotes > 0;
 
-  if (fail) return;
+  const matchesAnything =
+    filters.showAll ||
+    matchesLikes ||
+    matchesReposts ||
+    matchesReplies ||
+    matchesQuotes;
+
+  if (!matchesAnything) return null;
+
+  //if (fail) return;
 
   return (
     <div className="flex flex-col">
