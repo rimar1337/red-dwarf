@@ -21,14 +21,16 @@ export const feedScrollPositionsAtom = atomWithStorage<Record<string, number>>(
   {}
 );
 
-type NotificationsScrollState = {
+type TabRouteScrollState = {
   activeTab: string;
   scrollPositions: Record<string, number>;
 };
-export const notificationsScrollAtom = atom<NotificationsScrollState>({
+export const notificationsScrollAtom = atom<TabRouteScrollState>({
   activeTab: "mentions",
   scrollPositions: {},
 });
+
+export const reusableTabRouteScrollAtom = atom<Record<string, TabRouteScrollState | undefined> | undefined>({});
 
 export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   "likedPosts",
