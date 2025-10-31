@@ -534,16 +534,16 @@ type ListRecordsResponse = {
   }[];
 };
 
-export function constructAuthorFeedQuery(did: string, pdsUrl: string) {
+export function constructAuthorFeedQuery(did: string, pdsUrl: string, collection: string = "app.bsky.feed.post") {
   return queryOptions({
-    queryKey: ['authorFeed', did],
+    queryKey: ['authorFeed', did, collection],
     queryFn: async ({ pageParam }: QueryFunctionContext) => {
       const limit = 25;
       
       const cursor = pageParam as string | undefined;
       const cursorParam = cursor ? `&cursor=${cursor}` : '';
       
-      const url = `${pdsUrl}/xrpc/com.atproto.repo.listRecords?repo=${did}&collection=app.bsky.feed.post&limit=${limit}${cursorParam}`;
+      const url = `${pdsUrl}/xrpc/com.atproto.repo.listRecords?repo=${did}&collection=${collection}&limit=${limit}${cursorParam}`;
       
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch author's posts");
@@ -553,8 +553,8 @@ export function constructAuthorFeedQuery(did: string, pdsUrl: string) {
   });
 }
 
-export function useInfiniteQueryAuthorFeed(did: string | undefined, pdsUrl: string | undefined) {
-  const { queryKey, queryFn } = constructAuthorFeedQuery(did!, pdsUrl!);
+export function useInfiniteQueryAuthorFeed(did: string | undefined, pdsUrl: string | undefined, collection?: string) {
+  const { queryKey, queryFn } = constructAuthorFeedQuery(did!, pdsUrl!, collection);
   
   return useInfiniteQuery({
     queryKey,

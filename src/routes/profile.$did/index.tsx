@@ -1,10 +1,16 @@
 import { RichText } from "@atproto/api";
+import * as ATPAPI from "@atproto/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import React, { type ReactNode, useEffect, useState } from "react";
 
+import defaultpfp from "~/../public/favicon.png";
 import { Header } from "~/components/Header";
+import {
+  ReusableTabRoute,
+  useReusableTabScrollRestore,
+} from "~/components/ReusableTabRoute";
 import {
   renderTextWithFacets,
   UniversalPostRendererATURILoader,
@@ -18,6 +24,7 @@ import {
 } from "~/utils/followState";
 import {
   useInfiniteQueryAuthorFeed,
+  useQueryConstellation,
   useQueryIdentity,
   useQueryProfile,
 } from "~/utils/useQuery";
@@ -29,6 +36,7 @@ export const Route = createFileRoute("/profile/$did/")({
 function ProfileComponent() {
   // booo bad this is not always the did it might be a handle, use identity.did instead
   const { did } = Route.useParams();
+  const { agent } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
@@ -46,31 +54,6 @@ function ProfileComponent() {
     : undefined;
   const { data: profileRecord } = useQueryProfile(profileUri);
   const profile = profileRecord?.value;
-
-  const {
-    data: postsData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: arePostsLoading,
-  } = useInfiniteQueryAuthorFeed(resolvedDid, pdsUrl);
-
-  React.useEffect(() => {
-    if (postsData) {
-      postsData.pages.forEach((page) => {
-        page.records.forEach((record) => {
-          if (!queryClient.getQueryData(["post", record.uri])) {
-            queryClient.setQueryData(["post", record.uri], record);
-          }
-        });
-      });
-    }
-  }, [postsData, queryClient]);
-
-  const posts = React.useMemo(
-    () => postsData?.pages.flatMap((page) => page.records) ?? [],
-    [postsData]
-  );
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
@@ -90,28 +73,10 @@ function ProfileComponent() {
   const handle = resolvedHandle ? `@${resolvedHandle}` : resolvedDid || did;
   const description = profile?.description || "";
 
-  if (isIdentityLoading) {
-    return (
-      <div className="p-4 text-center text-gray-500">Resolving profile...</div>
-    );
-  }
-
-  if (identityError) {
-    return (
-      <div className="p-4 text-center text-red-500">
-        Error: {identityError.message}
-      </div>
-    );
-  }
-
-  if (!resolvedDid) {
-    return (
-      <div className="p-4 text-center text-gray-500">Profile not found.</div>
-    );
-  }
+  const isReady = !!resolvedDid && !isIdentityLoading && !!profileRecord;
 
   return (
-    <>
+    <div className="">
       <Header
         title={`Profile`}
         backButtonCallback={() => {
@@ -121,6 +86,7 @@ function ProfileComponent() {
             window.location.assign("/");
           }
         }}
+        bottomBorderDisabled={true}
       />
       {/* <div className="flex gap-2 px-4 py-2 h-[52px] sticky top-0 bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700">
         <Link
@@ -191,40 +157,434 @@ function ProfileComponent() {
         </div>
       </div>
 
-      {/* Posts Section */}
-      <div className="max-w-2xl mx-auto">
-        <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
-          Posts
+      {/* this should not be rendered until its ready (the top profile layout is stable) */}
+      {isReady ? (
+        <ReusableTabRoute
+          route={`Profile` + did}
+          tabs={{
+            Posts: <PostsTab did={did} />,
+            Reposts: <RepostsTab did={did} />,
+            Feeds: <FeedsTab did={did} />,
+            Lists: <ListsTab did={did} />,
+            ...(identity?.did === agent?.did
+              ? { Likes: <SelfLikesTab did={did} /> }
+              : {}),
+          }}
+        />
+      ) : isIdentityLoading ? (
+        <div className="p-4 text-center text-gray-500">
+          Resolving profile...
         </div>
-        <div>
-          {posts.map((post) => (
+      ) : identityError ? (
+        <div className="p-4 text-center text-red-500">
+          Error: {identityError.message}
+        </div>
+      ) : !resolvedDid ? (
+        <div className="p-4 text-center text-gray-500">Profile not found.</div>
+      ) : (
+        <div className="p-4 text-center text-gray-500">
+          Loading profile content...
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PostsTab({ did }: { did: string }) {
+  useReusableTabScrollRestore(`Profile` + did);
+  const queryClient = useQueryClient();
+  const {
+    data: identity,
+    isLoading: isIdentityLoading,
+    error: identityError,
+  } = useQueryIdentity(did);
+
+  const resolvedDid = did.startsWith("did:") ? did : identity?.did;
+
+  const {
+    data: postsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: arePostsLoading,
+  } = useInfiniteQueryAuthorFeed(resolvedDid, identity?.pds);
+
+  React.useEffect(() => {
+    if (postsData) {
+      postsData.pages.forEach((page) => {
+        page.records.forEach((record) => {
+          if (!queryClient.getQueryData(["post", record.uri])) {
+            queryClient.setQueryData(["post", record.uri], record);
+          }
+        });
+      });
+    }
+  }, [postsData, queryClient]);
+
+  const posts = React.useMemo(
+    () => postsData?.pages.flatMap((page) => page.records) ?? [],
+    [postsData]
+  );
+
+  return (
+    <>
+      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+        Posts
+      </div>
+      <div>
+        {posts.map((post) => (
+          <UniversalPostRendererATURILoader
+            key={post.uri}
+            atUri={post.uri}
+            feedviewpost={true}
+          />
+        ))}
+      </div>
+
+      {/* Loading and "Load More" states */}
+      {arePostsLoading && posts.length === 0 && (
+        <div className="p-4 text-center text-gray-500">Loading posts...</div>
+      )}
+      {isFetchingNextPage && (
+        <div className="p-4 text-center text-gray-500">Loading more...</div>
+      )}
+      {hasNextPage && !isFetchingNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
+        >
+          Load More Posts
+        </button>
+      )}
+      {posts.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No posts found.</div>
+      )}
+    </>
+  );
+}
+
+function RepostsTab({ did }: { did: string }) {
+  useReusableTabScrollRestore(`Profile` + did);
+  const {
+    data: identity,
+    isLoading: isIdentityLoading,
+    error: identityError,
+  } = useQueryIdentity(did);
+
+  const resolvedDid = did.startsWith("did:") ? did : identity?.did;
+
+  const {
+    data: repostsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: arePostsLoading,
+  } = useInfiniteQueryAuthorFeed(
+    resolvedDid,
+    identity?.pds,
+    "app.bsky.feed.repost"
+  );
+
+  const reposts = React.useMemo(
+    () => repostsData?.pages.flatMap((page) => page.records) ?? [],
+    [repostsData]
+  );
+
+  return (
+    <>
+      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+        Reposts
+      </div>
+      <div>
+        {reposts.map((repost) => {
+          if (
+            !repost ||
+            !repost?.value ||
+            !repost?.value?.subject ||
+            // @ts-expect-error blehhhhh
+            !repost?.value?.subject?.uri
+          )
+            return;
+          const repostRecord =
+            repost.value as unknown as ATPAPI.AppBskyFeedRepost.Record;
+          return (
             <UniversalPostRendererATURILoader
-              key={post.uri}
-              atUri={post.uri}
+              key={repostRecord.subject.uri}
+              atUri={repostRecord.subject.uri}
+              feedviewpost={true}
+              repostedby={repost.uri}
+            />
+          );
+        })}
+      </div>
+
+      {/* Loading and "Load More" states */}
+      {arePostsLoading && reposts.length === 0 && (
+        <div className="p-4 text-center text-gray-500">Loading posts...</div>
+      )}
+      {isFetchingNextPage && (
+        <div className="p-4 text-center text-gray-500">Loading more...</div>
+      )}
+      {hasNextPage && !isFetchingNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
+        >
+          Load More Posts
+        </button>
+      )}
+      {reposts.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No posts found.</div>
+      )}
+    </>
+  );
+}
+
+function FeedsTab({ did }: { did: string }) {
+  useReusableTabScrollRestore(`Profile` + did);
+  const {
+    data: identity,
+    isLoading: isIdentityLoading,
+    error: identityError,
+  } = useQueryIdentity(did);
+
+  const resolvedDid = did.startsWith("did:") ? did : identity?.did;
+
+  const {
+    data: feedsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: arePostsLoading,
+  } = useInfiniteQueryAuthorFeed(
+    resolvedDid,
+    identity?.pds,
+    "app.bsky.feed.generator"
+  );
+
+  const feeds = React.useMemo(
+    () => feedsData?.pages.flatMap((page) => page.records) ?? [],
+    [feedsData]
+  );
+
+  return (
+    <>
+      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+        Feeds
+      </div>
+      <div>
+        {feeds.map((feed) => {
+          if (!feed || !feed?.value) return;
+          const feedGenRecord =
+            feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
+          return <FeedItemRender feed={feed as any} key={feed.uri} />;
+        })}
+      </div>
+
+      {/* Loading and "Load More" states */}
+      {arePostsLoading && feeds.length === 0 && (
+        <div className="p-4 text-center text-gray-500">Loading feeds...</div>
+      )}
+      {isFetchingNextPage && (
+        <div className="p-4 text-center text-gray-500">Loading more...</div>
+      )}
+      {hasNextPage && !isFetchingNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
+        >
+          Load More Feeds
+        </button>
+      )}
+      {feeds.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No feeds found.</div>
+      )}
+    </>
+  );
+}
+
+function FeedItemRender({
+  feed,
+  listmode
+}: {
+  feed: { uri: string; cid: string; value: ATPAPI.AppBskyFeedGenerator.Record };
+  listmode?: boolean;
+}) {
+  const name = listmode ? feed.value?.name as string : feed.value?.displayName as string;
+  const aturi = new ATPAPI.AtUri(feed.uri);
+  const {data: identity} = useQueryIdentity(aturi.host);
+  const resolvedDid = identity?.did;
+  const [imgcdn] = useAtom(imgCDNAtom);
+
+  function getAvatarThumbnailUrl(f: typeof feed) {
+    const link = f?.value.avatar?.ref?.["$link"];
+    if (!link || !resolvedDid) return null;
+    return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
+  }
+
+  // @ts-expect-error overloads sucks
+  const {data: likes} = useQueryConstellation(!listmode ? {
+    target: feed.uri,
+    method: "/links/count",
+    collection: "app.bsky.feed.like",
+    path: ".subject.uri"
+  } : undefined)
+
+  return (
+    <div className="px-4 py-4 border-b flex flex-col gap-1">
+      <div className="flex flex-row gap-3">
+        <div className="min-w-10 min-h-10">
+          <img src={getAvatarThumbnailUrl(feed) || defaultpfp} className="h-10 w-10 rounded border" />
+        </div>
+        <div className="flex flex-col">
+          <span className="">{name}</span>
+          <span className=" text-sm px-1.5 py-0.5 text-gray-500 bg-gray-200 dark:text-gray-400 dark:bg-gray-800 rounded-lg flex flex-row items-center justify-center">{feed.value.did || aturi.rkey}</span>
+        </div>
+        <div className="flex-1" />
+        {/* <div className="button bg-red-500 rounded-full min-w-[60px]" /> */}
+      </div>
+      <span className=" text-sm">{feed.value?.description}</span>
+      {!listmode && (<span className=" text-sm dark:text-gray-400 text-gray-500">Liked by {(likes as unknown as any)?.total as number || 0} users</span>)}
+    </div>
+  );
+}
+
+
+function ListsTab({ did }: { did: string }) {
+  useReusableTabScrollRestore(`Profile` + did);
+  const {
+    data: identity,
+    isLoading: isIdentityLoading,
+    error: identityError,
+  } = useQueryIdentity(did);
+
+  const resolvedDid = did.startsWith("did:") ? did : identity?.did;
+
+  const {
+    data: feedsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: arePostsLoading,
+  } = useInfiniteQueryAuthorFeed(
+    resolvedDid,
+    identity?.pds,
+    "app.bsky.graph.list"
+  );
+
+  const feeds = React.useMemo(
+    () => feedsData?.pages.flatMap((page) => page.records) ?? [],
+    [feedsData]
+  );
+
+  return (
+    <>
+      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+        Feeds
+      </div>
+      <div>
+        {feeds.map((feed) => {
+          if (!feed || !feed?.value) return;
+          const feedGenRecord =
+            feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
+          return <FeedItemRender listmode={true} feed={feed as any} key={feed.uri} />;
+        })}
+      </div>
+
+      {/* Loading and "Load More" states */}
+      {arePostsLoading && feeds.length === 0 && (
+        <div className="p-4 text-center text-gray-500">Loading lists...</div>
+      )}
+      {isFetchingNextPage && (
+        <div className="p-4 text-center text-gray-500">Loading more...</div>
+      )}
+      {hasNextPage && !isFetchingNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
+        >
+          Load More Lists
+        </button>
+      )}
+      {feeds.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No lists found.</div>
+      )}
+    </>
+  );
+}
+
+function SelfLikesTab({ did }: { did: string }) {
+  useReusableTabScrollRestore(`Profile` + did);
+  const {
+    data: identity,
+    isLoading: isIdentityLoading,
+    error: identityError,
+  } = useQueryIdentity(did);
+
+  const resolvedDid = did.startsWith("did:") ? did : identity?.did;
+
+  const {
+    data: repostsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: arePostsLoading,
+  } = useInfiniteQueryAuthorFeed(
+    resolvedDid,
+    identity?.pds,
+    "app.bsky.feed.like"
+  );
+
+  const reposts = React.useMemo(
+    () => repostsData?.pages.flatMap((page) => page.records) ?? [],
+    [repostsData]
+  );
+
+  return (
+    <>
+      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+        Likes
+      </div>
+      <div>
+        {reposts.map((repost) => {
+          if (
+            !repost ||
+            !repost?.value ||
+            !repost?.value?.subject ||
+            // @ts-expect-error blehhhhh
+            !repost?.value?.subject?.uri
+          )
+            return;
+          const repostRecord =
+            repost.value as unknown as ATPAPI.AppBskyFeedLike.Record;
+          return (
+            <UniversalPostRendererATURILoader
+              key={repostRecord.subject.uri}
+              atUri={repostRecord.subject.uri}
               feedviewpost={true}
             />
-          ))}
-        </div>
-
-        {/* Loading and "Load More" states */}
-        {arePostsLoading && posts.length === 0 && (
-          <div className="p-4 text-center text-gray-500">Loading posts...</div>
-        )}
-        {isFetchingNextPage && (
-          <div className="p-4 text-center text-gray-500">Loading more...</div>
-        )}
-        {hasNextPage && !isFetchingNextPage && (
-          <button
-            onClick={() => fetchNextPage()}
-            className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
-          >
-            Load More Posts
-          </button>
-        )}
-        {posts.length === 0 && !arePostsLoading && (
-          <div className="p-4 text-center text-gray-500">No posts found.</div>
-        )}
+          );
+        })}
       </div>
+
+      {/* Loading and "Load More" states */}
+      {arePostsLoading && reposts.length === 0 && (
+        <div className="p-4 text-center text-gray-500">Loading posts...</div>
+      )}
+      {isFetchingNextPage && (
+        <div className="p-4 text-center text-gray-500">Loading more...</div>
+      )}
+      {hasNextPage && !isFetchingNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
+        >
+          Load More Posts
+        </button>
+      )}
+      {reposts.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No posts found.</div>
+      )}
     </>
   );
 }

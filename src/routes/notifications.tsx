@@ -1,13 +1,12 @@
 import { AtUri } from "@atproto/api";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
-import { useEffect, useLayoutEffect } from "react";
 
 import defaultpfp from "~/../public/favicon.png";
 import { Header } from "~/components/Header";
+import { ReusableTabRoute, useReusableTabScrollRestore } from "~/components/ReusableTabRoute";
 import {
   MdiCardsHeartOutline,
   MdiCommentOutline,
@@ -18,8 +17,6 @@ import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
   constellationURLAtom,
   imgCDNAtom,
-  isAtTopAtom,
-  notificationsScrollAtom,
 } from "~/utils/atoms";
 import {
   useInfiniteQueryAuthorFeed,
@@ -55,79 +52,15 @@ export const Route = createFileRoute("/notifications")({
 });
 
 export default function NotificationsTabs() {
-  const [notifState, setNotifState] = useAtom(notificationsScrollAtom);
-  const activeTab = notifState.activeTab;
-  const [isAtTop] = useAtom(isAtTopAtom);
-
-  const handleValueChange = (newTab: string) => {
-    console.log(newTab);
-    setNotifState((prev) => {
-      const wow = {
-        ...prev,
-        scrollPositions: {
-          ...prev.scrollPositions,
-          [prev.activeTab]: window.scrollY,
-        },
-        activeTab: newTab,
-      };
-      //console.log(wow);
-      return wow;
-    });
-  };
-
-  useLayoutEffect(() => {
-    return () => {
-      setNotifState((prev) => {
-        const wow = {
-          ...prev,
-          scrollPositions: {
-            ...prev.scrollPositions,
-            [activeTab]: window.scrollY,
-          },
-        };
-        //console.log(wow);
-        return wow;
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
-    <TabsPrimitive.Root
-      value={activeTab}
-      onValueChange={handleValueChange}
-      className={`w-full`}
-    >
-      <TabsPrimitive.List
-        className={`flex sticky top-[52px] bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] z-[9] border-0 sm:border-b ${!isAtTop && "shadow-sm"} sm:shadow-none sm:dark:bg-gray-950 sm:bg-white border-gray-200 dark:border-gray-700`}
-      >
-        <TabsPrimitive.Trigger
-          value="mentions"
-          className="m3tab"
-          // styling is in app.css
-        >
-          Mentions
-        </TabsPrimitive.Trigger>
-        <TabsPrimitive.Trigger value="follows" className="m3tab">
-          Follows
-        </TabsPrimitive.Trigger>
-        <TabsPrimitive.Trigger value="postInteractions" className="m3tab">
-          Post Interactions
-        </TabsPrimitive.Trigger>
-      </TabsPrimitive.List>
-
-      <TabsPrimitive.Content value="mentions" className="flex-1">
-        {activeTab === "mentions" && <MentionsTab />}
-      </TabsPrimitive.Content>
-
-      <TabsPrimitive.Content value="follows" className="flex-1">
-        {activeTab === "follows" && <FollowsTab />}
-      </TabsPrimitive.Content>
-
-      <TabsPrimitive.Content value="postInteractions" className="flex-1">
-        {activeTab === "postInteractions" && <PostInteractionsTab />}
-      </TabsPrimitive.Content>
-    </TabsPrimitive.Root>
+    <ReusableTabRoute
+      route={`Notifications`}
+      tabs={{
+        Mentions: <MentionsTab />,
+        Follows: <FollowsTab />,
+        "Post Interactions": <PostInteractionsTab />,
+      }}
+    />
   );
 }
 
@@ -169,12 +102,8 @@ function MentionsTab() {
     );
   }, [infiniteMentionsData]);
 
-  const [notifState] = useAtom(notificationsScrollAtom);
-  const activeTab = notifState.activeTab;
-  useEffect(() => {
-    const savedY = notifState.scrollPositions[activeTab] ?? 0;
-    window.scrollTo(0, savedY);
-  }, [activeTab, notifState.scrollPositions]);
+
+  useReusableTabScrollRestore("Notifications");
 
   if (isLoading) return <LoadingState text="Loading mentions..." />;
   if (isError) return <ErrorState error={error} />;
@@ -238,12 +167,7 @@ function FollowsTab() {
     );
   }, [infiniteFollowsData]);
 
-  const [notifState] = useAtom(notificationsScrollAtom);
-  const activeTab = notifState.activeTab;
-  useEffect(() => {
-    const savedY = notifState.scrollPositions[activeTab] ?? 0;
-    window.scrollTo(0, savedY);
-  }, [activeTab, notifState.scrollPositions]);
+  useReusableTabScrollRestore("Notifications");
 
   if (isLoading) return <LoadingState text="Loading mentions..." />;
   if (isError) return <ErrorState error={error} />;
@@ -298,12 +222,7 @@ function PostInteractionsTab() {
     [postsData]
   );
 
-  const [notifState] = useAtom(notificationsScrollAtom);
-  const activeTab = notifState.activeTab;
-  useEffect(() => {
-    const savedY = notifState.scrollPositions[activeTab] ?? 0;
-    window.scrollTo(0, savedY);
-  }, [activeTab, notifState.scrollPositions]);
+  useReusableTabScrollRestore("Notifications");
 
   return (
     <>
