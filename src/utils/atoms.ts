@@ -2,6 +2,8 @@ import { atom, createStore, useAtomValue } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useEffect } from "react";
 
+import { type ProfilePostsFilter } from "~/routes/profile.$did";
+
 export const store = createStore();
 
 export const quickAuthAtom = atomWithStorage<string | null>(
@@ -69,6 +71,8 @@ export const internalLikedPostsAtom = atomWithStorage<Record<string, LikeRecord 
   "internal-liked-posts",
   {}
 );
+
+export const profileChipsAtom = atom<Record<string, ProfilePostsFilter | null>>({})
 
 export const defaultconstellationURL = "constellation.microcosm.blue";
 export const constellationURLAtom = atomWithStorage<string>(

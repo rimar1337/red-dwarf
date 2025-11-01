@@ -16,7 +16,7 @@ import {
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { imgCDNAtom } from "~/utils/atoms";
+import { imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
 import {
   toggleFollow,
   useGetFollowState,
@@ -31,6 +31,8 @@ import {
   useQueryIdentity,
   useQueryProfile,
 } from "~/utils/useQuery";
+
+import { Chip } from "../notifications";
 
 export const Route = createFileRoute("/profile/$did/")({
   component: ProfileComponent,
@@ -207,7 +209,65 @@ function ProfileComponent() {
   );
 }
 
+export type ProfilePostsFilter = {
+  posts: boolean,
+  replies: boolean,
+  mediaOnly: boolean,
+}
+export const defaultProfilePostsFilter: ProfilePostsFilter = {
+  posts: true,
+  replies: true,
+  mediaOnly: false,
+}
+
+function ProfilePostsFilterChipBar({filters, toggle}:{filters: ProfilePostsFilter | null, toggle: (key: keyof ProfilePostsFilter) => void}) {
+  const empty = (!filters?.replies && !filters?.posts);
+  const almostEmpty = (!filters?.replies && filters?.posts);
+
+  useEffect(() => {
+    if (empty) {
+      toggle("posts")
+    }
+  }, [empty, toggle]);
+
+  return (
+    <div className="flex flex-row flex-wrap gap-2 px-4 pt-4">
+      <Chip
+        state={filters?.posts ?? true}
+        text="Posts"
+        onClick={() => almostEmpty ? null : toggle("posts")}
+      />
+      <Chip
+        state={filters?.replies ?? true}
+        text="Replies"
+        onClick={() => toggle("replies")}
+      />
+      <Chip
+        state={filters?.mediaOnly ?? false}
+        text="Media Only"
+        onClick={() => toggle("mediaOnly")}
+      />
+    </div>
+  );
+}
+
 function PostsTab({ did }: { did: string }) {
+  // todo: this needs to be a (non-persisted is fine) atom to survive navigation
+  const [filterses, setFilterses] = useAtom(profileChipsAtom);
+  const filters = filterses?.[did];
+  const setFilters = (obj: ProfilePostsFilter) => {
+    setFilterses((prev)=>{
+      return{
+        ...prev,
+        [did]: obj
+      }
+    })
+  }
+  useEffect(()=>{
+    if (!filters) {
+      setFilters(defaultProfilePostsFilter);
+    }
+  })
   useReusableTabScrollRestore(`Profile` + did);
   const queryClient = useQueryClient();
   const {
@@ -243,17 +303,35 @@ function PostsTab({ did }: { did: string }) {
     [postsData]
   );
 
+  const toggle = (key: keyof ProfilePostsFilter) => {
+    setFilterses(prev => {
+      const existing = prev[did] ?? { posts: false, replies: false, mediaOnly: false }; // default
+
+      return {
+        ...prev,
+        [did]: {
+          ...existing,
+          [key]: !existing[key], // safely negate
+        },
+      };
+    });
+  };
+
   return (
     <>
-      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+      {/* <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
         Posts
-      </div>
+      </div> */}
+      <ProfilePostsFilterChipBar filters={filters} toggle={toggle} />
       <div>
         {posts.map((post) => (
           <UniversalPostRendererATURILoader
             key={post.uri}
             atUri={post.uri}
             feedviewpost={true}
+            filterNoReplies={!filters?.replies}
+            filterMustHaveMedia={filters?.mediaOnly}
+            filterMustBeReply={!filters?.posts}
           />
         ))}
       </div>

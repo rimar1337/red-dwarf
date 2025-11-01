@@ -308,7 +308,7 @@ function PostInteractionsFilterChipBar() {
   );
 }
 
-function Chip({
+export function Chip({
   state,
   text,
   onClick,

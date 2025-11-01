@@ -1,3 +1,4 @@
+import * as ATPAPI from "@atproto/api"
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
@@ -44,6 +45,9 @@ export interface UniversalPostRendererATURILoaderProps {
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
   isQuote?: boolean;
+  filterNoReplies?: boolean;
+  filterMustHaveMedia?: boolean;
+  filterMustBeReply?: boolean;
 }
 
 // export async function cachedGetRecord({
@@ -156,6 +160,9 @@ export function UniversalPostRendererATURILoader({
   lightboxCallback,
   maxReplies,
   isQuote,
+  filterNoReplies,
+  filterMustHaveMedia,
+  filterMustBeReply
 }: UniversalPostRendererATURILoaderProps) {
   // todo remove this once tree rendering is implemented, use a prop like isTree
   const TEMPLINEAR = true;
@@ -541,6 +548,9 @@ export function UniversalPostRendererATURILoader({
         lightboxCallback={lightboxCallback}
         maxReplies={maxReplies}
         isQuote={isQuote}
+        filterNoReplies={filterNoReplies}
+        filterMustHaveMedia={filterMustHaveMedia}
+        filterMustBeReply={filterMustBeReply}
       />
       <>
         {(maxReplies && maxReplies === 0 && replies && replies > 0) ? (
@@ -643,6 +653,9 @@ export function UniversalPostRendererRawRecordShim({
   lightboxCallback,
   maxReplies,
   isQuote,
+  filterNoReplies,
+  filterMustHaveMedia,
+  filterMustBeReply,
 }: {
   postRecord: any;
   profileRecord: any;
@@ -665,6 +678,9 @@ export function UniversalPostRendererRawRecordShim({
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
   isQuote?: boolean;
+  filterNoReplies?: boolean;
+  filterMustHaveMedia?: boolean;
+  filterMustBeReply?: boolean;
 }) {
   // /*mass comment*/ console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
@@ -734,6 +750,15 @@ export function UniversalPostRendererRawRecordShim({
 
   //   run();
   // }, [postRecord, resolved?.did]);
+
+  const hasEmbed = (postRecord?.value as ATPAPI.AppBskyFeedPost.Record)?.embed;
+  const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
+  const hasVideo = hasEmbed?.$type === "app.bsky.embed.video";
+  const isquotewithmedia = hasEmbed?.$type === "app.bsky.embed.recordWithMedia";
+  const isQuotewithImages = isquotewithmedia && (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type === "app.bsky.embed.images";
+  const isQuotewithVideo = isquotewithmedia && (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type === "app.bsky.embed.video";
+
+  const hasMedia = hasEmbed && (hasImages || hasVideo || isQuotewithImages || isQuotewithVideo);
 
   const {
     data: hydratedEmbed,
@@ -829,7 +854,7 @@ export function UniversalPostRendererRawRecordShim({
   // }, [fakepost, get, set]);
   const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent
     ?.uri;
-  const feedviewpostreplydid = thereply ? new AtUri(thereply).host : undefined;
+  const feedviewpostreplydid = thereply&&!filterNoReplies ? new AtUri(thereply).host : undefined;
   const replyhookvalue = useQueryIdentity(
     feedviewpost ? feedviewpostreplydid : undefined
   );
@@ -840,11 +865,20 @@ export function UniversalPostRendererRawRecordShim({
     repostedby ? aturirepostbydid : undefined
   );
   const feedviewpostrepostedbyhandle = repostedbyhookvalue?.data?.handle;
+
+  if (filterNoReplies && thereply) return null;
+
+  if (filterMustHaveMedia && !hasMedia) return null;
+
+  if (filterMustBeReply && !thereply) return null;
+
   return (
     <>
       {/* <p>
         {postRecord?.value?.embed.$type + " " + JSON.stringify(hydratedEmbed)}
       </p> */}
+      {/* <span>filtermustbereply is {filterMustBeReply ? "true" : "false"}</span>
+      <span>thereply is {thereply ? "true" : "false"}</span> */}
       <UniversalPostRenderer
         expanded={detailed}
         onPostClick={() =>
