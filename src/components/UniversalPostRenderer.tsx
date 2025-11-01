@@ -10,7 +10,6 @@ import {
   composerAtom,
   constellationURLAtom,
   imgCDNAtom,
-  likedPostsAtom,
 } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
@@ -38,7 +37,7 @@ export interface UniversalPostRendererATURILoaderProps {
   feedviewpost?: boolean;
   repostedby?: string;
   style?: React.CSSProperties;
-  ref?: React.Ref<HTMLDivElement>;
+  ref?: React.RefObject<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
   concise?: boolean;
@@ -659,7 +658,7 @@ export function UniversalPostRendererRawRecordShim({
   feedviewpost?: boolean;
   repostedby?: string;
   style?: React.CSSProperties;
-  ref?: React.Ref<HTMLDivElement>;
+  ref?: React.RefObject<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
   concise?: boolean;
@@ -1206,6 +1205,7 @@ import defaultpfp from "~/../public/favicon.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { FeedItemRenderAturiLoader, FollowButton, Mutual } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
+import { useFastLike } from "~/utils/likeMutationQueue";
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
 // import type {
 //   ViewRecord,
@@ -1358,7 +1358,7 @@ function UniversalPostRenderer({
   depth?: number;
   repostedby?: string;
   style?: React.CSSProperties;
-  ref?: React.Ref<HTMLDivElement>;
+  ref?: React.RefObject<HTMLDivElement>;
   dataIndexPropPass?: number;
   nopics?: boolean;
   concise?: boolean;
@@ -1367,44 +1367,21 @@ function UniversalPostRenderer({
 }) {
   const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
-  const [likedPosts, setLikedPosts] = useAtom(likedPostsAtom);
   const [hasRetweeted, setHasRetweeted] = useState<boolean>(
     post.viewer?.repost ? true : false
   );
-  const [hasLiked, setHasLiked] = useState<boolean>(
-    post.uri in likedPosts || post.viewer?.like ? true : false
-  );
   const [, setComposerPost] = useAtom(composerAtom);
   const { agent } = useAuth();
-  const [likeUri, setLikeUri] = useState<string | undefined>(post.viewer?.like);
   const [retweetUri, setRetweetUri] = useState<string | undefined>(
     post.viewer?.repost
   );
-
-  const likeOrUnlikePost = async () => {
-    const newLikedPosts = { ...likedPosts };
-    if (!agent) {
-      console.error("Agent is null or undefined");
-      return;
-    }
-    if (hasLiked) {
-      if (post.uri in likedPosts) {
-        const likeUri = likedPosts[post.uri];
-        setLikeUri(likeUri);
-      }
-      if (likeUri) {
-        await agent.deleteLike(likeUri);
-        setHasLiked(false);
-        delete newLikedPosts[post.uri];
-      }
-    } else {
-      const { uri } = await agent.like(post.uri, post.cid);
-      setLikeUri(uri);
-      setHasLiked(true);
-      newLikedPosts[post.uri] = uri;
-    }
-    setLikedPosts(newLikedPosts);
-  };
+  const { liked, toggle, backfill } = useFastLike(post.uri, post.cid);
+  // const bovref = useBackfillOnView(post.uri, post.cid);
+  // React.useLayoutEffect(()=>{
+  //   if (expanded && !isQuote) {
+  //     backfill();
+  //   }
+  // },[backfill, expanded, isQuote])
 
   const repostOrUnrepostPost = async () => {
     if (!agent) {
@@ -1442,7 +1419,7 @@ function UniversalPostRenderer({
   const isMainItem = false;
   const setMainItem = (any: any) => {};
   // eslint-disable-next-line react-hooks/refs
-  console.log("Received ref in UniversalPostRenderer:", ref);
+  //console.log("Received ref in UniversalPostRenderer:", usedref);
   return (
     <div ref={ref} style={style} data-index={dataIndexPropPass}>
       <div
@@ -1919,15 +1896,15 @@ function UniversalPostRenderer({
                   </DropdownMenu.Root>
                   <HitSlopButton
                     onClick={() => {
-                      likeOrUnlikePost();
+                      toggle();
                     }}
                     style={{
                       ...btnstyle,
-                      ...(hasLiked ? { color: "#EC4899" } : {}),
+                      ...(liked ? { color: "#EC4899" } : {}),
                     }}
                   >
-                    {hasLiked ? <MdiCardsHeart /> : <MdiCardsHeartOutline />}
-                    {(post.likeCount || 0) + (hasLiked ? 1 : 0)}
+                    {liked ? <MdiCardsHeart /> : <MdiCardsHeartOutline />}
+                    {(post.likeCount || 0) + (liked ? 1 : 0)}
                   </HitSlopButton>
                   <div style={{ display: "flex", gap: 8 }}>
                     <HitSlopButton

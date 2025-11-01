@@ -22,6 +22,7 @@ import { Import } from "~/components/Import";
 import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import { FluentEmojiHighContrastGlowingStar } from "~/components/Star";
+import { LikeMutationQueueProvider } from "~/providers/LikeMutationQueueProvider";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
 import { composerAtom, hueAtom, useAtomCssVar } from "~/utils/atoms";
 import { seo } from "~/utils/seo";
@@ -79,11 +80,13 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <UnifiedAuthProvider>
-      <RootDocument>
-        <KeepAliveProvider>
-          <KeepAliveOutlet />
-        </KeepAliveProvider>
-      </RootDocument>
+      <LikeMutationQueueProvider>
+        <RootDocument>
+          <KeepAliveProvider>
+            <KeepAliveOutlet />
+          </KeepAliveProvider>
+        </RootDocument>
+      </LikeMutationQueueProvider>
     </UnifiedAuthProvider>
   );
 }

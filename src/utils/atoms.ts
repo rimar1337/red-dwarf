@@ -59,6 +59,17 @@ export const likedPostsAtom = atomWithStorage<Record<string, string>>(
   {}
 );
 
+export type LikeRecord = {
+  uri: string; // at://did/collection/rkey
+  target: string;
+  cid: string;
+};
+
+export const internalLikedPostsAtom = atomWithStorage<Record<string, LikeRecord | null>>(
+  "internal-liked-posts",
+  {}
+);
+
 export const defaultconstellationURL = "constellation.microcosm.blue";
 export const constellationURLAtom = atomWithStorage<string>(
   "constellationURL",

@@ -22,6 +22,7 @@ import {
   useGetFollowState,
   useGetOneToOneState,
 } from "~/utils/followState";
+import { useFastSetLikesFromFeed } from "~/utils/likeMutationQueue";
 import {
   useInfiniteQueryAuthorFeed,
   useQueryArbitrary,
@@ -454,7 +455,7 @@ export function FeedItemRender({
   }
 
   const { data: likes } = useQueryConstellation(
-  // @ts-expect-error overloads sucks
+    // @ts-expect-error overloads sucks
     !listmode
       ? {
           target: feed.uri,
@@ -470,7 +471,9 @@ export function FeedItemRender({
       className={`px-4 py-4 ${!disableBottomBorder && "border-b"} flex flex-col gap-1`}
       to="/profile/$did/feed/$rkey"
       params={{ did: aturi.host, rkey: aturi.rkey }}
-      onClick={(e)=>{e.stopPropagation();}}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
     >
       <div className="flex flex-row gap-3">
         <div className="min-w-10 min-h-10">
@@ -574,7 +577,7 @@ function SelfLikesTab({ did }: { did: string }) {
   const resolvedDid = did.startsWith("did:") ? did : identity?.did;
 
   const {
-    data: repostsData,
+    data: likesData,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -585,10 +588,27 @@ function SelfLikesTab({ did }: { did: string }) {
     "app.bsky.feed.like"
   );
 
-  const reposts = React.useMemo(
-    () => repostsData?.pages.flatMap((page) => page.records) ?? [],
-    [repostsData]
+  const likes = React.useMemo(
+    () => likesData?.pages.flatMap((page) => page.records) ?? [],
+    [likesData]
   );
+
+  const { setFastState } = useFastSetLikesFromFeed();
+  const seededRef = React.useRef(new Set<string>());
+
+  useEffect(() => {
+    for (const like of likes) {
+      if (!seededRef.current.has(like.uri)) {
+        seededRef.current.add(like.uri);
+        const record = like.value as unknown as ATPAPI.AppBskyFeedLike.Record;
+        setFastState(record.subject.uri, {
+          target: record.subject.uri,
+          uri: like.uri,
+          cid: like.cid,
+        });
+      }
+    }
+  }, [likes, setFastState]);
 
   return (
     <>
@@ -596,21 +616,21 @@ function SelfLikesTab({ did }: { did: string }) {
         Likes
       </div>
       <div>
-        {reposts.map((repost) => {
+        {likes.map((like) => {
           if (
-            !repost ||
-            !repost?.value ||
-            !repost?.value?.subject ||
+            !like ||
+            !like?.value ||
+            !like?.value?.subject ||
             // @ts-expect-error blehhhhh
-            !repost?.value?.subject?.uri
+            !like?.value?.subject?.uri
           )
             return;
-          const repostRecord =
-            repost.value as unknown as ATPAPI.AppBskyFeedLike.Record;
+          const likeRecord =
+            like.value as unknown as ATPAPI.AppBskyFeedLike.Record;
           return (
             <UniversalPostRendererATURILoader
-              key={repostRecord.subject.uri}
-              atUri={repostRecord.subject.uri}
+              key={likeRecord.subject.uri}
+              atUri={likeRecord.subject.uri}
               feedviewpost={true}
             />
           );
@@ -618,8 +638,8 @@ function SelfLikesTab({ did }: { did: string }) {
       </div>
 
       {/* Loading and "Load More" states */}
-      {arePostsLoading && reposts.length === 0 && (
-        <div className="p-4 text-center text-gray-500">Loading posts...</div>
+      {arePostsLoading && likes.length === 0 && (
+        <div className="p-4 text-center text-gray-500">Loading likes...</div>
       )}
       {isFetchingNextPage && (
         <div className="p-4 text-center text-gray-500">Loading more...</div>
@@ -629,11 +649,11 @@ function SelfLikesTab({ did }: { did: string }) {
           onClick={() => fetchNextPage()}
           className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
         >
-          Load More Posts
+          Load More Likes
         </button>
       )}
-      {reposts.length === 0 && !arePostsLoading && (
-        <div className="p-4 text-center text-gray-500">No posts found.</div>
+      {likes.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No likes found.</div>
       )}
     </>
   );
