@@ -18,6 +18,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CallbackIndexRouteImport } from './routes/callback/index'
 import { Route as PathlessLayoutNestedLayoutRouteImport } from './routes/_pathlessLayout/_nested-layout'
 import { Route as ProfileDidIndexRouteImport } from './routes/profile.$did/index'
+import { Route as ProfileDidFollowsRouteImport } from './routes/profile.$did/follows'
+import { Route as ProfileDidFollowersRouteImport } from './routes/profile.$did/followers'
 import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
 import { Route as PathlessLayoutNestedLayoutRouteARouteImport } from './routes/_pathlessLayout/_nested-layout/route-a'
 import { Route as ProfileDidPostRkeyRouteImport } from './routes/profile.$did/post.$rkey'
@@ -69,6 +71,16 @@ const PathlessLayoutNestedLayoutRoute =
 const ProfileDidIndexRoute = ProfileDidIndexRouteImport.update({
   id: '/profile/$did/',
   path: '/profile/$did/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileDidFollowsRoute = ProfileDidFollowsRouteImport.update({
+  id: '/profile/$did/follows',
+  path: '/profile/$did/follows',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileDidFollowersRoute = ProfileDidFollowersRouteImport.update({
+  id: '/profile/$did/followers',
+  path: '/profile/$did/followers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PathlessLayoutNestedLayoutRouteBRoute =
@@ -127,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/callback': typeof CallbackIndexRoute
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
+  '/profile/$did/followers': typeof ProfileDidFollowersRoute
+  '/profile/$did/follows': typeof ProfileDidFollowsRoute
   '/profile/$did': typeof ProfileDidIndexRoute
   '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
@@ -144,6 +158,8 @@ export interface FileRoutesByTo {
   '/callback': typeof CallbackIndexRoute
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
+  '/profile/$did/followers': typeof ProfileDidFollowersRoute
+  '/profile/$did/follows': typeof ProfileDidFollowsRoute
   '/profile/$did': typeof ProfileDidIndexRoute
   '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
@@ -164,6 +180,8 @@ export interface FileRoutesById {
   '/callback/': typeof CallbackIndexRoute
   '/_pathlessLayout/_nested-layout/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/_pathlessLayout/_nested-layout/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
+  '/profile/$did/followers': typeof ProfileDidFollowersRoute
+  '/profile/$did/follows': typeof ProfileDidFollowsRoute
   '/profile/$did/': typeof ProfileDidIndexRoute
   '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
@@ -183,6 +201,8 @@ export interface FileRouteTypes {
     | '/callback'
     | '/route-a'
     | '/route-b'
+    | '/profile/$did/followers'
+    | '/profile/$did/follows'
     | '/profile/$did'
     | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
@@ -200,6 +220,8 @@ export interface FileRouteTypes {
     | '/callback'
     | '/route-a'
     | '/route-b'
+    | '/profile/$did/followers'
+    | '/profile/$did/follows'
     | '/profile/$did'
     | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
@@ -219,6 +241,8 @@ export interface FileRouteTypes {
     | '/callback/'
     | '/_pathlessLayout/_nested-layout/route-a'
     | '/_pathlessLayout/_nested-layout/route-b'
+    | '/profile/$did/followers'
+    | '/profile/$did/follows'
     | '/profile/$did/'
     | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
@@ -236,6 +260,8 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   CallbackIndexRoute: typeof CallbackIndexRoute
+  ProfileDidFollowersRoute: typeof ProfileDidFollowersRoute
+  ProfileDidFollowsRoute: typeof ProfileDidFollowsRoute
   ProfileDidIndexRoute: typeof ProfileDidIndexRoute
   ProfileDidFeedRkeyRoute: typeof ProfileDidFeedRkeyRoute
   ProfileDidPostRkeyRoute: typeof ProfileDidPostRkeyRouteWithChildren
@@ -304,6 +330,20 @@ declare module '@tanstack/react-router' {
       path: '/profile/$did'
       fullPath: '/profile/$did'
       preLoaderRoute: typeof ProfileDidIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$did/follows': {
+      id: '/profile/$did/follows'
+      path: '/profile/$did/follows'
+      fullPath: '/profile/$did/follows'
+      preLoaderRoute: typeof ProfileDidFollowsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$did/followers': {
+      id: '/profile/$did/followers'
+      path: '/profile/$did/followers'
+      fullPath: '/profile/$did/followers'
+      preLoaderRoute: typeof ProfileDidFollowersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_pathlessLayout/_nested-layout/route-b': {
@@ -420,6 +460,8 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   CallbackIndexRoute: CallbackIndexRoute,
+  ProfileDidFollowersRoute: ProfileDidFollowersRoute,
+  ProfileDidFollowsRoute: ProfileDidFollowsRoute,
   ProfileDidIndexRoute: ProfileDidIndexRoute,
   ProfileDidFeedRkeyRoute: ProfileDidFeedRkeyRoute,
   ProfileDidPostRkeyRoute: ProfileDidPostRkeyRouteWithChildren,

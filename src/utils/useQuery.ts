@@ -284,6 +284,25 @@ export function constructConstellationQuery(query?:{
     gcTime: /*0//*/5 * 60 * 1000,
   });
 }
+// todo do more of these instead of overloads since overloads sucks so much apparently
+export function useQueryConstellationLinksCountDistinctDids(query?: {
+  method: "/links/count/distinct-dids";
+  target: string;
+  collection: string;
+  path: string;
+  cursor?: string;
+}): UseQueryResult<linksCountResponse, Error> | undefined {
+  //if (!query) return;
+  const [constellationurl] = useAtom(constellationURLAtom)
+  const queryres = useQuery(
+    constructConstellationQuery(query && {constellation: constellationurl, ...query})
+  ) as unknown as UseQueryResult<linksCountResponse, Error>;
+  if (!query) {
+    return undefined as undefined; 
+  }
+  return queryres as UseQueryResult<linksCountResponse, Error>;
+}
+
 export function useQueryConstellation(query: {
   method: "/links";
   target: string;

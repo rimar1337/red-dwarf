@@ -13,6 +13,7 @@ export const Route = createFileRoute("/profile/$did/feed/$rkey")({
   component: FeedRoute,
 });
 
+// todo: scroll restoration
 function FeedRoute() {
   const { did, rkey } = Route.useParams();
   const { agent, status } = useAuth();

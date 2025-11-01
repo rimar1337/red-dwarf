@@ -27,6 +27,7 @@ import {
   useInfiniteQueryAuthorFeed,
   useQueryArbitrary,
   useQueryConstellation,
+  useQueryConstellationLinksCountDistinctDids,
   useQueryIdentity,
   useQueryProfile,
 } from "~/utils/useQuery";
@@ -76,6 +77,15 @@ function ProfileComponent() {
   const description = profile?.description || "";
 
   const isReady = !!resolvedDid && !isIdentityLoading && !!profileRecord;
+
+  const resultwhateversure = useQueryConstellationLinksCountDistinctDids(resolvedDid ? {
+    method: "/links/count/distinct-dids",
+    collection: "app.bsky.graph.follow",
+    target: resolvedDid,
+    path: ".subject"
+  } : undefined)
+
+  const followercount = resultwhateversure?.data?.total;
 
   return (
     <div className="">
@@ -149,6 +159,11 @@ function ProfileComponent() {
           <div className="text-gray-500 dark:text-gray-400 text-base mb-3 flex flex-row gap-1">
             <Mutual targetdidorhandle={did} />
             {handle}
+          </div>
+          <div className="flex flex-row gap-2 text-md text-gray-500 dark:text-gray-400 mb-2">
+            <Link to="/profile/$did/followers" params={{did: did}}>{followercount && (<span className="mr-1 text-gray-900 dark:text-gray-200 font-medium">{followercount}</span>)}Followers</Link>
+            -
+            <Link to="/profile/$did/follows" params={{did: did}}>Follows</Link>
           </div>
           {description && (
             <div className="text-base leading-relaxed text-gray-800 dark:text-gray-300 mb-5 whitespace-pre-wrap break-words text-[15px]">

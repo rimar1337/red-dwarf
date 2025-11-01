@@ -132,20 +132,24 @@ function MentionsTab() {
   );
 }
 
-function FollowsTab() {
+export function FollowsTab({did}:{did?:string}) {
   const { agent } = useAuth();
+  const userdidunsafe = did ?? agent?.did;
+  const { data: identity} = useQueryIdentity(userdidunsafe);
+  const userdid = identity?.did;
+  
   const [constellationurl] = useAtom(constellationURLAtom);
   const infinitequeryresults = useInfiniteQuery({
     ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
       {
         constellation: constellationurl,
         method: "/links",
-        target: agent?.did,
+        target: userdid,
         collection: "app.bsky.graph.follow",
         path: ".subject",
       }
     ),
-    enabled: !!agent?.did,
+    enabled: !!userdid,
   });
 
   const {
