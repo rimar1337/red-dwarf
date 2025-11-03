@@ -32,6 +32,7 @@ import {
   useQueryIdentity,
   useQueryProfile,
 } from "~/utils/useQuery";
+import IconMdiShieldOutline from "~icons/mdi/shield-outline.jsx";
 
 import { renderSnack } from "../__root";
 import { Chip } from "../notifications";
@@ -51,6 +52,20 @@ function ProfileComponent() {
     isLoading: isIdentityLoading,
     error: identityError,
   } = useQueryIdentity(did);
+
+  // i was gonna check the did doc but useQueryIdentity doesnt return that info (slingshot minidoc)
+  // so instead we should query the labeler profile
+
+  const { data: labelerProfile } = useQueryArbitrary(
+    identity?.did
+      ? `at://${identity?.did}/app.bsky.labeler.service/self`
+      : undefined
+  );
+
+  const isLabeler = !!labelerProfile?.cid;
+  const labelerRecord = isLabeler
+    ? (labelerProfile?.value as ATPAPI.AppBskyLabelerService.Record)
+    : undefined;
 
   const resolvedDid = did.startsWith("did:") ? did : identity?.did;
   const resolvedHandle = did.startsWith("did:") ? identity?.handle : did;
@@ -141,11 +156,19 @@ function ProfileComponent() {
 
         {/* Avatar (PFP) */}
         <div className="absolute left-[16px] top-[100px] ">
-          <img
-            src={getAvatarUrl(profile) || "/favicon.png"}
-            alt="avatar"
-            className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700"
-          />
+          {!getAvatarUrl(profile) && isLabeler ? (
+            <div
+              className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} items-center justify-center flex object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700`}
+            >
+              <IconMdiShieldOutline className="w-20 h-20" />
+            </div>
+          ) : (
+            <img
+              src={getAvatarUrl(profile) || "/favicon.png"}
+              alt="avatar"
+              className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700`}
+            />
+          )}
         </div>
 
         <div className="absolute right-[16px] top-[170px] flex flex-row gap-2.5">
@@ -206,10 +229,17 @@ function ProfileComponent() {
         <ReusableTabRoute
           route={`Profile` + did}
           tabs={{
-            Posts: <PostsTab did={did} />,
-            Reposts: <RepostsTab did={did} />,
-            Feeds: <FeedsTab did={did} />,
-            Lists: <ListsTab did={did} />,
+            ...(isLabeler
+              ? {
+                  Labels: <LabelsTab did={did} labelerRecord={labelerRecord} />,
+                }
+              : {}),
+            ...{
+              Posts: <PostsTab did={did} />,
+              Reposts: <RepostsTab did={did} />,
+              Feeds: <FeedsTab did={did} />,
+              Lists: <ListsTab did={did} />,
+            },
             ...(identity?.did === agent?.did
               ? { Likes: <SelfLikesTab did={did} /> }
               : {}),
@@ -529,6 +559,86 @@ function FeedsTab({ did }: { did: string }) {
       {feeds.length === 0 && !arePostsLoading && (
         <div className="p-4 text-center text-gray-500">No feeds found.</div>
       )}
+    </>
+  );
+}
+
+function LabelsTab({
+  did,
+  labelerRecord,
+}: {
+  did: string;
+  labelerRecord?: ATPAPI.AppBskyLabelerService.Record;
+}) {
+  useReusableTabScrollRestore(`Profile` + did);
+  const { agent } = useAuth();
+  // const {
+  //   data: identity,
+  //   isLoading: isIdentityLoading,
+  //   error: identityError,
+  // } = useQueryIdentity(did);
+
+  // const resolvedDid = did.startsWith("did:") ? did : identity?.did;
+
+  const labelMap = new Map(
+    labelerRecord?.policies?.labelValueDefinitions?.map((def) => {
+      const locale = def.locales.find((l) => l.lang === "en") ?? def.locales[0];
+      return [
+        def.identifier,
+        {
+          name: locale?.name,
+          description: locale?.description,
+          blur: def.blurs,
+          severity: def.severity,
+          adultOnly: def.adultOnly,
+          defaultSetting: def.defaultSetting,
+        },
+      ];
+    })
+  );
+
+  return (
+    <>
+      <div className="text-gray-500 dark:text-gray-400 text-lg font-semibold my-3 mx-4">
+        Labels
+      </div>
+      <div>
+        {[...labelMap.entries()].map(([key, item]) => (
+          <div
+            key={key}
+            className="border-gray-300 dark:border-gray-700 border-b px-4 py-4"
+          >
+            <div className="font-semibold text-lg">{item.name}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {item.description}
+            </div>
+            <div className="mt-1 text-xs text-gray-400">
+              {item.blur && <span>Blur: {item.blur} </span>}
+              {item.severity && <span>• Severity: {item.severity} </span>}
+              {item.adultOnly && <span>• 18+ only</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Loading and "Load More" states */}
+      {!labelerRecord && (
+        <div className="p-4 text-center text-gray-500">Loading labels...</div>
+      )}
+      {/* {!labelerRecord && (
+        <div className="p-4 text-center text-gray-500">Loading more...</div>
+      )} */}
+      {/* {hasNextPage && !isFetchingNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold"
+        >
+          Load More Feeds
+        </button>
+      )}
+      {feeds.length === 0 && !arePostsLoading && (
+        <div className="p-4 text-center text-gray-500">No feeds found.</div>
+      )} */}
     </>
   );
 }

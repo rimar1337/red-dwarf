@@ -213,6 +213,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isSettings = location.pathname.startsWith("/settings");
   const isSearch = location.pathname.startsWith("/search");
   const isFeeds = location.pathname.startsWith("/feeds");
+  const isModeration = location.pathname.startsWith("/moderation");
 
   const locationEnum:
     | "feeds"
@@ -220,6 +221,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     | "settings"
     | "notifications"
     | "profile"
+    | "moderation"
     | "home" = isFeeds
     ? "feeds"
     : isSearch
@@ -230,7 +232,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ? "notifications"
           : isProfile
             ? "profile"
-            : "home";
+            : isModeration 
+              ? "moderation"
+              : "home";
 
   const [, setComposerPost] = useAtom(composerAtom);
 
@@ -309,6 +313,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               })
             }
             text="Feeds"
+          />
+          <MaterialNavItem
+            InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
+            ActiveIcon={<IconMdiShield className="w-6 h-6" />}
+            active={locationEnum === "moderation"}
+            onClickCallbback={() =>
+              navigate({
+                to: "/moderation",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Moderation"
           />
           <MaterialNavItem
             InactiveIcon={
@@ -555,6 +571,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
           <MaterialNavItem
             small
+            InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
+            ActiveIcon={<IconMdiShield className="w-6 h-6" />}
+            active={locationEnum === "moderation"}
+            onClickCallbback={() =>
+              navigate({
+                to: "/moderation",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Moderation"
+          />
+          <MaterialNavItem
+            small
             InactiveIcon={
               <IconMaterialSymbolsAccountCircleOutline className="w-6 h-6" />
             }
@@ -778,7 +807,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <IconMaterialSymbolsSettingsOutline className="w-6 h-6" />
               }
               ActiveIcon={<IconMaterialSymbolsSettings className="w-6 h-6" />}
-              active={locationEnum === "settings"}
+              active={locationEnum === "settings" || locationEnum === "feeds" || locationEnum === "moderation"}
               onClickCallbback={() =>
                 navigate({
                   to: "/settings",
@@ -833,7 +862,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MaterialNavItem({
+export function MaterialNavItem({
   InactiveIcon,
   ActiveIcon,
   text,

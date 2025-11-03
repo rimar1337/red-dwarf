@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Slider, Switch } from "radix-ui";
 import { useEffect, useState } from "react";
@@ -21,11 +21,14 @@ import {
   videoCDNAtom,
 } from "~/utils/atoms";
 
+import { MaterialNavItem } from "./__root";
+
 export const Route = createFileRoute("/settings")({
   component: Settings,
 });
 
 export function Settings() {
+  const navigate = useNavigate();
   return (
     <>
       <Header
@@ -40,6 +43,33 @@ export function Settings() {
       />
       <div className="lg:hidden">
         <Login />
+      </div>
+      <div className="sm:hidden flex flex-col justify-around mt-4">
+        <SettingHeading title="Other Pages" top />
+        <MaterialNavItem
+          InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
+          ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
+          active={false}
+          onClickCallbback={() =>
+            navigate({
+              to: "/feeds",
+              //params: { did: agent.assertDid },
+            })
+          }
+          text="Feeds"
+        />
+        <MaterialNavItem
+          InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
+          ActiveIcon={<IconMdiShield className="w-6 h-6" />}
+          active={false}
+          onClickCallbback={() =>
+            navigate({
+              to: "/moderation",
+              //params: { did: agent.assertDid },
+            })
+          }
+          text="Moderation"
+        />
       </div>
       <div className="h-4" />
 
@@ -102,9 +132,7 @@ export function Settings() {
       <SwitchSetting
         atom={enableWafrnTextAtom}
         title={"Wafrn Text"}
-        description={
-          "Show the original text of posts from Wafrn instances"
-        }
+        description={"Show the original text of posts from Wafrn instances"}
         //init={false}
       />
       <p className="text-gray-500 dark:text-gray-400 py-4 px-4 text-sm border rounded-xl mx-4 mt-8 mb-4">

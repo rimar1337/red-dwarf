@@ -23,4 +23,6 @@ declare global {
   const IconMdiClose: typeof import('~icons/mdi/close.jsx').default
   const IconMdiMessageReplyTextOutline: typeof import('~icons/mdi/message-reply-text-outline.jsx').default
   const IconMdiPencilOutline: typeof import('~icons/mdi/pencil-outline.jsx').default
+  const IconMdiShield: typeof import('~icons/mdi/shield.jsx').default
+  const IconMdiShieldOutline: typeof import('~icons/mdi/shield-outline.jsx').default
 }

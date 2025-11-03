@@ -572,7 +572,7 @@ function InteractionsButton({
   );
 }
 
-export function NotificationItem({ notification }: { notification: string }) {
+export function NotificationItem({ notification, labeler }: { notification: string, labeler?: boolean }) {
   const aturi = new AtUri(notification);
   const bite = aturi.collection === "net.wafrn.feed.bite";
   const navigate = useNavigate();
@@ -618,7 +618,7 @@ export function NotificationItem({ notification }: { notification: string }) {
         <img
           src={avatar || defaultpfp}
           alt={identity?.handle}
-          className="w-10 h-10 rounded-full"
+          className={`w-10 h-10 ${labeler ? "rounded-md" : "rounded-full"}`}
         />
       ) : (
         <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700" />
