@@ -1,4 +1,4 @@
-import * as ATPAPI from "@atproto/api"
+import * as ATPAPI from "@atproto/api";
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
@@ -10,6 +10,8 @@ import { type SVGProps } from "react";
 import {
   composerAtom,
   constellationURLAtom,
+  enableBridgyTextAtom,
+  enableWafrnTextAtom,
   imgCDNAtom,
 } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
@@ -162,7 +164,7 @@ export function UniversalPostRendererATURILoader({
   isQuote,
   filterNoReplies,
   filterMustHaveMedia,
-  filterMustBeReply
+  filterMustBeReply,
 }: UniversalPostRendererATURILoaderProps) {
   // todo remove this once tree rendering is implemented, use a prop like isTree
   const TEMPLINEAR = true;
@@ -526,7 +528,9 @@ export function UniversalPostRendererATURILoader({
             ? true
             : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
               ? false
-              : (maxReplies === 0 && (!replies || (!!replies && replies === 0))) ? false : bottomReplyLine
+              : maxReplies === 0 && (!replies || (!!replies && replies === 0))
+                ? false
+                : bottomReplyLine
         }
         topReplyLine={topReplyLine}
         //bottomBorder={maxReplies&&oldestOpsReplyElseNewestNonOpsReply ? false : bottomBorder}
@@ -553,12 +557,14 @@ export function UniversalPostRendererATURILoader({
         filterMustBeReply={filterMustBeReply}
       />
       <>
-        {(maxReplies && maxReplies === 0 && replies && replies > 0) ? (
+        {maxReplies && maxReplies === 0 && replies && replies > 0 ? (
           <>
-          {/* <div>hello</div> */}
-          <MoreReplies atUri={atUri} />
+            {/* <div>hello</div> */}
+            <MoreReplies atUri={atUri} />
           </>
-        ) : (<></>)}
+        ) : (
+          <></>
+        )}
       </>
       {!isQuote && oldestOpsReplyElseNewestNonOpsReply && (
         <>
@@ -755,10 +761,18 @@ export function UniversalPostRendererRawRecordShim({
   const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
   const hasVideo = hasEmbed?.$type === "app.bsky.embed.video";
   const isquotewithmedia = hasEmbed?.$type === "app.bsky.embed.recordWithMedia";
-  const isQuotewithImages = isquotewithmedia && (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type === "app.bsky.embed.images";
-  const isQuotewithVideo = isquotewithmedia && (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type === "app.bsky.embed.video";
+  const isQuotewithImages =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.images";
+  const isQuotewithVideo =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.video";
 
-  const hasMedia = hasEmbed && (hasImages || hasVideo || isQuotewithImages || isQuotewithVideo);
+  const hasMedia =
+    hasEmbed &&
+    (hasImages || hasVideo || isQuotewithImages || isQuotewithVideo);
 
   const {
     data: hydratedEmbed,
@@ -854,7 +868,8 @@ export function UniversalPostRendererRawRecordShim({
   // }, [fakepost, get, set]);
   const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent
     ?.uri;
-  const feedviewpostreplydid = thereply&&!filterNoReplies ? new AtUri(thereply).host : undefined;
+  const feedviewpostreplydid =
+    thereply && !filterNoReplies ? new AtUri(thereply).host : undefined;
   const replyhookvalue = useQueryIdentity(
     feedviewpost ? feedviewpostreplydid : undefined
   );
@@ -1237,7 +1252,11 @@ import ReactPlayer from "react-player";
 
 import defaultpfp from "~/../public/favicon.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { FeedItemRenderAturiLoader, FollowButton, Mutual } from "~/routes/profile.$did";
+import {
+  FeedItemRenderAturiLoader,
+  FollowButton,
+  Mutual,
+} from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 import { useFastLike } from "~/utils/likeMutationQueue";
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
@@ -1446,8 +1465,44 @@ function UniversalPostRenderer({
     : undefined;
 
   const emergencySalt = randomString();
-  const fedi = (post.record as { bridgyOriginalText?: string })
+
+  const [showBridgyText] = useAtom(enableBridgyTextAtom);
+  const [showWafrnText] = useAtom(enableWafrnTextAtom);
+
+  const unfedibridgy = (post.record as { bridgyOriginalText?: string })
     .bridgyOriginalText;
+  const unfediwafrnPartial = (post.record as { fullText?: string }).fullText;
+  const unfediwafrnTags = (post.record as { fullTags?: string }).fullTags;
+  const unfediwafrnUnHost = (post.record as { fediverseId?: string })
+    .fediverseId;
+
+  const undfediwafrnHost = unfediwafrnUnHost
+    ? new URL(unfediwafrnUnHost).hostname
+    : undefined;
+
+  const tags = unfediwafrnTags
+    ? unfediwafrnTags
+        .split("\n")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : undefined;
+
+  const links = tags
+    ? tags
+        .map((tag) => {
+          const encoded = encodeURIComponent(tag);
+          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(' ','-')}</a>`;
+        })
+        .join("<br>")
+    : "";
+
+  const unfediwafrn = unfediwafrnPartial
+    ? unfediwafrnPartial + (links ? `<br>${links}` : "")
+    : undefined;
+
+  const fedi =
+    (showBridgyText ? unfedibridgy : undefined) ??
+    (showWafrnText ? unfediwafrn : undefined);
 
   /* fuck you */
   const isMainItem = false;
@@ -1586,7 +1641,8 @@ function UniversalPostRenderer({
                       {post.author.displayName || post.author.handle}{" "}
                     </div>
                     <div className="text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1">
-                      <Mutual targetdidorhandle={post.author.did} />@{post.author.handle}{" "} 
+                      <Mutual targetdidorhandle={post.author.did} />@
+                      {post.author.handle}{" "}
                     </div>
                   </div>
                   {uprrrsauthor?.description && (
@@ -1834,7 +1890,11 @@ function UniversalPostRenderer({
                 </div>
               </>
             )}
-            <div style={{ paddingTop: post.embed && !concise && depth < 1 ? 4 : 0 }}>
+            <div
+              style={{
+                paddingTop: post.embed && !concise && depth < 1 ? 4 : 0,
+              }}
+            >
               <>
                 {expanded && (
                   <div
@@ -2203,8 +2263,16 @@ function PostEmbeds({
       //     <MaybeFeedCard view={embed.record} />
       //   </div>
       // )
-    } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.feed.generator") {
-      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder/></div>
+    } else if (
+      !!reallybaduri &&
+      !!reallybadaturi &&
+      reallybadaturi.collection === "app.bsky.feed.generator"
+    ) {
+      return (
+        <div className="rounded-xl border">
+          <FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder />
+        </div>
+      );
     }
 
     // list embed
@@ -2216,8 +2284,21 @@ function PostEmbeds({
       //     <MaybeListCard view={embed.record} />
       //   </div>
       // )
-    } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.graph.list") {
-      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode disablePropagation /></div>
+    } else if (
+      !!reallybaduri &&
+      !!reallybadaturi &&
+      reallybadaturi.collection === "app.bsky.graph.list"
+    ) {
+      return (
+        <div className="rounded-xl border">
+          <FeedItemRenderAturiLoader
+            aturi={reallybaduri}
+            disableBottomBorder
+            listmode
+            disablePropagation
+          />
+        </div>
+      );
     }
 
     // starter pack embed
@@ -2229,8 +2310,21 @@ function PostEmbeds({
       //     <StarterPackCard starterPack={embed.record} />
       //   </div>
       // )
-    } else if (!!reallybaduri && !!reallybadaturi && reallybadaturi.collection === "app.bsky.graph.starterpack") {
-      return <div className="rounded-xl border"><FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder listmode disablePropagation /></div>
+    } else if (
+      !!reallybaduri &&
+      !!reallybadaturi &&
+      reallybadaturi.collection === "app.bsky.graph.starterpack"
+    ) {
+      return (
+        <div className="rounded-xl border">
+          <FeedItemRenderAturiLoader
+            aturi={reallybaduri}
+            disableBottomBorder
+            listmode
+            disablePropagation
+          />
+        </div>
+      );
     }
 
     // quote post

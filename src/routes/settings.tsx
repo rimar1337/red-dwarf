@@ -13,6 +13,8 @@ import {
   defaultslingshotURL,
   defaultVideoCDN,
   enableBitesAtom,
+  enableBridgyTextAtom,
+  enableWafrnTextAtom,
   hueAtom,
   imgCDNAtom,
   slingshotURLAtom,
@@ -84,7 +86,25 @@ export function Settings() {
       <SwitchSetting
         atom={enableBitesAtom}
         title={"Bites"}
-        description={"Enable Wafrn Bites to bite other people"}
+        description={"Enable Wafrn Bites to bite and be bitten by other people"}
+        //init={false}
+      />
+      <div className="h-4" />
+      <SwitchSetting
+        atom={enableBridgyTextAtom}
+        title={"Bridgy Text"}
+        description={
+          "Show the original text of posts bridged from the Fediverse"
+        }
+        //init={false}
+      />
+      <div className="h-4" />
+      <SwitchSetting
+        atom={enableWafrnTextAtom}
+        title={"Wafrn Text"}
+        description={
+          "Show the original text of posts from Wafrn instances"
+        }
         //init={false}
       />
       <p className="text-gray-500 dark:text-gray-400 py-4 px-4 text-sm border rounded-xl mx-4 mt-8 mb-4">
@@ -137,19 +157,17 @@ export function SwitchSetting({
 
   return (
     <div className="flex items-center gap-4 px-4 ">
-      <div className="flex flex-col">
-        <label htmlFor="switch-demo" className="text-md">
-          {title}
-        </label>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {description}
-        </span>
-      </div>
-
-      <div className="flex-1" />
+      <label htmlFor={`switch-${title}`} className="flex flex-row flex-1">
+        <div className="flex flex-col">
+          <span className="text-md">{title}</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {description}
+          </span>
+        </div>
+      </label>
 
       <Switch.Root
-        id="switch-demo"
+        id={`switch-${title}`}
         checked={value}
         onCheckedChange={(v) => setValue(v)}
         className="m3switch root"

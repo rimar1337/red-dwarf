@@ -137,3 +137,13 @@ export const enableBitesAtom = atomWithStorage<boolean>(
   "enableBitesAtom",
   false
 );
+
+export const enableBridgyTextAtom = atomWithStorage<boolean>(
+  "enableBridgyTextAtom",
+  false
+);
+
+export const enableWafrnTextAtom = atomWithStorage<boolean>(
+  "enableWafrnTextAtom",
+  false
+);
