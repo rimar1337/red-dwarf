@@ -128,3 +128,12 @@ hueAtom.onMount = (setAtom) => {
 //   console.log("atom get ", initial);
 //   document.documentElement.style.setProperty(cssVar, initial.toString());
 // }
+
+
+
+// fun stuff
+
+export const enableBitesAtom = atomWithStorage<boolean>(
+  "enableBitesAtom",
+  false
+);

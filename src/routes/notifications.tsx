@@ -19,6 +19,7 @@ import {
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
   constellationURLAtom,
+  enableBitesAtom,
   imgCDNAtom,
   postInteractionsFiltersAtom,
 } from "~/utils/atoms";
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/notifications")({
 });
 
 export default function NotificationsTabs() {
+  const [bitesEnabled] = useAtom(enableBitesAtom);
   return (
     <ReusableTabRoute
       route={`Notifications`}
@@ -63,6 +65,9 @@ export default function NotificationsTabs() {
         Mentions: <MentionsTab />,
         Follows: <FollowsTab />,
         "Post Interactions": <PostInteractionsTab />,
+        ...bitesEnabled ? {
+          Bites: <BitesTab />,
+        } : {}
       }}
     />
   );
@@ -180,6 +185,76 @@ export function FollowsTab({did}:{did?:string}) {
   if (isError) return <ErrorState error={error} />;
 
   if (!followsAturis?.length) return <EmptyState text="No follows yet." />;
+
+  return (
+    <>
+      {followsAturis.map((m) => (
+        <NotificationItem key={m} notification={m} />
+      ))}
+
+      {hasNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
+          className="w-[calc(100%-2rem)] mx-4 my-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold disabled:opacity-50"
+        >
+          {isFetchingNextPage ? "Loading..." : "Load More"}
+        </button>
+      )}
+    </>
+  );
+}
+
+
+export function BitesTab({did}:{did?:string}) {
+  const { agent } = useAuth();
+  const userdidunsafe = did ?? agent?.did;
+  const { data: identity} = useQueryIdentity(userdidunsafe);
+  const userdid = identity?.did;
+  
+  const [constellationurl] = useAtom(constellationURLAtom);
+  const infinitequeryresults = useInfiniteQuery({
+    ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
+      {
+        constellation: constellationurl,
+        method: "/links",
+        target: "at://"+userdid,
+        collection: "net.wafrn.feed.bite",
+        path: ".subject",
+        staleMult: 0 // safe fun
+      }
+    ),
+    enabled: !!userdid,
+  });
+
+  const {
+    data: infiniteFollowsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = infinitequeryresults;
+
+  const followsAturis = React.useMemo(() => {
+    // Get all replies from the standard infinite query
+    return (
+      infiniteFollowsData?.pages.flatMap(
+        (page) =>
+          page?.linking_records.map(
+            (r) => `at://${r.did}/${r.collection}/${r.rkey}`
+          ) ?? []
+      ) ?? []
+    );
+  }, [infiniteFollowsData]);
+
+  useReusableTabScrollRestore("Notifications");
+
+  if (isLoading) return <LoadingState text="Loading bites..." />;
+  if (isError) return <ErrorState error={error} />;
+
+  if (!followsAturis?.length) return <EmptyState text="No bites yet." />;
 
   return (
     <>
@@ -499,6 +574,7 @@ function InteractionsButton({
 
 export function NotificationItem({ notification }: { notification: string }) {
   const aturi = new AtUri(notification);
+  const bite = aturi.collection === "net.wafrn.feed.bite";
   const navigate = useNavigate();
   const { data: identity } = useQueryIdentity(aturi.host);
   const resolvedDid = identity?.did;

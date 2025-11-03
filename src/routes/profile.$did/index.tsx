@@ -1,5 +1,6 @@
-import { RichText } from "@atproto/api";
+import { Agent, RichText } from "@atproto/api";
 import * as ATPAPI from "@atproto/api";
+import { TID } from "@atproto/common-web";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
@@ -16,7 +17,7 @@ import {
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
+import { enableBitesAtom, imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
 import {
   toggleFollow,
   useGetFollowState,
@@ -143,6 +144,7 @@ function ProfileComponent() {
         </div>
 
         <div className="absolute right-[16px] top-[170px] flex flex-row gap-2.5">
+          <BiteButton targetdidorhandle={did} />
           {/* 
             todo: full follow and unfollow backfill (along with partial likes backfill, 
             just enough for it to be useful) 
@@ -810,6 +812,60 @@ export function FollowButton({
     </>
   );
 }
+
+export function BiteButton({
+  targetdidorhandle,
+}: {
+  targetdidorhandle: string;
+}) {
+  const { agent } = useAuth();
+  const { data: identity } = useQueryIdentity(targetdidorhandle);
+  const [show] = useAtom(enableBitesAtom);
+
+  if (!show) return
+
+  return (
+    <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          sendBite({
+            agent: agent || undefined,
+            targetDid: identity?.did,
+          });
+        }}
+        className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+      >
+        Bite
+      </button>
+    </>
+  );
+}
+
+function sendBite({
+  agent,
+  targetDid,
+}: {
+  agent?: Agent;
+  targetDid?: string;
+}) {
+  if (!agent?.did || !targetDid) return;
+  const newRecord = {
+    repo: agent.did,
+    collection: "net.wafrn.feed.bite",
+    rkey: TID.next().toString(),
+    record: {
+      $type: "net.wafrn.feed.bite",
+      subject: "at://"+targetDid,
+      createdAt: new Date().toISOString(),
+    },
+  };
+
+  agent.com.atproto.repo.createRecord(newRecord).catch((err) => {
+    console.error("Bite failed:", err);
+  });
+}
+
 
 export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
   const { agent } = useAuth();

@@ -654,8 +654,10 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
   method: '/links'
   target?: string
   collection: string
-  path: string
+  path: string,
+  staleMult?: number
 }) {
+  const safemult = query?.staleMult || 1;
   // console.log(
   //   'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
   //   query,
@@ -697,7 +699,7 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
       return (lastPage as any)?.cursor ?? undefined
     },
     initialPageParam: undefined,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000 * safemult,
+    gcTime: 5 * 60 * 1000 * safemult,
   })
 }

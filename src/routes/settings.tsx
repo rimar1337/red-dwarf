@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAtom } from "jotai";
-import { Slider } from "radix-ui";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { Slider, Switch } from "radix-ui";
+import { useEffect,useState } from "react";
 
 import { Header } from "~/components/Header";
 import Login from "~/components/Login";
@@ -11,6 +12,7 @@ import {
   defaultImgCDN,
   defaultslingshotURL,
   defaultVideoCDN,
+  enableBitesAtom,
   hueAtom,
   imgCDNAtom,
   slingshotURLAtom,
@@ -68,12 +70,63 @@ export function Settings() {
       />
 
       <Hue />
+      <SwitchSetting
+        atom={enableBitesAtom}
+        title={"Bites"}
+        description={"Enable Wafrn Bites"}
+        //init={false}
+        />
       <p className="text-gray-500 dark:text-gray-400 py-4 px-6 text-sm">
         please restart/refresh the app if changes arent applying correctly
       </p>
     </>
   );
 }
+
+export function SwitchSetting({
+  atom,
+  title,
+  description,
+}: {
+  atom: typeof enableBitesAtom;
+  title?: string;
+  description?: string;
+}) {
+  const value = useAtomValue(atom);
+  const setValue = useSetAtom(atom);
+
+  const [hydrated, setHydrated] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setHydrated(true), []);
+
+  if (!hydrated) {
+    // Avoid rendering Switch until we know storage is loaded
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-2">
+      <div className="flex flex-col">
+        <label htmlFor="switch-demo" className="text-lg">
+          {title}
+        </label>
+        <span className="text-sm">{description}</span>
+      </div>
+
+      <Switch.Root
+        id="switch-demo"
+        checked={value}
+        onCheckedChange={(v) => setValue(v)}
+        className="w-10 h-6 bg-gray-300 rounded-full relative data-[state=checked]:bg-blue-500 transition-colors"
+      >
+        <Switch.Thumb
+          className="block w-5 h-5 bg-white rounded-full shadow-sm transition-transform translate-x-[2px] data-[state=checked]:translate-x-[20px]"
+        />
+      </Switch.Root>
+    </div>
+  );
+}
+
 function Hue() {
   const [hue, setHue] = useAtom(hueAtom);
   return (
