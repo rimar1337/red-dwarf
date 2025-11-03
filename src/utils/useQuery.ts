@@ -657,7 +657,7 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
   path: string,
   staleMult?: number
 }) {
-  const safemult = query?.staleMult || 1;
+  const safemult = query?.staleMult ?? 1;
   // console.log(
   //   'yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks',
   //   query,
