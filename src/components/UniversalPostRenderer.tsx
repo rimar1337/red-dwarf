@@ -2818,7 +2818,7 @@ export function renderTextWithFacets({
           className="link"
           style={{
             textDecoration: "none",
-            color: "rgb(29, 122, 242)",
+            color: "var(--link-text-color)",
             wordBreak: "break-all",
           }}
           target="_blank"
@@ -2838,7 +2838,7 @@ export function renderTextWithFacets({
       result.push(
         <span
           key={start}
-          style={{ color: "rgb(29, 122, 242)" }}
+          style={{ color: "var(--link-text-color)" }}
           className=" cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
@@ -2856,7 +2856,7 @@ export function renderTextWithFacets({
       result.push(
         <span
           key={start}
-          style={{ color: "rgb(29, 122, 242)" }}
+          style={{ color: "var(--link-text-color)" }}
           onClick={(e) => {
             e.stopPropagation();
           }}

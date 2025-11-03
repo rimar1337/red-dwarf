@@ -33,6 +33,12 @@
   --color-gray-950: oklch(0.129 0.055 var(--safe-hue));
 }
 
+:root {
+  --link-text-color: oklch(0.5962 0.1987 var(--safe-hue));
+  /* max chroma!!! use fallback*/
+  /*--link-text-color: oklch(0.6 0.37 var(--safe-hue));*/
+}
+
 @layer base {
   html {
     color-scheme: light dark;
@@ -84,7 +90,7 @@
 .dangerousFediContent {
   & a[href]{
     text-decoration: none;
-    color: rgb(29, 122, 242);
+    color: var(--link-text-color);
     word-break: break-all;
   }
 }
