@@ -13,6 +13,9 @@ import { generateMetadataPlugin } from "./oauthdev.mts";
 const PROD_URL = "https://reddwarf.app"
 const DEV_URL = "https://local3768forumtest.whey.party"
 
+const PROD_HANDLE_RESOLVER_PDS = "https://pds-nd.whey.party"
+const DEV_HANDLE_RESOLVER_PDS = "https://bsky.social"
+
 function shp(url: string): string {
   return url.replace(/^https?:\/\//, '');
 }
@@ -23,6 +26,8 @@ export default defineConfig({
     generateMetadataPlugin({
       prod: PROD_URL,
       dev: DEV_URL,
+      prodResolver: PROD_HANDLE_RESOLVER_PDS,
+      devResolver: DEV_HANDLE_RESOLVER_PDS,
     }),
     TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact({

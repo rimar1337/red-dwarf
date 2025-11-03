@@ -38,6 +38,7 @@ export function generateMetadataPlugin({
   return {
     name: "vite-plugin-generate-metadata",
     config(_config: any, { mode }: any) {
+      console.log('💡 vite mode =', mode)
       let appOrigin, resolver;
       if (mode === "production") {
         appOrigin = prod;
