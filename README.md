@@ -15,6 +15,15 @@ the PROD_URL is what will compile your oauth client metadata so it is very impor
 
 run dev with `npm run dev` (port 3768) and build with `npm run build` (the output is the `dist` folder)
 
+
+
+you probably dont need to change these
+```ts
+const PROD_HANDLE_RESOLVER_PDS = "https://pds-nd.whey.party"
+const DEV_HANDLE_RESOLVER_PDS = "https://bsky.social"
+```
+if you do want to change these, i recommend changing both of these to your own PDS url. i separate the prod and dev urls so that you can change it as needed. here i separated it because if the prod resolver and prod url shares the same domain itll error and prevent logins
+
 ## useQuery
 Red Dwarf has been upgraded from its original bespoke caching system to Tanstack Query (react query). this migration was done to achieve a more robust and maintainable approach to data fetching and caching and state synchronization. ive seen serious performance gains from this switch! 
 

@@ -8,3 +8,4 @@ count.txt
 .nitro
 .tanstack
 public/client-metadata.json
+public/resolvers.json
