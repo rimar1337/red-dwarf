@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Slider, Switch } from "radix-ui";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Header } from "~/components/Header";
 import Login from "~/components/Login";
@@ -40,6 +40,17 @@ export function Settings() {
         <Login />
       </div>
       <div className="h-4" />
+
+      <SettingHeading title="Personalization" top />
+      <Hue />
+
+      <SettingHeading title="Network Configuration" />
+      <div className="flex flex-col px-4 pb-2">
+        <span className="text-md">Service Endpoints</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          Customize the servers to be used by the app
+        </span>
+      </div>
       <TextInputSetting
         atom={constellationURLAtom}
         title={"Constellation"}
@@ -69,17 +80,37 @@ export function Settings() {
         init={defaultVideoCDN}
       />
 
-      <Hue />
+      <SettingHeading title="Experimental" />
       <SwitchSetting
         atom={enableBitesAtom}
         title={"Bites"}
-        description={"Enable Wafrn Bites"}
+        description={"Enable Wafrn Bites to bite other people"}
         //init={false}
-        />
-      <p className="text-gray-500 dark:text-gray-400 py-4 px-6 text-sm">
-        please restart/refresh the app if changes arent applying correctly
+      />
+      <p className="text-gray-500 dark:text-gray-400 py-4 px-4 text-sm border rounded-xl mx-4 mt-8 mb-4">
+        Notice: Please restart/refresh the app if changes arent applying
+        correctly
       </p>
     </>
+  );
+}
+
+export function SettingHeading({
+  title,
+  top,
+}: {
+  title: string;
+  top?: boolean;
+}) {
+  return (
+    <div
+      className="px-4"
+      style={{ marginTop: top ? 0 : 18, paddingBottom: 12 }}
+    >
+      <span className=" text-sm font-medium text-gray-500 dark:text-gray-400">
+        {title}
+      </span>
+    </div>
   );
 }
 
@@ -105,23 +136,25 @@ export function SwitchSetting({
   }
 
   return (
-    <div className="flex items-center gap-4 px-4 py-2">
+    <div className="flex items-center gap-4 px-4 ">
       <div className="flex flex-col">
-        <label htmlFor="switch-demo" className="text-lg">
+        <label htmlFor="switch-demo" className="text-md">
           {title}
         </label>
-        <span className="text-sm">{description}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {description}
+        </span>
       </div>
+
+      <div className="flex-1" />
 
       <Switch.Root
         id="switch-demo"
         checked={value}
         onCheckedChange={(v) => setValue(v)}
-        className="w-10 h-6 bg-gray-300 rounded-full relative data-[state=checked]:bg-blue-500 transition-colors"
+        className="m3switch root"
       >
-        <Switch.Thumb
-          className="block w-5 h-5 bg-white rounded-full shadow-sm transition-transform translate-x-[2px] data-[state=checked]:translate-x-[20px]"
-        />
+        <Switch.Thumb className="m3switch thumb " />
       </Switch.Root>
     </div>
   );
@@ -130,13 +163,13 @@ export function SwitchSetting({
 function Hue() {
   const [hue, setHue] = useAtom(hueAtom);
   return (
-    <div className="flex flex-col px-4 mt-4 ">
-      <span className="z-10">Hue</span>
-      <div className="flex flex-row items-center gap-4">
-        <SliderComponent
-          atom={hueAtom}
-          max={360}
-        />
+    <div className="flex flex-col px-4">
+      <span className="z-[2] text-md">Hue</span>
+      <span className="z-[2] text-sm text-gray-500 dark:text-gray-400">
+        Change the colors of the app
+      </span>
+      <div className="z-[1] flex flex-row items-center gap-4">
+        <SliderComponent atom={hueAtom} max={360} />
         <button
           onClick={() => setHue(defaulthue ?? 28)}
           className="px-6 py-2 h-12 rounded-full bg-gray-100 dark:bg-gray-800 
@@ -207,7 +240,6 @@ export function TextInputSetting({
   );
 }
 
-
 interface SliderProps {
   atom: typeof hueAtom;
   min?: number;
@@ -221,8 +253,7 @@ export const SliderComponent: React.FC<SliderProps> = ({
   max = 100,
   step = 1,
 }) => {
-
-  const [value, setValue] = useAtom(atom)
+  const [value, setValue] = useAtom(atom);
 
   return (
     <Slider.Root
