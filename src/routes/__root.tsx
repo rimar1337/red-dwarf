@@ -14,6 +14,8 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useAtom } from "jotai";
 import * as React from "react";
+import { toast as sonnerToast } from "sonner";
+import { Toaster } from "sonner";
 import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
 import { Composer } from "~/components/Composer";
@@ -83,12 +85,117 @@ function RootComponent() {
       <LikeMutationQueueProvider>
         <RootDocument>
           <KeepAliveProvider>
+            <AppToaster />
             <KeepAliveOutlet />
           </KeepAliveProvider>
         </RootDocument>
       </LikeMutationQueueProvider>
     </UnifiedAuthProvider>
   );
+}
+
+export function AppToaster() {
+  return (
+    <Toaster
+      position="bottom-center"
+      toastOptions={{
+        duration: 4000,
+      }}
+    />
+  );
+}
+
+export function renderSnack({
+  title,
+  description,
+  button,
+}: Omit<ToastProps, "id">) {
+  return sonnerToast.custom((id) => (
+    <Snack
+      id={id}
+      title={title}
+      description={description}
+      button={
+        button?.label
+          ? {
+              label: button?.label,
+              onClick: () => {
+                button?.onClick?.();
+              },
+            }
+          : undefined
+      }
+    />
+  ));
+}
+
+function Snack(props: ToastProps) {
+  const { title, description, button, id } = props;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="
+        w-full md:max-w-[520px]
+        flex items-center justify-between
+        rounded-md
+        px-4 py-3
+        shadow-sm
+        dark:bg-gray-300 dark:text-gray-900
+        bg-gray-700 text-gray-100
+        ring-1 dark:ring-gray-200 ring-gray-800
+      "
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{title}</p>
+        {description ? (
+          <p className="mt-1 text-sm dark:text-gray-600 text-gray-300 truncate">
+            {description}
+          </p>
+        ) : null}
+      </div>
+
+      {button ? (
+        <div className="ml-4 flex-shrink-0">
+          <button
+            className="
+              text-sm font-medium
+              px-3 py-1 rounded-md
+              bg-gray-200 text-gray-900
+              hover:bg-gray-300
+              dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700
+              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-700
+            "
+            onClick={() => {
+              button.onClick();
+              sonnerToast.dismiss(id);
+            }}
+          >
+            {button.label}
+          </button>
+        </div>
+      ) : null}
+      <button className=" ml-4"
+        onClick={() => {
+          sonnerToast.dismiss(id);
+        }}
+      >
+        <IconMdiClose />
+      </button>
+    </div>
+  );
+}
+
+/* Types */
+interface ToastProps {
+  id: string | number;
+  title: string;
+  description?: string;
+  button?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -134,7 +241,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950">
         <nav className="hidden lg:flex h-screen w-[250px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
-            <FluentEmojiHighContrastGlowingStar className="h-8 w-8" style={{color: "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))"}} />
+            <FluentEmojiHighContrastGlowingStar
+              className="h-8 w-8"
+              style={{
+                color:
+                  "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))",
+              }}
+            />
             <span className="font-extrabold text-2xl tracking-tight text-gray-900 dark:text-gray-100">
               Red Dwarf{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -235,7 +348,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               //active={true}
-              onClickCallbback={() => setComposerPost({ kind: 'root' })}
+              onClickCallbback={() => setComposerPost({ kind: "root" })}
               text="Post"
             />
           </div>
@@ -373,7 +486,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
         <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-2 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
-            <FluentEmojiHighContrastGlowingStar className="h-8 w-8" style={{color: "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))"}} />
+            <FluentEmojiHighContrastGlowingStar
+              className="h-8 w-8"
+              style={{
+                color:
+                  "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))",
+              }}
+            />
           </div>
           <MaterialNavItem
             small
@@ -475,7 +594,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
               //active={true}
-              onClickCallbback={() => setComposerPost({ kind: 'root' })}
+              onClickCallbback={() => setComposerPost({ kind: "root" })}
               text="Post"
             />
           </div>
@@ -485,7 +604,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <button
             className="lg:hidden fixed bottom-22 right-4 z-50 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-2xl w-14 h-14 flex items-center justify-center transition-all"
             style={{ boxShadow: "0 4px 24px 0 rgba(0,0,0,0.12)" }}
-            onClick={() => setComposerPost({ kind: 'root' })}
+            onClick={() => setComposerPost({ kind: "root" })}
             type="button"
             aria-label="Create Post"
           >
@@ -502,12 +621,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         </main>
 
         <aside className="hidden lg:flex h-screen w-[250px] sticky top-0 self-start flex-col">
-          <div className="px-4 pt-4"><Import /></div>
+          <div className="px-4 pt-4">
+            <Import />
+          </div>
           <Login />
 
           <div className="flex-1"></div>
           <p className="text-xs text-gray-400 dark:text-gray-500 text-justify mx-4 mb-4">
-            Red Dwarf is a Bluesky client that does not rely on any Bluesky API App Servers. Instead, it uses Microcosm to fetch records directly from each users' PDS (via Slingshot) and connect them using backlinks (via Constellation)
+            Red Dwarf is a Bluesky client that does not rely on any Bluesky API
+            App Servers. Instead, it uses Microcosm to fetch records directly
+            from each users' PDS (via Slingshot) and connect them using
+            backlinks (via Constellation)
           </p>
         </aside>
       </div>
@@ -683,7 +807,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-0 shadow border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 z-10">
           <div className="flex items-center gap-2">
-            <FluentEmojiHighContrastGlowingStar className="h-6 w-6" style={{color: "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))"}} />
+            <FluentEmojiHighContrastGlowingStar
+              className="h-6 w-6"
+              style={{
+                color:
+                  "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))",
+              }}
+            />
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
               Red Dwarf{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">

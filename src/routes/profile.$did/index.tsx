@@ -33,6 +33,7 @@ import {
   useQueryProfile,
 } from "~/utils/useQuery";
 
+import { renderSnack } from "../__root";
 import { Chip } from "../notifications";
 
 export const Route = createFileRoute("/profile/$did/")({
@@ -81,12 +82,16 @@ function ProfileComponent() {
 
   const isReady = !!resolvedDid && !isIdentityLoading && !!profileRecord;
 
-  const resultwhateversure = useQueryConstellationLinksCountDistinctDids(resolvedDid ? {
-    method: "/links/count/distinct-dids",
-    collection: "app.bsky.graph.follow",
-    target: resolvedDid,
-    path: ".subject"
-  } : undefined)
+  const resultwhateversure = useQueryConstellationLinksCountDistinctDids(
+    resolvedDid
+      ? {
+          method: "/links/count/distinct-dids",
+          collection: "app.bsky.graph.follow",
+          target: resolvedDid,
+          path: ".subject",
+        }
+      : undefined
+  );
 
   const followercount = resultwhateversure?.data?.total;
 
@@ -152,7 +157,16 @@ function ProfileComponent() {
             also save it persistently
           */}
           <FollowButton targetdidorhandle={did} />
-          <button className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]">
+          <button
+            className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]"
+            onClick={(e) => {
+              renderSnack({
+                title: "Not Implemented Yet",
+                description: "Sorry...",
+                //button: { label: 'Try Again', onClick: () => console.log('whatever') },
+              });
+            }}
+          >
             ... {/* todo: icon */}
           </button>
         </div>
@@ -165,9 +179,18 @@ function ProfileComponent() {
             {handle}
           </div>
           <div className="flex flex-row gap-2 text-md text-gray-500 dark:text-gray-400 mb-2">
-            <Link to="/profile/$did/followers" params={{did: did}}>{followercount && (<span className="mr-1 text-gray-900 dark:text-gray-200 font-medium">{followercount}</span>)}Followers</Link>
+            <Link to="/profile/$did/followers" params={{ did: did }}>
+              {followercount && (
+                <span className="mr-1 text-gray-900 dark:text-gray-200 font-medium">
+                  {followercount}
+                </span>
+              )}
+              Followers
+            </Link>
             -
-            <Link to="/profile/$did/follows" params={{did: did}}>Follows</Link>
+            <Link to="/profile/$did/follows" params={{ did: did }}>
+              Follows
+            </Link>
           </div>
           {description && (
             <div className="text-base leading-relaxed text-gray-800 dark:text-gray-300 mb-5 whitespace-pre-wrap break-words text-[15px]">
@@ -212,23 +235,29 @@ function ProfileComponent() {
 }
 
 export type ProfilePostsFilter = {
-  posts: boolean,
-  replies: boolean,
-  mediaOnly: boolean,
-}
+  posts: boolean;
+  replies: boolean;
+  mediaOnly: boolean;
+};
 export const defaultProfilePostsFilter: ProfilePostsFilter = {
   posts: true,
   replies: true,
   mediaOnly: false,
-}
+};
 
-function ProfilePostsFilterChipBar({filters, toggle}:{filters: ProfilePostsFilter | null, toggle: (key: keyof ProfilePostsFilter) => void}) {
-  const empty = (!filters?.replies && !filters?.posts);
-  const almostEmpty = (!filters?.replies && filters?.posts);
+function ProfilePostsFilterChipBar({
+  filters,
+  toggle,
+}: {
+  filters: ProfilePostsFilter | null;
+  toggle: (key: keyof ProfilePostsFilter) => void;
+}) {
+  const empty = !filters?.replies && !filters?.posts;
+  const almostEmpty = !filters?.replies && filters?.posts;
 
   useEffect(() => {
     if (empty) {
-      toggle("posts")
+      toggle("posts");
     }
   }, [empty, toggle]);
 
@@ -237,7 +266,7 @@ function ProfilePostsFilterChipBar({filters, toggle}:{filters: ProfilePostsFilte
       <Chip
         state={filters?.posts ?? true}
         text="Posts"
-        onClick={() => almostEmpty ? null : toggle("posts")}
+        onClick={() => (almostEmpty ? null : toggle("posts"))}
       />
       <Chip
         state={filters?.replies ?? true}
@@ -258,18 +287,18 @@ function PostsTab({ did }: { did: string }) {
   const [filterses, setFilterses] = useAtom(profileChipsAtom);
   const filters = filterses?.[did];
   const setFilters = (obj: ProfilePostsFilter) => {
-    setFilterses((prev)=>{
-      return{
+    setFilterses((prev) => {
+      return {
         ...prev,
-        [did]: obj
-      }
-    })
-  }
-  useEffect(()=>{
+        [did]: obj,
+      };
+    });
+  };
+  useEffect(() => {
     if (!filters) {
       setFilters(defaultProfilePostsFilter);
     }
-  })
+  });
   useReusableTabScrollRestore(`Profile` + did);
   const queryClient = useQueryClient();
   const {
@@ -306,8 +335,12 @@ function PostsTab({ did }: { did: string }) {
   );
 
   const toggle = (key: keyof ProfilePostsFilter) => {
-    setFilterses(prev => {
-      const existing = prev[did] ?? { posts: false, replies: false, mediaOnly: false }; // default
+    setFilterses((prev) => {
+      const existing = prev[did] ?? {
+        posts: false,
+        replies: false,
+        mediaOnly: false,
+      }; // default
 
       return {
         ...prev,
@@ -805,7 +838,16 @@ export function FollowButton({
           )}
         </>
       ) : (
-        <button className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]">
+        <button
+          className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+          onClick={(e) => {
+            renderSnack({
+              title: "Not Implemented Yet",
+              description: "Sorry...",
+              //button: { label: 'Try Again', onClick: () => console.log('whatever') },
+            });
+          }}
+        >
           Edit Profile
         </button>
       )}
@@ -822,14 +864,14 @@ export function BiteButton({
   const { data: identity } = useQueryIdentity(targetdidorhandle);
   const [show] = useAtom(enableBitesAtom);
 
-  if (!show) return
+  if (!show) return;
 
   return (
     <>
       <button
-        onClick={(e) => {
+        onClick={async (e) => {
           e.stopPropagation();
-          sendBite({
+          await sendBite({
             agent: agent || undefined,
             targetDid: identity?.did,
           });
@@ -842,30 +884,48 @@ export function BiteButton({
   );
 }
 
-function sendBite({
+async function sendBite({
   agent,
   targetDid,
 }: {
   agent?: Agent;
   targetDid?: string;
 }) {
-  if (!agent?.did || !targetDid) return;
+  if (!agent?.did || !targetDid) {
+    renderSnack({
+      title: "Bite Failed",
+      description: "You must be logged-in to bite someone.",
+      //button: { label: 'Try Again', onClick: () => console.log('whatever') },
+    });
+    return;
+  }
   const newRecord = {
     repo: agent.did,
     collection: "net.wafrn.feed.bite",
     rkey: TID.next().toString(),
     record: {
       $type: "net.wafrn.feed.bite",
-      subject: "at://"+targetDid,
+      subject: "at://" + targetDid,
       createdAt: new Date().toISOString(),
     },
   };
 
-  agent.com.atproto.repo.createRecord(newRecord).catch((err) => {
+  try {
+    await agent.com.atproto.repo.createRecord(newRecord);
+    renderSnack({
+      title: "Bite Sent",
+      description: "Your bite was delivered.",
+      //button: { label: 'Undo', onClick: () => console.log('Undo clicked') },
+    });
+  } catch (err) {
     console.error("Bite failed:", err);
-  });
+    renderSnack({
+      title: "Bite Failed",
+      description: "Your bite failed to be delivered.",
+      //button: { label: 'Try Again', onClick: () => console.log('whatever') },
+    });
+  }
 }
-
 
 export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
   const { agent } = useAuth();

@@ -5,6 +5,7 @@ import { useAtom } from "jotai";
 import React, { createContext, use, useCallback, useEffect, useRef } from "react";
 
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { renderSnack } from "~/routes/__root";
 import { constellationURLAtom, internalLikedPostsAtom } from "~/utils/atoms";
 import { constructArbitraryQuery, constructConstellationQuery, type linksRecordsResponse } from "~/utils/useQuery";
 
@@ -125,6 +126,11 @@ export function LikeMutationQueueProvider({ children }: { children: React.ReactN
           }
         } catch (err) {
           console.error("Like mutation failed, reverting:", err);
+          renderSnack({
+            title: 'Like Mutation Failed',
+            description: 'Please try again.',
+            //button: { label: 'Try Again', onClick: () => console.log('whatever') },
+          })
           if (mutation.type === 'like') {
             setFastState(mutation.target, null);
           } else if (mutation.type === 'unlike') {
