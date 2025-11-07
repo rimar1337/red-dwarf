@@ -325,3 +325,36 @@ export const SliderComponent: React.FC<SliderProps> = ({
     </Slider.Root>
   );
 };
+
+
+interface SliderPProps {
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+
+export const SliderPrimitive: React.FC<SliderPProps> = ({
+  value,
+  min = 0,
+  max = 100,
+  step = 1,
+}) => {
+
+  return (
+    <Slider.Root
+      className="relative flex items-center w-full h-4"
+      value={[value]}
+      min={min}
+      max={max}
+      step={step}
+      onValueChange={(v: number[]) => {}}
+    >
+      <Slider.Track className="relative flex-grow h-4 bg-gray-300 dark:bg-gray-700 rounded-full">
+        <Slider.Range className="absolute h-full bg-gray-500 dark:bg-gray-400 rounded-l-full rounded-r-none" />
+      </Slider.Track>
+      <Slider.Thumb className=" hidden shadow-[0_0_0_8px_var(--color-white)] dark:shadow-[0_0_0_8px_var(--color-gray-950)] block w-[3px] h-12 bg-gray-500 dark:bg-gray-400 rounded-md focus:outline-none" />
+    </Slider.Root>
+  );
+};

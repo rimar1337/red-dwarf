@@ -806,9 +806,13 @@ type statuschek = {
   [key: string]: unknown;
   error?: "MethodNotImplemented";
   message?: "Method Not Implemented";
-  status?: "finished";
+  status?: "finished" | "in_progress";
+  position?: string,
+  progress?: number,
+
 };
 
+//{"status":"in_progress","position":"2025-08-30T06:53:18Z","progress":0.0878319661441268}
 type importtype = {
   message?: "Import has already started" | "Import has been scheduled"
 }

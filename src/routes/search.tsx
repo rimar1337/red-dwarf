@@ -2,7 +2,7 @@ import type { Agent } from "@atproto/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useAtom } from "jotai";
-import { useMemo } from "react";
+import { useEffect,useMemo } from "react";
 
 import { Header } from "~/components/Header";
 import { Import } from "~/components/Import";
@@ -21,6 +21,7 @@ import {
 } from "~/utils/useQuery";
 
 import { renderSnack } from "./__root";
+import { SliderPrimitive } from "./settings";
 
 export const Route = createFileRoute("/search")({
   component: Search,
@@ -32,15 +33,30 @@ export function Search() {
   const { data: identity } = useQueryIdentity(agent?.did);
   const [lycandomain] = useAtom(lycanURLAtom);
   const lycanExists = lycandomain !== "";
-  const { data: lycanstatusdata } = useQueryLycanStatus();
+  const { data: lycanstatusdata, refetch } = useQueryLycanStatus();
   const lycanIndexed = lycanstatusdata?.status === "finished" || false;
+  const lycanIndexing = lycanstatusdata?.status === "in_progress" || false;
+  const lycanIndexingProgress = lycanIndexing
+    ? lycanstatusdata?.progress
+    : undefined;
+
   const authed = status === "signedIn";
 
   const lycanReady = lycanExists && lycanIndexed && authed;
 
   const { q }: { q: string } = useSearch({ from: "/search" });
 
-  //const lycanIndexed = useQuery();
+  // auto-refetch Lycan status until ready
+  useEffect(() => {
+    if (!lycanExists || !authed) return;
+    if (lycanReady) return;
+
+    const interval = setInterval(() => {
+      refetch();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [lycanExists, authed, lycanReady, refetch]);
 
   const maintext = !lycanExists
     ? "Sorry we dont have search. But instead, you can load some of these types of content into Red Dwarf:"
@@ -64,8 +80,8 @@ export function Search() {
         constructLycanRequestIndexQuery(opts)
       );
       if (
-        response?.message !== "Import has already started" ||
-        response?.message !== "Import has already started"
+        response?.message !== "Import has already started" &&
+        response?.message !== "Import has been scheduled"
       ) {
         renderSnack({
           title: "Registration failed!",
@@ -76,6 +92,7 @@ export function Search() {
           title: "Succesfully sent registration request!",
           description: "Please wait for the server to index your account",
         });
+        refetch();
       }
     } catch {
       renderSnack({
@@ -127,22 +144,33 @@ export function Search() {
           </p>
 
           {lycanExists && authed && !lycanReady ? (
-            <div className="mt-4 mx-auto">
-              <button
-                onClick={() =>
-                  index({
-                    agent: agent || undefined,
-                    isAuthed: status === "signedIn",
-                    pdsUrl: identity?.pds,
-                    feedServiceDid: "did:web:" + lycandomain,
-                  })
-                }
-                className="px-6 py-2 h-12 rounded-full bg-gray-100 dark:bg-gray-800 
+            !lycanIndexing ? (
+              <div className="mt-4 mx-auto">
+                <button
+                  onClick={() =>
+                    index({
+                      agent: agent || undefined,
+                      isAuthed: status === "signedIn",
+                      pdsUrl: identity?.pds,
+                      feedServiceDid: "did:web:" + lycandomain,
+                    })
+                  }
+                  className="px-6 py-2 h-12 rounded-full bg-gray-100 dark:bg-gray-800 
                              text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-              >
-                Index my Account
-              </button>
-            </div>
+                >
+                  Index my Account
+                </button>
+              </div>
+            ) : (
+              <div className="mt-4 gap-2 flex flex-col">
+                <span>indexing...</span>
+                <SliderPrimitive
+                  value={lycanIndexingProgress || 0}
+                  min={0}
+                  max={1}
+                />
+              </div>
+            )
           ) : (
             <></>
           )}
