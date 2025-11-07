@@ -1252,6 +1252,7 @@ import ReactPlayer from "react-player";
 
 import defaultpfp from "~/../public/favicon.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { renderSnack } from "~/routes/__root";
 import {
   FeedItemRenderAturiLoader,
   FollowButton,
@@ -1491,7 +1492,7 @@ function UniversalPostRenderer({
     ? tags
         .map((tag) => {
           const encoded = encodeURIComponent(tag);
-          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(' ','-')}</a>`;
+          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
         })
         .join("<br>")
     : "";
@@ -2012,8 +2013,14 @@ function UniversalPostRenderer({
                               "/post/" +
                               post.uri.split("/").pop()
                           );
+                          renderSnack({
+                            title: "Copied to clipboard!",
+                          });
                         } catch (_e) {
                           // idk
+                          renderSnack({
+                            title: "Failed to copy link",
+                          });
                         }
                       }}
                       style={{
@@ -2022,9 +2029,17 @@ function UniversalPostRenderer({
                     >
                       <MdiShareVariant />
                     </HitSlopButton>
-                    <span style={btnstyle}>
-                      <MdiMoreHoriz />
-                    </span>
+                    <HitSlopButton
+                      onClick={() => {
+                        renderSnack({
+                          title: "Not implemented yet...",
+                        });
+                      }}
+                    >
+                      <span style={btnstyle}>
+                        <MdiMoreHoriz />
+                      </span>
+                    </HitSlopButton>
                   </div>
                 </div>
               )}

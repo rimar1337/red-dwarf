@@ -1,21 +1,38 @@
 import { AtUri } from "@atproto/api";
 import { useNavigate, type UseNavigateResult } from "@tanstack/react-router";
+import { useAtom } from "jotai";
 import { useState } from "react";
+
+import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { lycanURLAtom } from "~/utils/atoms";
+import { useQueryLycanStatus } from "~/utils/useQuery";
 
 /**
  * Basically the best equivalent to Search that i can do
  */
-export function Import() {
-  const [textInput, setTextInput] = useState<string | undefined>();
+export function Import({optionaltextstring}: {optionaltextstring?: string}) {
+  const [textInput, setTextInput] = useState<string | undefined>(optionaltextstring);
   const navigate = useNavigate();
+
+  const { status } = useAuth();
+  const [lycandomain] = useAtom(lycanURLAtom);
+  const lycanExists = lycandomain !== "";
+  const { data: lycanstatusdata } = useQueryLycanStatus();
+  const lycanIndexed = lycanstatusdata?.status === "finished" || false;
+  const authed = status === "signedIn";
+
+  const lycanReady = lycanExists && lycanIndexed && authed;
 
   const handleEnter = () => {
     if (!textInput) return;
     handleImport({
       text: textInput,
       navigate,
+      lycanReady: lycanReady,
     });
   };
+
+  const placeholder = lycanReady ? "Search..." : "Import...";
 
   return (
     <div className="w-full relative">
@@ -23,7 +40,7 @@ export function Import() {
 
       <input
         type="text"
-        placeholder="Import..."
+        placeholder={placeholder}
         value={textInput}
         onChange={(e) => setTextInput(e.target.value)}
         onKeyDown={(e) => {
@@ -38,9 +55,11 @@ export function Import() {
 function handleImport({
   text,
   navigate,
+  lycanReady,
 }: {
   text: string;
   navigate: UseNavigateResult<string>;
+  lycanReady?: boolean;
 }) {
   const trimmed = text.trim();
   // parse text
@@ -147,4 +166,8 @@ function handleImport({
   // } catch {
   //   // continue
   // }
+
+  if (lycanReady) {
+    navigate({ to: "/search", search: { q: text} })
+  }
 }

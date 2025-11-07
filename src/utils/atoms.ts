@@ -92,6 +92,12 @@ export const videoCDNAtom = atomWithStorage<string>(
   defaultVideoCDN
 );
 
+export const defaultLycanURL = "";
+export const lycanURLAtom = atomWithStorage<string>(
+  "lycanURL",
+  defaultLycanURL
+);
+
 export const defaulthue = 28;
 export const hueAtom = atomWithStorage<number>("hue", defaulthue);
 

@@ -10,6 +10,7 @@ import {
   defaultconstellationURL,
   defaulthue,
   defaultImgCDN,
+  defaultLycanURL,
   defaultslingshotURL,
   defaultVideoCDN,
   enableBitesAtom,
@@ -17,6 +18,7 @@ import {
   enableWafrnTextAtom,
   hueAtom,
   imgCDNAtom,
+  lycanURLAtom,
   slingshotURLAtom,
   videoCDNAtom,
 } from "~/utils/atoms";
@@ -110,6 +112,12 @@ export function Settings() {
         title={"Video CDN"}
         description={"Customize the Slingshot instance to be used by Red Dwarf"}
         init={defaultVideoCDN}
+      />
+      <TextInputSetting
+        atom={lycanURLAtom}
+        title={"Lycan Search"}
+        description={"Enable text search across posts you've interacted with"}
+        init={defaultLycanURL}
       />
 
       <SettingHeading title="Experimental" />
