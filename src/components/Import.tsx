@@ -10,8 +10,14 @@ import { useQueryLycanStatus } from "~/utils/useQuery";
 /**
  * Basically the best equivalent to Search that i can do
  */
-export function Import({optionaltextstring}: {optionaltextstring?: string}) {
-  const [textInput, setTextInput] = useState<string | undefined>(optionaltextstring);
+export function Import({
+  optionaltextstring,
+}: {
+  optionaltextstring?: string;
+}) {
+  const [textInput, setTextInput] = useState<string | undefined>(
+    optionaltextstring
+  );
   const navigate = useNavigate();
 
   const { status } = useAuth();
@@ -19,6 +25,10 @@ export function Import({optionaltextstring}: {optionaltextstring?: string}) {
   const lycanExists = lycandomain !== "";
   const { data: lycanstatusdata } = useQueryLycanStatus();
   const lycanIndexed = lycanstatusdata?.status === "finished" || false;
+  const lycanIndexing = lycanstatusdata?.status === "in_progress" || false;
+  const lycanIndexingProgress = lycanIndexing
+    ? lycanstatusdata?.progress
+    : undefined;
   const authed = status === "signedIn";
 
   const lycanReady = lycanExists && lycanIndexed && authed;
@@ -28,7 +38,8 @@ export function Import({optionaltextstring}: {optionaltextstring?: string}) {
     handleImport({
       text: textInput,
       navigate,
-      lycanReady: lycanReady,
+      lycanReady:
+        lycanReady || (!!lycanIndexingProgress && lycanIndexingProgress > 0),
     });
   };
 
@@ -168,6 +179,6 @@ function handleImport({
   // }
 
   if (lycanReady) {
-    navigate({ to: "/search", search: { q: text} })
+    navigate({ to: "/search", search: { q: text } });
   }
 }
