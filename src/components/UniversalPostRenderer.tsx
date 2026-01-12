@@ -16,6 +16,7 @@ import {
 } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
+  useQueryArbitrary,
   useQueryConstellation,
   useQueryIdentity,
   useQueryPost,
@@ -375,7 +376,7 @@ export function UniversalPostRendererATURILoader({
   // }, [record, get, set, rkey, resolved, atUri]);
 
   const { data: opProfile } = useQueryProfile(
-    resolved ? `at://${resolved?.did}/app.bsky.actor.profile/self` : undefined
+    resolved ? `at://${resolved?.did}/app.bsky.actor.profile/self` : undefined,
   );
 
   // const displayName =
@@ -397,18 +398,18 @@ export function UniversalPostRendererATURILoader({
     setLikes(
       links
         ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
-        : null
+        : null,
     );
     setReposts(
       links
         ? links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records || 0
-        : null
+        : null,
     );
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
             ?.records || 0
-        : null
+        : null,
     );
   }, [links]);
 
@@ -429,7 +430,7 @@ export function UniversalPostRendererATURILoader({
         target: atUri,
         collection: "app.bsky.feed.post",
         path: ".reply.parent.uri",
-      }
+      },
     ),
     enabled: !!atUri && !!maxReplies && !isQuote,
   });
@@ -460,7 +461,7 @@ export function UniversalPostRendererATURILoader({
               const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
               return aturi;
             })
-          : []
+          : [],
       )
     : [];
 
@@ -475,11 +476,11 @@ export function UniversalPostRendererATURILoader({
 
     const opdid = new AtUri(
       //postQuery?.value.reply?.root.uri ?? postQuery?.uri ?? atUri
-      atUri
+      atUri,
     ).host;
 
     const opReplies = replyAturis.filter(
-      (aturi) => new AtUri(aturi).host === opdid
+      (aturi) => new AtUri(aturi).host === opdid,
     );
 
     if (opReplies.length > 0) {
@@ -523,6 +524,7 @@ export function UniversalPostRendererATURILoader({
         likesCount={likes}
         repostsCount={reposts}
         repliesCount={replies}
+        links={links}
         bottomReplyLine={
           maxReplies && oldestOpsReplyElseNewestNonOpsReply
             ? true
@@ -645,6 +647,7 @@ export function UniversalPostRendererRawRecordShim({
   likesCount,
   repostsCount,
   repliesCount,
+  links,
   detailed = false,
   bottomReplyLine = false,
   topReplyLine = false,
@@ -670,6 +673,7 @@ export function UniversalPostRendererRawRecordShim({
   likesCount?: number | null;
   repostsCount?: number | null;
   repliesCount?: number | null;
+  links?: any;
   detailed?: boolean;
   bottomReplyLine?: boolean;
   topReplyLine?: boolean;
@@ -794,7 +798,7 @@ export function UniversalPostRendererRawRecordShim({
       labels: profileRecord?.labels || undefined,
       verification: undefined,
     }),
-    [imgcdn, profileRecord, resolved?.did, resolved?.handle]
+    [imgcdn, profileRecord, resolved?.did, resolved?.handle],
   );
 
   const fakeprofileviewdetailed =
@@ -804,7 +808,7 @@ export function UniversalPostRendererRawRecordShim({
         $type: "app.bsky.actor.defs#profileViewDetailed",
         description: profileRecord?.value?.description || undefined,
       }),
-      [fakeprofileviewbasic, profileRecord?.value?.description]
+      [fakeprofileviewbasic, profileRecord?.value?.description],
     );
 
   const fakepost = React.useMemo<AppBskyFeedDefs.PostView>(
@@ -834,7 +838,7 @@ export function UniversalPostRendererRawRecordShim({
       repliesCount,
       repostsCount,
       likesCount,
-    ]
+    ],
   );
 
   //const [feedviewpostreplyhandle, setFeedviewpostreplyhandle] = useState<string | undefined>(undefined);
@@ -871,13 +875,13 @@ export function UniversalPostRendererRawRecordShim({
   const feedviewpostreplydid =
     thereply && !filterNoReplies ? new AtUri(thereply).host : undefined;
   const replyhookvalue = useQueryIdentity(
-    feedviewpost ? feedviewpostreplydid : undefined
+    feedviewpost ? feedviewpostreplydid : undefined,
   );
   const feedviewpostreplyhandle = replyhookvalue?.data?.handle;
 
   const aturirepostbydid = repostedby ? new AtUri(repostedby).host : undefined;
   const repostedbyhookvalue = useQueryIdentity(
-    repostedby ? aturirepostbydid : undefined
+    repostedby ? aturirepostbydid : undefined,
   );
   const feedviewpostrepostedbyhandle = repostedbyhookvalue?.data?.handle;
 
@@ -932,6 +936,7 @@ export function UniversalPostRendererRawRecordShim({
         lightboxCallback={lightboxCallback}
         maxReplies={maxReplies}
         isQuote={isQuote}
+        constellationLinks={links}
       />
     </>
   );
@@ -1361,7 +1366,7 @@ function randomString(length = 8) {
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return Array.from(
     { length },
-    () => chars[Math.floor(Math.random() * chars.length)]
+    () => chars[Math.floor(Math.random() * chars.length)],
   ).join("");
 }
 
@@ -1391,6 +1396,7 @@ function UniversalPostRenderer({
   concise,
   lightboxCallback,
   maxReplies,
+  constellationLinks,
 }: {
   post: PostView;
   uprrrsauthor?: AppBskyActorDefs.ProfileViewDetailed;
@@ -1418,16 +1424,17 @@ function UniversalPostRenderer({
   concise?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
+  constellationLinks?: any;
 }) {
   const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
   const [hasRetweeted, setHasRetweeted] = useState<boolean>(
-    post.viewer?.repost ? true : false
+    post.viewer?.repost ? true : false,
   );
   const [, setComposerPost] = useAtom(composerAtom);
   const { agent } = useAuth();
   const [retweetUri, setRetweetUri] = useState<string | undefined>(
-    post.viewer?.repost
+    post.viewer?.repost,
   );
   const { liked, toggle, backfill } = useFastLike(post.uri, post.cid);
   // const bovref = useBackfillOnView(post.uri, post.cid);
@@ -1879,6 +1886,7 @@ function UniversalPostRenderer({
                 postid={{ did: post.author.did, rkey: parsed.rkey }}
                 nopics={nopics}
                 lightboxCallback={lightboxCallback}
+                constellationLinks={constellationLinks}
               />
             ) : null}
             {post.embed && depth > 0 && (
@@ -2011,7 +2019,7 @@ function UniversalPostRenderer({
                               "/profile/" +
                               post.author.handle +
                               "/post/" +
-                              post.uri.split("/").pop()
+                              post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -2134,6 +2142,108 @@ const stopgap = {
   border: "1px solid rgba(161, 170, 174, 0.38)",
 };
 
+function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
+  const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
+  const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <div className="h-6 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-12 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+          <div className="h-12 bg-gray-300 dark:bg-gray-600 rounded-lg w-3/4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !pollRecord?.value) {
+    return <div className="text-red-500 text-sm p-2">Failed to load poll</div>;
+  }
+
+  const poll = pollRecord.value as {
+    a: string;
+    b: string;
+    c?: string;
+    d?: string;
+    expiry?: string;
+    multiple?: boolean;
+    createdAt: string;
+  };
+
+  const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
+  const isExpired = poll.expiry ? new Date(poll.expiry) < new Date() : false;
+
+  const formattedDate = poll.expiry
+    ? new Date(poll.expiry).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : null;
+
+  return (
+    <div className="my-4">
+      {/* Header */}
+      <div className="mb-4 flex items-center gap-3">
+        {/* Type Pill */}
+        <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1 text-sm font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
+          <IconMdiGlobe />
+          <span>Public Poll</span>
+        </div>
+
+        {/* Multiplicity */}
+        <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+          {poll.multiple ? "Select multiple options" : "Select one option"}
+        </span>
+      </div>
+
+      {/* Options List */}
+      <div className="space-y-3">
+        {options.map((optionText, index) => (
+          <div
+            key={index}
+            className="flex h-12 items-center justify-start truncate rounded-lg bg-gray-100 dark:bg-gray-800 px-4 text-sm font-medium text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700"
+          >
+            <span className="truncate">
+              {optionText}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+        {/* Expiry */}
+        {formattedDate && !isExpired && (
+          <div className="flex items-center gap-2">
+            <IconMdiClockOutline />
+            <span>Expires {formattedDate}</span>
+          </div>
+        )}
+
+        {/* Status */}
+        <div className="flex items-center gap-2">
+          {isExpired ? (
+            <span className="text-red-500 dark:text-red-400 font-medium">
+              Poll ended
+            </span>
+          ) : (
+            <span className="text-gray-500 dark:text-gray-400">
+              All votes are public
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PostEmbeds({
   embed,
   moderation,
@@ -2145,6 +2255,7 @@ function PostEmbeds({
   postid,
   nopics,
   lightboxCallback,
+  constellationLinks,
 }: {
   embed?: Embed;
   moderation?: ModerationDecision;
@@ -2156,6 +2267,7 @@ function PostEmbeds({
   postid?: { did: string; rkey: string };
   nopics?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
+  constellationLinks?: any;
 }) {
   //const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   function setLightboxIndex(number: number) {
@@ -2204,6 +2316,7 @@ function PostEmbeds({
           postid={postid}
           nopics={nopics}
           lightboxCallback={lightboxCallback}
+          constellationLinks={constellationLinks}
         />
         {/* padding empty div of 8px height */}
         <div style={{ height: 12 }} />
@@ -2699,6 +2812,15 @@ function PostEmbeds({
   // external link embed
   // =
   if (AppBskyEmbedExternal.isView(embed)) {
+    // Check for poll embed record in constellation links
+    const pollLinks = constellationLinks?.links?.["app.reddwarf.embed.poll"];
+    const hasPollLink = pollLinks && Object.keys(pollLinks).length > 0;
+
+    if (hasPollLink && postid) {
+      // Return poll embed instead of external embed
+      return <PollEmbed did={postid.did} rkey={postid.rkey} />;
+    }
+
     const link = embed.external;
     return (
       <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} />
@@ -2776,7 +2898,7 @@ function getByteToCharMap(text: string): number[] {
 function facetByteRangeToCharRange(
   byteStart: number,
   byteEnd: number,
-  byteToCharMap: number[]
+  byteToCharMap: number[],
 ): [number, number] {
   return [
     byteToCharMap[byteStart] ?? 0,
@@ -2796,7 +2918,7 @@ function extractFacetRanges(text: string, facets: Facet[]): FacetRange[] {
     const [start, end] = facetByteRangeToCharRange(
       f.index.byteStart,
       f.index.byteEnd,
-      map
+      map,
     );
     return { start, end, feature: f.features[0] };
   });
@@ -2811,7 +2933,7 @@ export function renderTextWithFacets({
   navigate: (_: any) => void;
 }) {
   const ranges = extractFacetRanges(text, facets).sort(
-    (a: any, b: any) => a.start - b.start
+    (a: any, b: any) => a.start - b.start,
   );
 
   const result: React.ReactNode[] = [];
@@ -2843,7 +2965,7 @@ export function renderTextWithFacets({
           }}
         >
           {fragment}
-        </a>
+        </a>,
       );
     } else if (
       feature.$type === "app.bsky.richtext.facet#mention" &&
@@ -2865,7 +2987,7 @@ export function renderTextWithFacets({
           }}
         >
           {fragment}
-        </span>
+        </span>,
       );
     } else if (feature.$type === "app.bsky.richtext.facet#tag") {
       result.push(
@@ -2877,7 +2999,7 @@ export function renderTextWithFacets({
           }}
         >
           {fragment}
-        </span>
+        </span>,
       );
     } else {
       result.push(<span key={start}>{fragment}</span>);
@@ -3068,7 +3190,7 @@ const SmartHLSPlayer = ({
       {
         root: null,
         threshold: 0.25,
-      }
+      },
     );
 
     if (containerRef.current) {
