@@ -10,7 +10,7 @@ interface RawOGCProps {
   b: string;
   c?: string;
   d?: string;
-  expiry: Date;
+  expiry?: Date;
 }
 
 export function RawOGC({
@@ -24,7 +24,7 @@ export function RawOGC({
 }: RawOGCProps) {
   const options = [a, b, c, d].filter((opt): opt is string => !!opt);
   
-  const formattedDate = expiry.toLocaleDateString('en-US', {
+  const formattedDate = expiry?.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -46,7 +46,7 @@ export function RawOGC({
         
         {/* Multiplicity */}
         <span className="text-2xl font-normal text-gray-300">
-          {multiple ? 'Select multiple options' : 'Select one option'}
+          {multiple || !privateProviderHandle ? 'Select multiple options' : 'Select one option'}
         </span>
       </div>
 
@@ -67,7 +67,7 @@ export function RawOGC({
         {/* Expiry */}
         <div className="flex items-center gap-3 rounded-xl bg-gray-800 px-6 py-3 font-medium text-gray-200">
           <IconMdiClockOutline />
-          <span>Expires {formattedDate}</span>
+          {!formattedDate || !privateProviderHandle ? (<span>Never expires</span>) : (<span>Expires {formattedDate}</span>)}
         </div>
 
         {/* Branding */}

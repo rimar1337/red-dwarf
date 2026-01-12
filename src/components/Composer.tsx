@@ -111,7 +111,7 @@ export function Composer() {
           c: pollData.c || undefined,
           d: pollData.d || undefined,
           expiry: pollData.expiry,
-          multiple: false,
+          multiple: true,
         });
 
         if (dataUrl) {
@@ -204,8 +204,7 @@ export function Composer() {
           b: pollData.b,
           c: pollData.c || undefined,
           d: pollData.d || undefined,
-          expiry: pollData.expiry.toISOString(),
-          multiple: false,
+          multiple: true,
           createdAt: new Date().toISOString(),
         };
 
@@ -452,14 +451,14 @@ function PollCreator({
     onChange((prev: any) => ({ ...prev, [field]: val }));
   };
 
-  const handleDuration = (val: string) => {
-    const hours = parseInt(val, 10);
-    onChange((prev: any) => ({
-      ...prev,
-      duration: val,
-      expiry: addHours(new Date(), hours),
-    }));
-  };
+  // const handleDuration = (val: string) => {
+  //   const hours = parseInt(val, 10);
+  //   onChange((prev: any) => ({
+  //     ...prev,
+  //     duration: val,
+  //     expiry: addHours(new Date(), hours),
+  //   }));
+  // };
 
   return (
     <div className="mt-2 p-4 bg-gray-100 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 space-y-3">
@@ -523,7 +522,7 @@ function PollCreator({
         </label>
       </div>
 
-      <div className="flex flex-col gap-1 pt-2">
+      {/* <div className="flex flex-col gap-1 pt-2">
         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1">
           Poll Duration
         </label>
@@ -551,7 +550,7 @@ function PollCreator({
             </svg>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

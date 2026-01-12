@@ -411,7 +411,7 @@ export function UniversalPostRendererATURILoader({
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-            ?.records || 0
+          ?.records || 0
         : null,
     );
   }, [links]);
@@ -459,13 +459,13 @@ export function UniversalPostRendererATURILoader({
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
-        page
-          ? page.linking_records.map((record) => {
-              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-              return aturi;
-            })
-          : [],
-      )
+      page
+        ? page.linking_records.map((record) => {
+          const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+          return aturi;
+        })
+        : [],
+    )
     : [];
 
   //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
@@ -625,7 +625,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
             opacity: 0.5,
           }}
           className="dark:bg-[repeating-linear-gradient(to_bottom,var(--color-gray-500)_0,var(--color-gray-400)_4px,transparent_4px,transparent_8px)]"
-          //className="border-gray-400 dark:border-gray-500"
+        //className="border-gray-400 dark:border-gray-500"
         />
       </div>
 
@@ -771,11 +771,11 @@ export function UniversalPostRendererRawRecordShim({
   const isQuotewithImages =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-      "app.bsky.embed.images";
+    "app.bsky.embed.images";
   const isQuotewithVideo =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-      "app.bsky.embed.video";
+    "app.bsky.embed.video";
 
   const hasMedia =
     hasEmbed &&
@@ -1493,18 +1493,18 @@ function UniversalPostRenderer({
 
   const tags = unfediwafrnTags
     ? unfediwafrnTags
-        .split("\n")
-        .map((t) => t.trim())
-        .filter(Boolean)
+      .split("\n")
+      .map((t) => t.trim())
+      .filter(Boolean)
     : undefined;
 
   const links = tags
     ? tags
-        .map((tag) => {
-          const encoded = encodeURIComponent(tag);
-          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
-        })
-        .join("<br>")
+      .map((tag) => {
+        const encoded = encodeURIComponent(tag);
+        return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
+      })
+      .join("<br>")
     : "";
 
   const unfediwafrn = unfediwafrnPartial
@@ -1517,7 +1517,7 @@ function UniversalPostRenderer({
 
   /* fuck you */
   const isMainItem = false;
-  const setMainItem = (any: any) => {};
+  const setMainItem = (any: any) => { };
   // eslint-disable-next-line react-hooks/refs
   //console.log("Received ref in UniversalPostRenderer:", usedref);
   return (
@@ -1531,12 +1531,12 @@ function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                    setMainItem({ post: post });
-                    onPostClick(e);
-                  }
+                  setMainItem({ post: post });
+                  onPostClick(e);
+                }
                 : () => {
-                    setMainItem({ post: post });
-                  }
+                  setMainItem({ post: post });
+                }
               : undefined
         }
         style={{
@@ -2019,10 +2019,10 @@ function UniversalPostRenderer({
                         try {
                           await navigator.clipboard.writeText(
                             "https://bsky.app" +
-                              "/profile/" +
-                              post.author.handle +
-                              "/post/" +
-                              post.uri.split("/").pop(),
+                            "/profile/" +
+                            post.author.handle +
+                            "/post/" +
+                            post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -2130,7 +2130,7 @@ type Embed =
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
-  | { $type: string; [k: string]: unknown };
+  | { $type: string;[k: string]: unknown };
 
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
@@ -2226,44 +2226,44 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   const userVotesA = useGetOneToOneState(
     agent?.did
       ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.a",
-          path: ".subject.uri",
-        }
+        target: pollUri,
+        user: agent?.did,
+        collection: "app.reddwarf.poll.vote.a",
+        path: ".subject.uri",
+      }
       : undefined,
   );
 
   const userVotesB = useGetOneToOneState(
     agent?.did
       ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.b",
-          path: ".subject.uri",
-        }
+        target: pollUri,
+        user: agent?.did,
+        collection: "app.reddwarf.poll.vote.b",
+        path: ".subject.uri",
+      }
       : undefined,
   );
 
   const userVotesC = useGetOneToOneState(
     agent?.did
       ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.c",
-          path: ".subject.uri",
-        }
+        target: pollUri,
+        user: agent?.did,
+        collection: "app.reddwarf.poll.vote.c",
+        path: ".subject.uri",
+      }
       : undefined,
   );
 
   const userVotesD = useGetOneToOneState(
     agent?.did
       ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.d",
-          path: ".subject.uri",
-        }
+        target: pollUri,
+        user: agent?.did,
+        collection: "app.reddwarf.poll.vote.d",
+        path: ".subject.uri",
+      }
       : undefined,
   );
 
@@ -2297,16 +2297,19 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   };
 
   const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
-  const isExpired = poll.expiry ? new Date(poll.expiry) < new Date() : false;
+  const isExpired = false //poll.expiry ? new Date(poll.expiry) < new Date() : false;
 
-  const formattedDate = poll.expiry
-    ? new Date(poll.expiry).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : null;
+  // todo unused waiting for private polls
+  // undefined for public polls which equals never expires
+  const formattedDate = undefined;
+  // const formattedDate = poll.expiry
+  //   ? new Date(poll.expiry).toLocaleDateString("en-US", {
+  //     month: "short",
+  //     day: "numeric",
+  //     hour: "numeric",
+  //     minute: "2-digit",
+  //   })
+  //   : null;
 
   // Calculate vote counts
   const voteData = [
@@ -2467,13 +2470,12 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
           return (
             <div
               key={index}
-              className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
-                !isExpired
-                  ? hasVotedForOption
-                    ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
-                    : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
-                  : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-              }`}
+              className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${!isExpired
+                ? hasVotedForOption
+                  ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
+                  : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
+                : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                }`}
               onClick={() => !isExpired && handleVote(optionKey)}
             >
               {/* Vote percentage bar - always show */}
@@ -2504,12 +2506,13 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
         {/* Expiry */}
-        {formattedDate && !isExpired && (
-          <div className="flex items-center gap-2">
-            <IconMdiClockOutline />
+        <div className="flex items-center gap-2">
+          <IconMdiClockOutline />
+          {/* <span>Expires {formattedDate}</span> */}
+          {formattedDate ? !isExpired ? (
             <span>Expires {formattedDate}</span>
-          </div>
-        )}
+          ) : (<span>Expired at {formattedDate}</span>) : <span>Never expires</span>}
+        </div>
 
         {/* Status */}
         <div className="flex items-center gap-2">
@@ -2846,10 +2849,10 @@ function PostEmbeds({
                 width: "100%",
                 aspectRatio: image.aspectRatio
                   ? (() => {
-                      const { width, height } = image.aspectRatio;
-                      const ratio = width / height;
-                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                    })()
+                    const { width, height } = image.aspectRatio;
+                    const ratio = width / height;
+                    return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                  })()
                   : "1 / 1", // fallback to square
                 //backgroundColor: theme.background, // fallback letterboxing color
                 borderRadius: 12,
@@ -3547,9 +3550,8 @@ const SmartHLSPlayer = ({
             borderRadius: 12,
             overflow: "hidden",
             //border: `1px solid ${theme.border}`,
-            paddingTop: `${
-              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-            }%`, // 16:9 = 56.25%, 4:3 = 75%
+            paddingTop: `${100 / (aspect ? aspect.width / aspect.height : 16 / 9)
+              }%`, // 16:9 = 56.25%, 4:3 = 75%
           }}
           className="border border-gray-200 dark:border-gray-800 was7"
         >
