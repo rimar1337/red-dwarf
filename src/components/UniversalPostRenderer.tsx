@@ -15,6 +15,7 @@ import {
   enableWafrnTextAtom,
   imgCDNAtom,
 } from "~/utils/atoms";
+import { useGetOneToOneState } from "~/utils/followState";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
   constructConstellationQuery,
@@ -2221,6 +2222,51 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     }),
   );
 
+  // Check if user has already voted for each option in this poll
+  const userVotesA = useGetOneToOneState(
+    agent?.did
+      ? {
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.a",
+          path: ".subject.uri",
+        }
+      : undefined,
+  );
+
+  const userVotesB = useGetOneToOneState(
+    agent?.did
+      ? {
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.b",
+          path: ".subject.uri",
+        }
+      : undefined,
+  );
+
+  const userVotesC = useGetOneToOneState(
+    agent?.did
+      ? {
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.c",
+          path: ".subject.uri",
+        }
+      : undefined,
+  );
+
+  const userVotesD = useGetOneToOneState(
+    agent?.did
+      ? {
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.d",
+          path: ".subject.uri",
+        }
+      : undefined,
+  );
+
   if (isLoading) {
     return (
       <div className="animate-pulse">
@@ -2292,20 +2338,78 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     if (!agent || isExpired) return;
 
     try {
-      await agent.com.atproto.repo.createRecord({
-        collection: `app.reddwarf.poll.vote.${option}`,
-        repo: agent.assertDid,
-        record: {
-          $type: `app.reddwarf.poll.vote.${option}`,
-          subject: {
-            $type: "com.atproto.repo.strongRef",
-            uri: pollUri,
-            cid: pollRecord.cid,
+      // Get existing votes for this option
+      const existingVotes = (() => {
+        switch (option) {
+          case "a":
+            return userVotesA;
+          case "b":
+            return userVotesB;
+          case "c":
+            return userVotesC;
+          case "d":
+            return userVotesD;
+          default:
+            return [];
+        }
+      })();
+
+      // If user has already voted for this option, delete all votes (unvote)
+      if (existingVotes && existingVotes.length > 0) {
+        for (const voteUri of existingVotes) {
+          const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
+          if (match) {
+            const [, did, collection, rkey] = match;
+            await agent.com.atproto.repo.deleteRecord({
+              repo: did,
+              collection,
+              rkey,
+            });
+          }
+        }
+      } else {
+        // If not voted for this option, create new vote
+        // First, delete votes from other options if poll doesn't allow multiple votes
+        if (!poll.multiple) {
+          const otherVotes = [
+            ...(userVotesA || []),
+            ...(userVotesB || []),
+            ...(userVotesC || []),
+            ...(userVotesD || []),
+          ].filter((vote) => {
+            // Filter out votes for the current option
+            return !vote.includes(`app.reddwarf.poll.vote.${option}`);
+          });
+
+          for (const voteUri of otherVotes) {
+            const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
+            if (match) {
+              const [, did, collection, rkey] = match;
+              await agent.com.atproto.repo.deleteRecord({
+                repo: did,
+                collection,
+                rkey,
+              });
+            }
+          }
+        }
+
+        // Create new vote
+        await agent.com.atproto.repo.createRecord({
+          collection: `app.reddwarf.poll.vote.${option}`,
+          repo: agent.assertDid,
+          record: {
+            $type: `app.reddwarf.poll.vote.${option}`,
+            subject: {
+              $type: "com.atproto.repo.strongRef",
+              uri: pollUri,
+              cid: pollRecord.cid,
+            },
+            createdAt: new Date().toISOString(),
           },
-          createdAt: new Date().toISOString(),
-        },
-        // Let PDS generate rkey automatically
-      });
+          // Let PDS generate rkey automatically
+        });
+      }
     } catch (error) {
       console.error("Failed to vote:", error);
     }
@@ -2337,24 +2441,60 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
         {options.map((optionText, index) => {
           const optionKey = ["a", "b", "c", "d"][index];
 
+          // Check if user has voted for this option
+          const userVotesForOption = (() => {
+            switch (optionKey) {
+              case "a":
+                return userVotesA;
+              case "b":
+                return userVotesB;
+              case "c":
+                return userVotesC;
+              case "d":
+                return userVotesD;
+              default:
+                return [];
+            }
+          })();
+
+          const hasVotedForOption =
+            userVotesForOption && userVotesForOption.length > 0;
+          const voteCount =
+            voteData.find((v) => v.option === optionKey)?.count ?? 0;
+          const votePercentage =
+            totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+
           return (
             <div
               key={index}
-              className={`relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
+              className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
                 !isExpired
-                  ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+                  ? hasVotedForOption
+                    ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
+                    : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
                   : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
               }`}
               onClick={() => !isExpired && handleVote(optionKey)}
             >
+              {/* Vote percentage bar - always show */}
+              <div
+                className="absolute inset-y-0 left-0 bg-gray-300 dark:bg-gray-700 group-hover:bg-gray-400 dark:group-hover:bg-gray-600"
+                style={{ width: `${votePercentage}%` }}
+              />
+
               {/* Option text */}
               <span className="relative z-10 text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {optionText}
+                {hasVotedForOption && (
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">
+                    {poll.multiple ? "✓" : "✓ (click to remove)"}
+                  </span>
+                )}
               </span>
 
               {/* Vote count */}
               <span className="relative z-10 text-sm font-medium text-gray-600 dark:text-gray-400">
-                {voteData.find(v => v.option === optionKey)?.count ?? 0}
+                {votePercentage.toFixed(0)}%
               </span>
             </div>
           );
