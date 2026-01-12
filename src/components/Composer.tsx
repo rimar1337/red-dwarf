@@ -135,11 +135,14 @@ export function Composer() {
       };
 
       let externalEmbed = null;
+
+      // todo get real way of doing this better getting domain
+      const domain = window.location.hostname;
       if (uploadedPollImageBlob) {
         externalEmbed = {
           $type: "app.bsky.embed.external",
           external: {
-            uri: `https://reddwarf.app/profile/${agent.did}/post/${rkey}`, // Todo: update to your actual poll viewer URL
+            uri: `https://${domain}/profile/${agent.did}/post/${rkey}`, // Todo: update to your actual poll viewer URL
             title: "Poll created by " + agent.did,
             description: "Click to participate in this poll",
             thumb: uploadedPollImageBlob,
