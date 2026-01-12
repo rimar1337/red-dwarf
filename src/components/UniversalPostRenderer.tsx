@@ -1,4 +1,5 @@
 import * as ATPAPI from "@atproto/api";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
@@ -16,6 +17,7 @@ import {
 } from "~/utils/atoms";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
+  constructConstellationQuery,
   useQueryArbitrary,
   useQueryConstellation,
   useQueryIdentity,
@@ -2143,8 +2145,81 @@ const stopgap = {
 };
 
 function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
+  const { agent } = useAuth();
   const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
   const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
+
+  // Query vote counts for each option
+  const [constellationurl] = useAtom(constellationURLAtom);
+
+  const { data: voteCountsA } = useQueryConstellation({
+    method: "/links/count/distinct-dids",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.a",
+    path: ".subject.uri",
+  });
+
+  const { data: voteCountsB } = useQueryConstellation({
+    method: "/links/count/distinct-dids",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.b",
+    path: ".subject.uri",
+  });
+
+  const { data: voteCountsC } = useQueryConstellation({
+    method: "/links/count/distinct-dids",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.c",
+    path: ".subject.uri",
+  });
+
+  const { data: voteCountsD } = useQueryConstellation({
+    method: "/links/count/distinct-dids",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.d",
+    path: ".subject.uri",
+  });
+
+  // Query first page of voters for each option to get PFPs
+  const { data: votersA } = useQuery(
+    constructConstellationQuery({
+      constellation: constellationurl,
+      method: "/links",
+      target: pollUri,
+      collection: "app.reddwarf.poll.vote.a",
+      path: ".subject.uri",
+    }),
+  );
+
+  const { data: votersB } = useQuery(
+    constructConstellationQuery({
+      constellation: constellationurl,
+      method: "/links",
+      target: pollUri,
+      collection: "app.reddwarf.poll.vote.b",
+      path: ".subject.uri",
+    }),
+  );
+
+  const { data: votersC } = useQuery(
+    constructConstellationQuery({
+      constellation: constellationurl,
+      method: "/links",
+      target: pollUri,
+      collection: "app.reddwarf.poll.vote.c",
+      path: ".subject.uri",
+    }),
+  );
+
+  const { data: votersD } = useQuery(
+    constructConstellationQuery({
+      constellation: constellationurl,
+      method: "/links",
+      target: pollUri,
+      collection: "app.reddwarf.poll.vote.d",
+      path: ".subject.uri",
+    }),
+  );
 
   if (isLoading) {
     return (
@@ -2187,6 +2262,55 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
       })
     : null;
 
+  // Calculate vote counts
+  const voteData = [
+    {
+      option: "a",
+      count: parseInt((voteCountsA as any)?.total || "0"),
+      voters: (votersA as any)?.linking_records || [],
+    },
+    {
+      option: "b",
+      count: parseInt((voteCountsB as any)?.total || "0"),
+      voters: (votersB as any)?.linking_records || [],
+    },
+    {
+      option: "c",
+      count: parseInt((voteCountsC as any)?.total || "0"),
+      voters: (votersC as any)?.linking_records || [],
+    },
+    {
+      option: "d",
+      count: parseInt((voteCountsD as any)?.total || "0"),
+      voters: (votersD as any)?.linking_records || [],
+    },
+  ].slice(0, options.length);
+
+  const totalVotes = voteData.reduce((sum, item) => sum + item.count, 0);
+
+  const handleVote = async (option: string) => {
+    if (!agent || isExpired) return;
+
+    try {
+      await agent.com.atproto.repo.createRecord({
+        collection: `app.reddwarf.poll.vote.${option}`,
+        repo: agent.assertDid,
+        record: {
+          $type: `app.reddwarf.poll.vote.${option}`,
+          subject: {
+            $type: "com.atproto.repo.strongRef",
+            uri: pollUri,
+            cid: pollRecord.cid,
+          },
+          createdAt: new Date().toISOString(),
+        },
+        // Let PDS generate rkey automatically
+      });
+    } catch (error) {
+      console.error("Failed to vote:", error);
+    }
+  };
+
   return (
     <div className="my-4">
       {/* Header */}
@@ -2201,20 +2325,40 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
         <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
           {poll.multiple ? "Select multiple options" : "Select one option"}
         </span>
+
+        {/* Total Votes */}
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+        </span>
       </div>
 
-      {/* Options List */}
+      {/* Options List with Results */}
       <div className="space-y-3">
-        {options.map((optionText, index) => (
-          <div
-            key={index}
-            className="flex h-12 items-center justify-start truncate rounded-lg bg-gray-100 dark:bg-gray-800 px-4 text-sm font-medium text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700"
-          >
-            <span className="truncate">
-              {optionText}
-            </span>
-          </div>
-        ))}
+        {options.map((optionText, index) => {
+          const optionKey = ["a", "b", "c", "d"][index];
+
+          return (
+            <div
+              key={index}
+              className={`relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
+                !isExpired
+                  ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+                  : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+              }`}
+              onClick={() => !isExpired && handleVote(optionKey)}
+            >
+              {/* Option text */}
+              <span className="relative z-10 text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                {optionText}
+              </span>
+
+              {/* Vote count */}
+              <span className="relative z-10 text-sm font-medium text-gray-600 dark:text-gray-400">
+                {voteData.find(v => v.option === optionKey)?.count ?? 0}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Footer */}
