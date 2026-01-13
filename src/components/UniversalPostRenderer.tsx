@@ -1,5 +1,4 @@
 import * as ATPAPI from "@atproto/api";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
@@ -14,7 +13,6 @@ import {
   enableBridgyTextAtom,
   enableWafrnTextAtom,
   imgCDNAtom,
-  slingshotURLAtom,
 } from "~/utils/atoms";
 import { useGetOneToOneState } from "~/utils/followState";
 import { useHydratedEmbed } from "~/utils/useHydrated";
@@ -411,7 +409,7 @@ export function UniversalPostRendererATURILoader({
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-          ?.records || 0
+            ?.records || 0
         : null,
     );
   }, [links]);
@@ -459,13 +457,13 @@ export function UniversalPostRendererATURILoader({
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
-      page
-        ? page.linking_records.map((record) => {
-          const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-          return aturi;
-        })
-        : [],
-    )
+        page
+          ? page.linking_records.map((record) => {
+              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+              return aturi;
+            })
+          : [],
+      )
     : [];
 
   //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
@@ -625,7 +623,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
             opacity: 0.5,
           }}
           className="dark:bg-[repeating-linear-gradient(to_bottom,var(--color-gray-500)_0,var(--color-gray-400)_4px,transparent_4px,transparent_8px)]"
-        //className="border-gray-400 dark:border-gray-500"
+          //className="border-gray-400 dark:border-gray-500"
         />
       </div>
 
@@ -771,11 +769,11 @@ export function UniversalPostRendererRawRecordShim({
   const isQuotewithImages =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-    "app.bsky.embed.images";
+      "app.bsky.embed.images";
   const isQuotewithVideo =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-    "app.bsky.embed.video";
+      "app.bsky.embed.video";
 
   const hasMedia =
     hasEmbed &&
@@ -1259,6 +1257,10 @@ import { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 
 import defaultpfp from "~/../public/favicon.png";
+import {
+  usePollData,
+  usePollMutationQueue,
+} from "~/providers/PollMutationQueueProvider";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 import {
@@ -1494,18 +1496,18 @@ function UniversalPostRenderer({
 
   const tags = unfediwafrnTags
     ? unfediwafrnTags
-      .split("\n")
-      .map((t) => t.trim())
-      .filter(Boolean)
+        .split("\n")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : undefined;
 
   const links = tags
     ? tags
-      .map((tag) => {
-        const encoded = encodeURIComponent(tag);
-        return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
-      })
-      .join("<br>")
+        .map((tag) => {
+          const encoded = encodeURIComponent(tag);
+          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
+        })
+        .join("<br>")
     : "";
 
   const unfediwafrn = unfediwafrnPartial
@@ -1518,7 +1520,7 @@ function UniversalPostRenderer({
 
   /* fuck you */
   const isMainItem = false;
-  const setMainItem = (any: any) => { };
+  const setMainItem = (any: any) => {};
   // eslint-disable-next-line react-hooks/refs
   //console.log("Received ref in UniversalPostRenderer:", usedref);
   return (
@@ -1532,12 +1534,12 @@ function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                  setMainItem({ post: post });
-                  onPostClick(e);
-                }
+                    setMainItem({ post: post });
+                    onPostClick(e);
+                  }
                 : () => {
-                  setMainItem({ post: post });
-                }
+                    setMainItem({ post: post });
+                  }
               : undefined
         }
         style={{
@@ -2020,10 +2022,10 @@ function UniversalPostRenderer({
                         try {
                           await navigator.clipboard.writeText(
                             "https://bsky.app" +
-                            "/profile/" +
-                            post.author.handle +
-                            "/post/" +
-                            post.uri.split("/").pop(),
+                              "/profile/" +
+                              post.author.handle +
+                              "/post/" +
+                              post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -2131,7 +2133,7 @@ type Embed =
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
-  | { $type: string;[k: string]: unknown };
+  | { $type: string; [k: string]: unknown };
 
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
@@ -2150,13 +2152,9 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   const { agent } = useAuth();
   const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
   const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
+  const { castVote } = usePollMutationQueue();
 
   // Query vote counts for each option
-  const [constellationurl] = useAtom(constellationURLAtom);
-  const [imgcdn] = useAtom(imgCDNAtom);
-  const [slingshoturl] = useAtom(slingshotURLAtom);
-  const queryClient = useQueryClient();
-
   const { data: voteCountsA } = useQueryConstellation({
     method: "/links/count/distinct-dids",
     target: pollUri,
@@ -2218,48 +2216,46 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   const userVotesA = useGetOneToOneState(
     agent?.did
       ? {
-        target: pollUri,
-        user: agent?.did,
-        collection: "app.reddwarf.poll.vote.a",
-        path: ".subject.uri",
-      }
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.a",
+          path: ".subject.uri",
+        }
       : undefined,
   );
 
   const userVotesB = useGetOneToOneState(
     agent?.did
       ? {
-        target: pollUri,
-        user: agent?.did,
-        collection: "app.reddwarf.poll.vote.b",
-        path: ".subject.uri",
-      }
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.b",
+          path: ".subject.uri",
+        }
       : undefined,
   );
 
   const userVotesC = useGetOneToOneState(
     agent?.did
       ? {
-        target: pollUri,
-        user: agent?.did,
-        collection: "app.reddwarf.poll.vote.c",
-        path: ".subject.uri",
-      }
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.c",
+          path: ".subject.uri",
+        }
       : undefined,
   );
 
   const userVotesD = useGetOneToOneState(
     agent?.did
       ? {
-        target: pollUri,
-        user: agent?.did,
-        collection: "app.reddwarf.poll.vote.d",
-        path: ".subject.uri",
-      }
+          target: pollUri,
+          user: agent?.did,
+          collection: "app.reddwarf.poll.vote.d",
+          path: ".subject.uri",
+        }
       : undefined,
   );
-
-
 
   // todo: hardcoded to multiple for all public polls
   const poll = {
@@ -2277,29 +2273,68 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
 
   const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
 
-  // Calculate vote counts
-  const voteData = [
-    {
-      option: "a",
-      count: parseInt((voteCountsA as any)?.total || "0"),
-      voters: votersA?.linking_records || [],
-    },
-    {
-      option: "b",
-      count: parseInt((voteCountsB as any)?.total || "0"),
-      voters: votersB?.linking_records || [],
-    },
-    {
-      option: "c",
-      count: parseInt((voteCountsC as any)?.total || "0"),
-      voters: votersC?.linking_records || [],
-    },
-    {
-      option: "d",
-      count: parseInt((voteCountsD as any)?.total || "0"),
-      voters: votersD?.linking_records || [],
-    },
-  ].slice(0, options.length);
+  // // Calculate vote counts
+  // const voteData = [
+  //   {
+  //     option: "a",
+  //     count: parseInt((voteCountsA as any)?.total || "0"),
+  //     voters: votersA?.linking_records || [],
+  //   },
+  //   {
+  //     option: "b",
+  //     count: parseInt((voteCountsB as any)?.total || "0"),
+  //     voters: votersB?.linking_records || [],
+  //   },
+  //   {
+  //     option: "c",
+  //     count: parseInt((voteCountsC as any)?.total || "0"),
+  //     voters: votersC?.linking_records || [],
+  //   },
+  //   {
+  //     option: "d",
+  //     count: parseInt((voteCountsD as any)?.total || "0"),
+  //     voters: votersD?.linking_records || [],
+  //   },
+  // ].slice(0, options.length);
+
+  const serverUserVotes = [
+    ...(userVotesA || []),
+    ...(userVotesB || []),
+    ...(userVotesC || []),
+    ...(userVotesD || []),
+  ];
+
+  // Flatten counts
+  const serverCounts = {
+    a: parseInt((voteCountsA as any)?.total || "0"),
+    b: parseInt((voteCountsB as any)?.total || "0"),
+    c: parseInt((voteCountsC as any)?.total || "0"),
+    d: parseInt((voteCountsD as any)?.total || "0"),
+  };
+
+  // 3. THE MAGIC HOOK
+  const pollState = usePollData(
+    pollUri,
+    !!poll.multiple,
+    serverCounts,
+    serverUserVotes,
+  );
+
+  // 4. Handle Vote Wrapper
+  const handleVote = async (optionKey: string) => {
+    if (!pollRecord) return;
+    // Expiry check
+    if (isExpired) return;
+
+    // Trigger the Provider logic
+    await castVote(
+      pollUri,
+      pollRecord.cid,
+      optionKey,
+      !!poll.multiple,
+      serverUserVotes,
+    );
+  };
 
   if (isLoading) {
     return (
@@ -2333,89 +2368,88 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   //   })
   //   : null;
 
+  // const totalVotes = voteData.reduce((sum, item) => sum + item.count, 0);
 
-  const totalVotes = voteData.reduce((sum, item) => sum + item.count, 0);
+  // const handleVote = async (option: string) => {
+  //   if (!agent || isExpired) return;
 
-  const handleVote = async (option: string) => {
-    if (!agent || isExpired) return;
+  //   try {
+  //     // Get existing votes for this option
+  //     const existingVotes = (() => {
+  //       switch (option) {
+  //         case "a":
+  //           return userVotesA;
+  //         case "b":
+  //           return userVotesB;
+  //         case "c":
+  //           return userVotesC;
+  //         case "d":
+  //           return userVotesD;
+  //         default:
+  //           return [];
+  //       }
+  //     })();
 
-    try {
-      // Get existing votes for this option
-      const existingVotes = (() => {
-        switch (option) {
-          case "a":
-            return userVotesA;
-          case "b":
-            return userVotesB;
-          case "c":
-            return userVotesC;
-          case "d":
-            return userVotesD;
-          default:
-            return [];
-        }
-      })();
+  //     // If user has already voted for this option, delete all votes (unvote)
+  //     if (existingVotes && existingVotes.length > 0) {
+  //       for (const voteUri of existingVotes) {
+  //         const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
+  //         if (match) {
+  //           const [, did, collection, rkey] = match;
+  //           await agent.com.atproto.repo.deleteRecord({
+  //             repo: did,
+  //             collection,
+  //             rkey,
+  //           });
+  //         }
+  //       }
+  //     } else {
+  //       // If not voted for this option, create new vote
+  //       // First, delete votes from other options if poll doesn't allow multiple votes
+  //       if (!poll.multiple) {
+  //         const otherVotes = [
+  //           ...(userVotesA || []),
+  //           ...(userVotesB || []),
+  //           ...(userVotesC || []),
+  //           ...(userVotesD || []),
+  //         ].filter((vote) => {
+  //           // Filter out votes for the current option
+  //           return !vote.includes(`app.reddwarf.poll.vote.${option}`);
+  //         });
 
-      // If user has already voted for this option, delete all votes (unvote)
-      if (existingVotes && existingVotes.length > 0) {
-        for (const voteUri of existingVotes) {
-          const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
-          if (match) {
-            const [, did, collection, rkey] = match;
-            await agent.com.atproto.repo.deleteRecord({
-              repo: did,
-              collection,
-              rkey,
-            });
-          }
-        }
-      } else {
-        // If not voted for this option, create new vote
-        // First, delete votes from other options if poll doesn't allow multiple votes
-        if (!poll.multiple) {
-          const otherVotes = [
-            ...(userVotesA || []),
-            ...(userVotesB || []),
-            ...(userVotesC || []),
-            ...(userVotesD || []),
-          ].filter((vote) => {
-            // Filter out votes for the current option
-            return !vote.includes(`app.reddwarf.poll.vote.${option}`);
-          });
+  //         for (const voteUri of otherVotes) {
+  //           const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
+  //           if (match) {
+  //             const [, did, collection, rkey] = match;
+  //             await agent.com.atproto.repo.deleteRecord({
+  //               repo: did,
+  //               collection,
+  //               rkey,
+  //             });
+  //           }
+  //         }
+  //       }
 
-          for (const voteUri of otherVotes) {
-            const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
-            if (match) {
-              const [, did, collection, rkey] = match;
-              await agent.com.atproto.repo.deleteRecord({
-                repo: did,
-                collection,
-                rkey,
-              });
-            }
-          }
-        }
-
-        // Create new vote
-        await agent.com.atproto.repo.createRecord({
-          collection: `app.reddwarf.poll.vote.${option}`,
-          repo: agent.assertDid,
-          record: {
-            $type: `app.reddwarf.poll.vote.${option}`,
-            subject: {
-              $type: "com.atproto.repo.strongRef",
-              uri: pollUri,
-              cid: pollRecord.cid,
-            },
-            createdAt: new Date().toISOString(),
-          },
-          // Let PDS generate rkey automatically
-        });
-      }
-    } catch (error) {
-      console.error("Failed to vote:", error);
-    }
-  };
+  //       // Create new vote
+  //       await agent.com.atproto.repo.createRecord({
+  //         collection: `app.reddwarf.poll.vote.${option}`,
+  //         repo: agent.assertDid,
+  //         record: {
+  //           $type: `app.reddwarf.poll.vote.${option}`,
+  //           subject: {
+  //             $type: "com.atproto.repo.strongRef",
+  //             uri: pollUri,
+  //             cid: pollRecord.cid,
+  //           },
+  //           createdAt: new Date().toISOString(),
+  //         },
+  //         // Let PDS generate rkey automatically
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to vote:", error);
+  //   }
+  // };
 
   return (
     <>
@@ -2430,59 +2464,67 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
 
           {/* Multiplicity */}
           <span className="text-sm font-normal text-gray-500 dark:text-gray-400 flex flex-row items-center gap-1">
-            {poll.multiple ? (<IconMdiCheckboxMultipleMarked />) : (<IconMdiCheckCircle />)}
+            {poll.multiple ? (
+              <IconMdiCheckboxMultipleMarked />
+            ) : (
+              <IconMdiCheckCircle />
+            )}
             {poll.multiple ? "Select one or more options" : "Select one option"}
           </span>
-
         </div>
 
         {/* Options List with Results */}
         <div className="space-y-3">
           {options.map((optionText, index) => {
-            const optionKey = ["a", "b", "c", "d"][index];
+            const optionKey = ["a", "b", "c", "d"][index] as
+              | "a"
+              | "b"
+              | "c"
+              | "d";
 
-            // Check if user has voted for this option
-            const userVotesForOption = (() => {
+            // Get the state from the hook
+            const optionState = pollState.results[optionKey];
+            const hasVotedForOption = optionState.hasVoted;
+            const voteCount = optionState.count;
+            const votePercentage =
+              pollState.totalVotes > 0
+                ? (voteCount / pollState.totalVotes) * 100
+                : 0;
+
+            // Get the voters data for displaying avatars
+            const votersData = (() => {
               switch (optionKey) {
                 case "a":
-                  return userVotesA;
+                  return votersA?.linking_records || [];
                 case "b":
-                  return userVotesB;
+                  return votersB?.linking_records || [];
                 case "c":
-                  return userVotesC;
+                  return votersC?.linking_records || [];
                 case "d":
-                  return userVotesD;
+                  return votersD?.linking_records || [];
                 default:
                   return [];
               }
             })();
 
-            const rowData = voteData.find((v) => v.option === optionKey);
-            const hasVotedForOption =
-              userVotesForOption && userVotesForOption.length > 0;
-            const voteCount =
-              voteData.find((v) => v.option === optionKey)?.count ?? 0;
-            const votePercentage =
-              totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
-
-            // Extract just the DIDs we want to show (top 2)
-            const topVoters = rowData?.voters
-              .filter(v => !!v.did)
-              .slice(0, 5) || [];
+            // Extract just the DIDs we want to show (top 5)
+            const topVoters =
+              votersData.filter((v) => !!v.did).slice(0, 5) || [];
 
             return (
               <div
                 key={index}
-                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${!isExpired
-                  ? hasVotedForOption
-                    ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
-                    : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
-                  : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                  }`}
+                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
+                  !isExpired
+                    ? hasVotedForOption
+                      ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
+                      : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
+                    : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!isExpired) {
-                    handleVote(optionKey)
+                    handleVote(optionKey);
                   }
                 }}
               >
@@ -2515,9 +2557,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
                           style={{ zIndex: 5 - idx }}
                         >
                           {/* The Component handles the async fetch! */}
-                          <PollOptionAvatar
-                            did={voter.did}
-                          />
+                          <PollOptionAvatar did={voter.did} />
                         </div>
                       ))}
                     </div>
@@ -2569,7 +2609,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
             }}
             className="rounded-full h-10 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-4 py-2 text-[14px]"
           >
-            View all {totalVotes} votes
+            View all {pollState.totalVotes} votes
           </button>
         </div>
       </div>
@@ -2585,15 +2625,13 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   );
 }
 
-function PollOptionAvatar({
-  did,
-}: {
-  did: string;
-}) {
+function PollOptionAvatar({ did }: { did: string }) {
   const [imgcdn] = useAtom(imgCDNAtom);
   // Each avatar handles its own data fetching
   // If this specific DID is already in cache, it loads instantly
-  const { data: profileRecord } = useQueryProfile(`at://${did}/app.bsky.actor.profile/self`)
+  const { data: profileRecord } = useQueryProfile(
+    `at://${did}/app.bsky.actor.profile/self`,
+  );
 
   //const profile = profileRecord?.value as ATPAPI.AppBskyActorProfile.Record;
   const avatarUrl = getAvatarUrl(profileRecord, did, imgcdn);
@@ -2935,10 +2973,10 @@ function PostEmbeds({
                 width: "100%",
                 aspectRatio: image.aspectRatio
                   ? (() => {
-                    const { width, height } = image.aspectRatio;
-                    const ratio = width / height;
-                    return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                  })()
+                      const { width, height } = image.aspectRatio;
+                      const ratio = width / height;
+                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                    })()
                   : "1 / 1", // fallback to square
                 //backgroundColor: theme.background, // fallback letterboxing color
                 borderRadius: 12,
@@ -3636,8 +3674,9 @@ const SmartHLSPlayer = ({
             borderRadius: 12,
             overflow: "hidden",
             //border: `1px solid ${theme.border}`,
-            paddingTop: `${100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-              }%`, // 16:9 = 56.25%, 4:3 = 75%
+            paddingTop: `${
+              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
+            }%`, // 16:9 = 56.25%, 4:3 = 75%
           }}
           className="border border-gray-200 dark:border-gray-800 was7"
         >

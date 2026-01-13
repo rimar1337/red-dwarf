@@ -25,6 +25,7 @@ import Login from "~/components/Login";
 import { NotFound } from "~/components/NotFound";
 import { FluentEmojiHighContrastGlowingStar } from "~/components/Star";
 import { LikeMutationQueueProvider } from "~/providers/LikeMutationQueueProvider";
+import { PollMutationQueueProvider } from "~/providers/PollMutationQueueProvider";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
 import { composerAtom, hueAtom, useAtomCssVar } from "~/utils/atoms";
 import { seo } from "~/utils/seo";
@@ -83,12 +84,14 @@ function RootComponent() {
   return (
     <UnifiedAuthProvider>
       <LikeMutationQueueProvider>
-        <RootDocument>
-          <KeepAliveProvider>
-            <AppToaster />
-            <KeepAliveOutlet />
-          </KeepAliveProvider>
-        </RootDocument>
+        <PollMutationQueueProvider>
+          <RootDocument>
+            <KeepAliveProvider>
+              <AppToaster />
+              <KeepAliveOutlet />
+            </KeepAliveProvider>
+          </RootDocument>
+        </PollMutationQueueProvider>
       </LikeMutationQueueProvider>
     </UnifiedAuthProvider>
   );
@@ -176,7 +179,8 @@ function Snack(props: ToastProps) {
           </button>
         </div>
       ) : null}
-      <button className=" ml-4"
+      <button
+        className=" ml-4"
         onClick={() => {
           sonnerToast.dismiss(id);
         }}
@@ -232,7 +236,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ? "notifications"
           : isProfile
             ? "profile"
-            : isModeration 
+            : isModeration
               ? "moderation"
               : "home";
 
@@ -806,7 +810,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <IconMaterialSymbolsSettingsOutline className="w-6 h-6" />
               }
               ActiveIcon={<IconMaterialSymbolsSettings className="w-6 h-6" />}
-              active={locationEnum === "settings" || locationEnum === "feeds" || locationEnum === "moderation"}
+              active={
+                locationEnum === "settings" ||
+                locationEnum === "feeds" ||
+                locationEnum === "moderation"
+              }
               onClickCallbback={() =>
                 navigate({
                   to: "/settings",

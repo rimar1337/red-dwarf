@@ -153,3 +153,21 @@ export const enableWafrnTextAtom = atomWithStorage<boolean>(
   "enableWafrnTextAtom",
   false
 );
+
+
+// polls state
+
+export type PollVoteStatus = 'pending' | 'confirmed';
+
+export interface LocalVote {
+  pollUri: string;
+  option: 'a' | 'b' | 'c' | 'd';
+  status: PollVoteStatus;
+  uri?: string; // The AT-URI. 'undefined' if pending
+  timestamp: number;
+}
+
+// Map: PollURI -> Array of Votes (because a user can vote for A and B in multi-choice)
+export type PollStateMap = Record<string, LocalVote[]>;
+
+export const localPollVotesAtom = atom<PollStateMap>({});
