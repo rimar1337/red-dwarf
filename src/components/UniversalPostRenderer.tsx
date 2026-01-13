@@ -2386,7 +2386,11 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
             ) : (
               <IconMdiCheckCircle />
             )}
-            {poll.multiple ? "Select one or more options" : "Select one option"}
+            <span className="md:flex hidden">
+              {poll.multiple
+                ? "Select one or more options"
+                : "Select one option"}
+            </span>
           </span>
 
           {/* Refresh Button */}
@@ -2523,7 +2527,13 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // open the route to the view all stuff
+              // todo: implement the proper votes page here thanks
+              renderSnack({
+                title: "Not implemented yet...",
+                description: "Opening PDSLS",
+              });
+              const pdslsUrl = `https://pdsls.dev/at://${did}/app.reddwarf.embed.poll/${rkey}#backlinks`;
+              window.open(pdslsUrl, "_blank");
             }}
             className="rounded-full h-10 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-4 py-2 text-[14px]"
           >
