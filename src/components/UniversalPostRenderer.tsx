@@ -1,5 +1,5 @@
 import * as ATPAPI from "@atproto/api";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
@@ -14,11 +14,11 @@ import {
   enableBridgyTextAtom,
   enableWafrnTextAtom,
   imgCDNAtom,
+  slingshotURLAtom,
 } from "~/utils/atoms";
 import { useGetOneToOneState } from "~/utils/followState";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
-  constructConstellationQuery,
   useQueryArbitrary,
   useQueryConstellation,
   useQueryIdentity,
@@ -2152,6 +2152,9 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
 
   // Query vote counts for each option
   const [constellationurl] = useAtom(constellationURLAtom);
+  const [imgcdn] = useAtom(imgCDNAtom);
+  const [slingshoturl] = useAtom(slingshotURLAtom);
+  const queryClient = useQueryClient();
 
   const { data: voteCountsA } = useQueryConstellation({
     method: "/links/count/distinct-dids",
@@ -2182,45 +2185,33 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   });
 
   // Query first page of voters for each option to get PFPs
-  const { data: votersA } = useQuery(
-    constructConstellationQuery({
-      constellation: constellationurl,
-      method: "/links",
-      target: pollUri,
-      collection: "app.reddwarf.poll.vote.a",
-      path: ".subject.uri",
-    }),
-  );
+  const { data: votersA } = useQueryConstellation({
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.a",
+    path: ".subject.uri",
+  });
 
-  const { data: votersB } = useQuery(
-    constructConstellationQuery({
-      constellation: constellationurl,
-      method: "/links",
-      target: pollUri,
-      collection: "app.reddwarf.poll.vote.b",
-      path: ".subject.uri",
-    }),
-  );
+  const { data: votersB } = useQueryConstellation({
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.b",
+    path: ".subject.uri",
+  });
 
-  const { data: votersC } = useQuery(
-    constructConstellationQuery({
-      constellation: constellationurl,
-      method: "/links",
-      target: pollUri,
-      collection: "app.reddwarf.poll.vote.c",
-      path: ".subject.uri",
-    }),
-  );
+  const { data: votersC } = useQueryConstellation({
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.c",
+    path: ".subject.uri",
+  });
 
-  const { data: votersD } = useQuery(
-    constructConstellationQuery({
-      constellation: constellationurl,
-      method: "/links",
-      target: pollUri,
-      collection: "app.reddwarf.poll.vote.d",
-      path: ".subject.uri",
-    }),
-  );
+  const { data: votersD } = useQueryConstellation({
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.d",
+    path: ".subject.uri",
+  });
 
   // Check if user has already voted for each option in this poll
   const userVotesA = useGetOneToOneState(
@@ -2267,6 +2258,44 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
       : undefined,
   );
 
+
+
+  const poll = pollRecord?.value as {
+    a: string;
+    b: string;
+    c?: string;
+    d?: string;
+    expiry?: string;
+    multiple?: boolean;
+    createdAt: string;
+  };
+
+  const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
+
+  // Calculate vote counts
+  const voteData = [
+    {
+      option: "a",
+      count: parseInt((voteCountsA as any)?.total || "0"),
+      voters: votersA?.linking_records || [],
+    },
+    {
+      option: "b",
+      count: parseInt((voteCountsB as any)?.total || "0"),
+      voters: votersB?.linking_records || [],
+    },
+    {
+      option: "c",
+      count: parseInt((voteCountsC as any)?.total || "0"),
+      voters: votersC?.linking_records || [],
+    },
+    {
+      option: "d",
+      count: parseInt((voteCountsD as any)?.total || "0"),
+      voters: votersD?.linking_records || [],
+    },
+  ].slice(0, options.length);
+
   if (isLoading) {
     return (
       <div className="animate-pulse">
@@ -2285,19 +2314,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   if (error || !pollRecord?.value) {
     return <div className="text-red-500 text-sm p-2">Failed to load poll</div>;
   }
-
-  const poll = pollRecord.value as {
-    a: string;
-    b: string;
-    c?: string;
-    d?: string;
-    expiry?: string;
-    multiple?: boolean;
-    createdAt: string;
-  };
-
-  const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
-  const isExpired = false //poll.expiry ? new Date(poll.expiry) < new Date() : false;
+  const isExpired = false; //poll.expiry ? new Date(poll.expiry) < new Date() : false;
 
   // todo unused waiting for private polls
   // undefined for public polls which equals never expires
@@ -2311,29 +2328,6 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   //   })
   //   : null;
 
-  // Calculate vote counts
-  const voteData = [
-    {
-      option: "a",
-      count: parseInt((voteCountsA as any)?.total || "0"),
-      voters: (votersA as any)?.linking_records || [],
-    },
-    {
-      option: "b",
-      count: parseInt((voteCountsB as any)?.total || "0"),
-      voters: (votersB as any)?.linking_records || [],
-    },
-    {
-      option: "c",
-      count: parseInt((voteCountsC as any)?.total || "0"),
-      voters: (votersC as any)?.linking_records || [],
-    },
-    {
-      option: "d",
-      count: parseInt((voteCountsD as any)?.total || "0"),
-      voters: (votersD as any)?.linking_records || [],
-    },
-  ].slice(0, options.length);
 
   const totalVotes = voteData.reduce((sum, item) => sum + item.count, 0);
 
@@ -2460,12 +2454,18 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
             }
           })();
 
+          const rowData = voteData.find((v) => v.option === optionKey);
           const hasVotedForOption =
             userVotesForOption && userVotesForOption.length > 0;
           const voteCount =
             voteData.find((v) => v.option === optionKey)?.count ?? 0;
           const votePercentage =
             totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+
+          // Extract just the DIDs we want to show (top 2)
+          const topVoters = rowData?.voters
+            .filter(v => !!v.did)
+            .slice(0, 2) || [];
 
           return (
             <div
@@ -2494,10 +2494,32 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
                 )}
               </span>
 
-              {/* Vote count */}
-              <span className="relative z-10 text-sm font-medium text-gray-600 dark:text-gray-400">
-                {votePercentage.toFixed(0)}%
-              </span>
+              {/* Avatar circles and vote count */}
+              <div className="relative z-10 flex items-center gap-2">
+                {/* Avatar circles - semi overlapping */}
+
+                {topVoters.length > 0 && (
+                  <div className="flex -space-x-2">
+                    {topVoters.map((voter, idx) => (
+                      <div
+                        key={voter.did} // Use DID as key, it's stable
+                        className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
+                        style={{ zIndex: 2 - idx }}
+                      >
+                        {/* The Component handles the async fetch! */}
+                        <PollOptionAvatar
+                          did={voter.did}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Vote count */}
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {votePercentage.toFixed(0)}%
+                </span>
+              </div>
             </div>
           );
         })}
@@ -2509,9 +2531,15 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
         <div className="flex items-center gap-2">
           <IconMdiClockOutline />
           {/* <span>Expires {formattedDate}</span> */}
-          {formattedDate ? !isExpired ? (
-            <span>Expires {formattedDate}</span>
-          ) : (<span>Expired at {formattedDate}</span>) : <span>Never expires</span>}
+          {formattedDate ? (
+            !isExpired ? (
+              <span>Expires {formattedDate}</span>
+            ) : (
+              <span>Expired at {formattedDate}</span>
+            )
+          ) : (
+            <span>Never expires</span>
+          )}
         </div>
 
         {/* Status */}
@@ -2528,6 +2556,38 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function PollOptionAvatar({
+  did,
+}: {
+  did: string;
+}) {
+  const [imgcdn] = useAtom(imgCDNAtom);
+  // Each avatar handles its own data fetching
+  // If this specific DID is already in cache, it loads instantly
+  const { data: profileRecord } = useQueryProfile(`at://${did}/app.bsky.actor.profile/self`)
+
+  //const profile = profileRecord?.value as ATPAPI.AppBskyActorProfile.Record;
+  const avatarUrl = getAvatarUrl(profileRecord, did, imgcdn);
+
+  if (!avatarUrl) {
+    // Fallback grey circle
+    return <div className="w-full h-full bg-gray-500" />;
+  }
+
+  return (
+    <img
+      src={avatarUrl}
+      alt="voter"
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        const target = e.target as HTMLImageElement;
+        target.style.display = "none";
+        target.parentElement!.style.backgroundColor = "#6b7280";
+      }}
+    />
   );
 }
 
