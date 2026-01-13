@@ -1,8 +1,8 @@
-import { type Agent,AtUri } from "@atproto/api";
+import { type Agent, AtUri } from "@atproto/api";
 import { TID } from "@atproto/common-web";
 import type { QueryClient } from "@tanstack/react-query";
 
-import { type linksRecordsResponse,useQueryConstellation } from "./useQuery";
+import { type linksRecordsResponse, useQueryConstellation } from "./useQuery";
 
 export function useGetFollowState({
   target,
@@ -21,7 +21,7 @@ export function useGetFollowState({
           path: ".subject",
           dids: [user],
         }
-      : { method: "undefined", target: "whatever" }
+      : { method: "undefined", target: "whatever" },
     // overloading sucks so much
   ) as { data: linksRecordsResponse | undefined };
   const follows = followData?.linking_records.slice(0, 50) ?? [];
@@ -60,12 +60,12 @@ export function toggleFollow({
 
   const updateCache = (
     updater: (
-      oldData: linksRecordsResponse | undefined
-    ) => linksRecordsResponse | undefined
+      oldData: linksRecordsResponse | undefined,
+    ) => linksRecordsResponse | undefined,
   ) => {
     queryClient.setQueryData(
       queryKey,
-      (oldData: linksRecordsResponse | undefined) => updater(oldData)
+      (oldData: linksRecordsResponse | undefined) => updater(oldData),
     );
   };
 
@@ -122,14 +122,12 @@ export function toggleFollow({
       linking_records: old.linking_records.filter(
         (rec) =>
           !followRecords.includes(
-            `at://${rec.did}/${rec.collection}/${rec.rkey}`
-          )
+            `at://${rec.did}/${rec.collection}/${rec.rkey}`,
+          ),
       ),
     };
   });
 }
-
-
 
 export function useGetOneToOneState(params?: {
   target: string;
@@ -146,8 +144,12 @@ export function useGetOneToOneState(params?: {
           collection: params.collection,
           path: params.path,
           dids: [params.user],
+          // todo disgusting hack please never code again
+          customkey: params.collection.includes("reddwarf.poll.vote")
+            ? "constellation-polls"
+            : undefined,
         }
-      : { method: "undefined", target: "whatever" }
+      : { method: "undefined", target: "whatever" },
     // overloading sucks so much
   ) as { data: linksRecordsResponse | undefined };
   if (!params || !params.user) return undefined;

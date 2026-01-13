@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import React, { createContext, use, useCallback, useMemo } from "react";
 
@@ -27,6 +28,7 @@ interface PollMutationContextType {
   ) => Promise<void>;
 
   getLocalVotes: (pollUri: string) => ExtendedLocalVote[];
+  refreshPollData: (pollUri?: string) => void;
 }
 
 const PollMutationContext = createContext<PollMutationContextType | undefined>(
@@ -43,6 +45,7 @@ export function PollMutationQueueProvider({
   children: React.ReactNode;
 }) {
   const { agent } = useAuth();
+  const queryClient = useQueryClient();
   const [localVotes, setLocalVotes] = useAtom(localPollVotesAtom);
 
   const getLocalVotes = useCallback(
@@ -53,13 +56,51 @@ export function PollMutationQueueProvider({
   );
 
   const updateLocalState = useCallback(
-    (pollUri: string, updater: (prev: ExtendedLocalVote[]) => ExtendedLocalVote[]) => {
+    (
+      pollUri: string,
+      updater: (prev: ExtendedLocalVote[]) => ExtendedLocalVote[],
+    ) => {
       setLocalVotes((prev) => ({
         ...prev,
         [pollUri]: updater((prev[pollUri] || []) as ExtendedLocalVote[]),
       }));
     },
     [setLocalVotes],
+  );
+
+  const refreshPollData = useCallback(
+    (pollUri?: string) => {
+      // Clear all local pending votes for this poll or all polls
+      if (pollUri) {
+        // Clear local state for specific poll
+        setLocalVotes((prev) => {
+          const newState = { ...prev };
+          delete newState[pollUri];
+          return newState;
+        });
+      } else {
+        // Clear all local votes
+        setLocalVotes({});
+      }
+
+      // Invalidate all poll constellation queries using predicate function
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) && queryKey.includes("constellation-polls")
+          );
+        },
+      });
+
+      // If specific poll URI provided, also invalidate that poll's data
+      if (pollUri) {
+        queryClient.invalidateQueries({
+          queryKey: ["arbitrary", pollUri],
+        });
+      }
+    },
+    [queryClient, setLocalVotes],
   );
 
   const castVoteRaw = useCallback(
@@ -81,7 +122,7 @@ export function PollMutationQueueProvider({
 
       // Check if ANY server vote exists for this option
       const hasServerVote = currentServerVotes.some((uri) =>
-        uri.includes(`app.reddwarf.poll.vote.${optionKey}`)
+        uri.includes(`app.reddwarf.poll.vote.${optionKey}`),
       );
 
       const isCurrentlyVoted = localEntry
@@ -92,24 +133,26 @@ export function PollMutationQueueProvider({
       // ACTION: UNVOTE (Toggle Off)
       // ------------------------------------------------------------
       if (isCurrentlyVoted) {
-
         // Optimistic Update: Tombstone
         updateLocalState(pollUri, (prev) => {
-          const clean = prev.filter(v => v.option !== optionKey);
-          return [...clean, {
-            pollUri,
-            option: optionKey,
-            status: "pending",
-            action: "delete",
-            timestamp
-          }];
+          const clean = prev.filter((v) => v.option !== optionKey);
+          return [
+            ...clean,
+            {
+              pollUri,
+              option: optionKey,
+              status: "pending",
+              action: "delete",
+              timestamp,
+            },
+          ];
         });
 
         try {
           // FIX: Collect ALL URIs for this option (Server + Local)
           // We want to nuke every record that matches this option to clean up state
-          const serverUris = currentServerVotes.filter(uri =>
-            uri.includes(`app.reddwarf.poll.vote.${optionKey}`)
+          const serverUris = currentServerVotes.filter((uri) =>
+            uri.includes(`app.reddwarf.poll.vote.${optionKey}`),
           );
 
           const urisToDelete = [...serverUris];
@@ -122,7 +165,7 @@ export function PollMutationQueueProvider({
 
           // Parallel delete for everything found
           await Promise.all(
-            uniqueUris.map(uri => {
+            uniqueUris.map((uri) => {
               const match = uri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
               if (!match) return Promise.resolve();
               const [, repo, collection, rkey] = match;
@@ -131,14 +174,15 @@ export function PollMutationQueueProvider({
                 collection,
                 rkey,
               });
-            })
+            }),
           );
-
         } catch (e) {
           console.error("Failed to unvote", e);
           renderSnack({ title: "Failed to remove vote" });
           // Revert optimistic update
-          updateLocalState(pollUri, (prev) => prev.filter(v => v.timestamp !== timestamp));
+          updateLocalState(pollUri, (prev) =>
+            prev.filter((v) => v.timestamp !== timestamp),
+          );
         }
       }
 
@@ -146,26 +190,33 @@ export function PollMutationQueueProvider({
       // ACTION: VOTE (Toggle On)
       // ------------------------------------------------------------
       else {
-        // ... (The Vote logic remains the same, as the Single Choice cleanup 
+        // ... (The Vote logic remains the same, as the Single Choice cleanup
         // logic there already iterated over the entire array) ...
 
         updateLocalState(pollUri, (prev) => {
-          const newState = isMultiple ? [...prev] : prev.filter(v => v.action !== 'create');
-          const clean = newState.filter(v => v.option !== optionKey);
-          return [...clean, {
-            pollUri,
-            option: optionKey,
-            status: "pending",
-            action: "create",
-            timestamp
-          }];
+          const newState = isMultiple
+            ? [...prev]
+            : prev.filter((v) => v.action !== "create");
+          const clean = newState.filter((v) => v.option !== optionKey);
+          return [
+            ...clean,
+            {
+              pollUri,
+              option: optionKey,
+              status: "pending",
+              action: "create",
+              timestamp,
+            },
+          ];
         });
 
         // Cleanup others if single choice
         if (!isMultiple) {
           const votesToDelete = [
             ...currentServerVotes,
-            ...(currentLocal.filter(v => v.action === 'create' && v.uri).map(v => v.uri) as string[])
+            ...(currentLocal
+              .filter((v) => v.action === "create" && v.uri)
+              .map((v) => v.uri) as string[]),
           ];
 
           // This was already safe because it iterates the whole array
@@ -174,7 +225,9 @@ export function PollMutationQueueProvider({
             const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
             if (match) {
               const [, repo, collection, rkey] = match;
-              agent.com.atproto.repo.deleteRecord({ repo, collection, rkey }).catch(console.error);
+              agent.com.atproto.repo
+                .deleteRecord({ repo, collection, rkey })
+                .catch(console.error);
             }
           });
         }
@@ -192,20 +245,25 @@ export function PollMutationQueueProvider({
           });
 
           updateLocalState(pollUri, (prev) => {
-            const clean = prev.filter(v => v.option !== optionKey);
-            return [...clean, {
-              pollUri,
-              option: optionKey,
-              status: "confirmed",
-              action: "create",
-              uri: res.data.uri,
-              timestamp: Date.now(),
-            }];
+            const clean = prev.filter((v) => v.option !== optionKey);
+            return [
+              ...clean,
+              {
+                pollUri,
+                option: optionKey,
+                status: "confirmed",
+                action: "create",
+                uri: res.data.uri,
+                timestamp: Date.now(),
+              },
+            ];
           });
         } catch (e) {
           console.error("Vote failed", e);
           renderSnack({ title: "Vote failed" });
-          updateLocalState(pollUri, (prev) => prev.filter(v => v.timestamp !== timestamp));
+          updateLocalState(pollUri, (prev) =>
+            prev.filter((v) => v.timestamp !== timestamp),
+          );
         }
       }
     },
@@ -213,7 +271,9 @@ export function PollMutationQueueProvider({
   );
 
   return (
-    <PollMutationContext value={{ castVoteRaw, getLocalVotes }}>
+    <PollMutationContext
+      value={{ castVoteRaw, getLocalVotes, refreshPollData }}
+    >
       {children}
     </PollMutationContext>
   );
@@ -234,16 +294,44 @@ function usePollSelfVotes(pollUri: string) {
   const agentDid = agent?.did;
 
   const userVotesA = useGetOneToOneState(
-    agentDid ? { target: pollUri, user: agentDid, collection: "app.reddwarf.poll.vote.a", path: ".subject.uri" } : undefined
+    agentDid
+      ? {
+          target: pollUri,
+          user: agentDid,
+          collection: "app.reddwarf.poll.vote.a",
+          path: ".subject.uri",
+        }
+      : undefined,
   );
   const userVotesB = useGetOneToOneState(
-    agentDid ? { target: pollUri, user: agentDid, collection: "app.reddwarf.poll.vote.b", path: ".subject.uri" } : undefined
+    agentDid
+      ? {
+          target: pollUri,
+          user: agentDid,
+          collection: "app.reddwarf.poll.vote.b",
+          path: ".subject.uri",
+        }
+      : undefined,
   );
   const userVotesC = useGetOneToOneState(
-    agentDid ? { target: pollUri, user: agentDid, collection: "app.reddwarf.poll.vote.c", path: ".subject.uri" } : undefined
+    agentDid
+      ? {
+          target: pollUri,
+          user: agentDid,
+          collection: "app.reddwarf.poll.vote.c",
+          path: ".subject.uri",
+        }
+      : undefined,
   );
   const userVotesD = useGetOneToOneState(
-    agentDid ? { target: pollUri, user: agentDid, collection: "app.reddwarf.poll.vote.d", path: ".subject.uri" } : undefined
+    agentDid
+      ? {
+          target: pollUri,
+          user: agentDid,
+          collection: "app.reddwarf.poll.vote.d",
+          path: ".subject.uri",
+        }
+      : undefined,
   );
 
   return useMemo(() => {
@@ -273,22 +361,41 @@ export function usePollData(
   // 1. FETCHING - Move the logic here
   // We only need the first page/subset to show avatars
   const { data: votersA } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.a", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.a",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
   const { data: votersB } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.b", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.b",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
   const { data: votersC } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.c", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.c",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
   const { data: votersD } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.d", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.d",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
 
-  const handleVote = useCallback((optionKey: string) => {
-    if (!pollCid) return;
-    castVoteRaw(pollUri, pollCid, optionKey, isMultiple, serverUserVotes);
-  }, [pollUri, pollCid, isMultiple, serverUserVotes, castVoteRaw]);
+  const handleVote = useCallback(
+    (optionKey: string) => {
+      if (!pollCid) return;
+      castVoteRaw(pollUri, pollCid, optionKey, isMultiple, serverUserVotes);
+    },
+    [pollUri, pollCid, isMultiple, serverUserVotes, castVoteRaw],
+  );
 
   return useMemo(() => {
     // Helper to clean a raw list: extract DIDs, Deduplicate, Remove Self
@@ -314,7 +421,7 @@ export function usePollData(
       // --- LOGIC: Determine if we have voted (Boolean) ---
       const localEntry = localVotes.find((v) => v.option === option);
       const isServerVoted = serverUserVotes.some((uri) =>
-        uri.includes(`app.reddwarf.poll.vote.${option}`)
+        uri.includes(`app.reddwarf.poll.vote.${option}`),
       );
 
       let hasVoted = false;
@@ -326,7 +433,9 @@ export function usePollData(
           hasVoted = isServerVoted;
         } else {
           // Single choice: if we created a vote elsewhere locally, this one is false
-          const hasSwitched = localVotes.some((v) => v.option !== option && v.action === "create");
+          const hasSwitched = localVotes.some(
+            (v) => v.option !== option && v.action === "create",
+          );
           hasVoted = hasSwitched ? false : isServerVoted;
         }
       }
@@ -348,7 +457,7 @@ export function usePollData(
         hasVoted,
         count,
         // We only return the DIDs now, top 5
-        topVoterDids: finalVoters.slice(0, 5)
+        topVoterDids: finalVoters.slice(0, 5),
       };
     };
 
@@ -359,7 +468,11 @@ export function usePollData(
 
     return {
       results: { a: stateA, b: stateB, c: stateC, d: stateD },
-      hasVotedAny: stateA.hasVoted || stateB.hasVoted || stateC.hasVoted || stateD.hasVoted,
+      hasVotedAny:
+        stateA.hasVoted ||
+        stateB.hasVoted ||
+        stateC.hasVoted ||
+        stateD.hasVoted,
       totalVotes: stateA.count + stateB.count + stateC.count + stateD.count,
       handleVote,
     };
@@ -367,7 +480,10 @@ export function usePollData(
     localVotes,
     serverUserVotes,
     serverCounts,
-    votersA, votersB, votersC, votersD, // Dependencies for fetching
+    votersA,
+    votersB,
+    votersC,
+    votersD, // Dependencies for fetching
     isMultiple,
     handleVote,
     myDid,

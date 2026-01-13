@@ -239,6 +239,7 @@ export function constructConstellationQuery(query?: {
   path?: string;
   cursor?: string;
   dids?: string[];
+  customkey?: string;
 }) {
   // : QueryOptions<
   //   | linksRecordsResponse
@@ -257,6 +258,7 @@ export function constructConstellationQuery(query?: {
       query?.path,
       query?.cursor,
       query?.dids,
+      query?.customkey,
     ] as const,
     queryFn: async () => {
       if (!query || query.method === "undefined") return undefined as undefined;
@@ -322,6 +324,7 @@ export function useQueryConstellation(query: {
   path: string;
   cursor?: string;
   dids?: string[];
+  customkey?: string;
 }): UseQueryResult<linksRecordsResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/distinct-dids";
@@ -329,6 +332,7 @@ export function useQueryConstellation(query: {
   collection: string;
   path: string;
   cursor?: string;
+  customkey?: string;
 }): UseQueryResult<linksDidsResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/count";
@@ -336,6 +340,7 @@ export function useQueryConstellation(query: {
   collection: string;
   path: string;
   cursor?: string;
+  customkey?: string;
 }): UseQueryResult<linksCountResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/count/distinct-dids";
@@ -343,15 +348,18 @@ export function useQueryConstellation(query: {
   collection: string;
   path: string;
   cursor?: string;
+  customkey?: string;
 }): UseQueryResult<linksCountResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/all";
   target: string;
+  customkey?: string;
 }): UseQueryResult<linksAllResponse, Error>;
 export function useQueryConstellation(): undefined;
 export function useQueryConstellation(query: {
   method: "undefined";
   target: string;
+  customkey?: string;
 }): undefined;
 export function useQueryConstellation(query?: {
   method:
@@ -366,6 +374,7 @@ export function useQueryConstellation(query?: {
   path?: string;
   cursor?: string;
   dids?: string[];
+  customkey?: string;
 }):
   | UseQueryResult<
       | linksRecordsResponse

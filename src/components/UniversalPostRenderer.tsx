@@ -408,7 +408,7 @@ export function UniversalPostRendererATURILoader({
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-          ?.records || 0
+            ?.records || 0
         : null,
     );
   }, [links]);
@@ -456,13 +456,13 @@ export function UniversalPostRendererATURILoader({
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
-      page
-        ? page.linking_records.map((record) => {
-          const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-          return aturi;
-        })
-        : [],
-    )
+        page
+          ? page.linking_records.map((record) => {
+              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+              return aturi;
+            })
+          : [],
+      )
     : [];
 
   //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
@@ -622,7 +622,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
             opacity: 0.5,
           }}
           className="dark:bg-[repeating-linear-gradient(to_bottom,var(--color-gray-500)_0,var(--color-gray-400)_4px,transparent_4px,transparent_8px)]"
-        //className="border-gray-400 dark:border-gray-500"
+          //className="border-gray-400 dark:border-gray-500"
         />
       </div>
 
@@ -768,11 +768,11 @@ export function UniversalPostRendererRawRecordShim({
   const isQuotewithImages =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-    "app.bsky.embed.images";
+      "app.bsky.embed.images";
   const isQuotewithVideo =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-    "app.bsky.embed.video";
+      "app.bsky.embed.video";
 
   const hasMedia =
     hasEmbed &&
@@ -1258,6 +1258,7 @@ import ReactPlayer from "react-player";
 import defaultpfp from "~/../public/favicon.png";
 import {
   usePollData,
+  usePollMutationQueue,
 } from "~/providers/PollMutationQueueProvider";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
@@ -1494,18 +1495,18 @@ function UniversalPostRenderer({
 
   const tags = unfediwafrnTags
     ? unfediwafrnTags
-      .split("\n")
-      .map((t) => t.trim())
-      .filter(Boolean)
+        .split("\n")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : undefined;
 
   const links = tags
     ? tags
-      .map((tag) => {
-        const encoded = encodeURIComponent(tag);
-        return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
-      })
-      .join("<br>")
+        .map((tag) => {
+          const encoded = encodeURIComponent(tag);
+          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
+        })
+        .join("<br>")
     : "";
 
   const unfediwafrn = unfediwafrnPartial
@@ -1518,7 +1519,7 @@ function UniversalPostRenderer({
 
   /* fuck you */
   const isMainItem = false;
-  const setMainItem = (any: any) => { };
+  const setMainItem = (any: any) => {};
   // eslint-disable-next-line react-hooks/refs
   //console.log("Received ref in UniversalPostRenderer:", usedref);
   return (
@@ -1532,12 +1533,12 @@ function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                  setMainItem({ post: post });
-                  onPostClick(e);
-                }
+                    setMainItem({ post: post });
+                    onPostClick(e);
+                  }
                 : () => {
-                  setMainItem({ post: post });
-                }
+                    setMainItem({ post: post });
+                  }
               : undefined
         }
         style={{
@@ -2020,10 +2021,10 @@ function UniversalPostRenderer({
                         try {
                           await navigator.clipboard.writeText(
                             "https://bsky.app" +
-                            "/profile/" +
-                            post.author.handle +
-                            "/post/" +
-                            post.uri.split("/").pop(),
+                              "/profile/" +
+                              post.author.handle +
+                              "/post/" +
+                              post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -2131,7 +2132,7 @@ type Embed =
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
-  | { $type: string;[k: string]: unknown };
+  | { $type: string; [k: string]: unknown };
 
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
@@ -2148,6 +2149,7 @@ const stopgap = {
 
 function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   const { agent } = useAuth();
+  const { refreshPollData } = usePollMutationQueue();
   const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
   const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
 
@@ -2159,6 +2161,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     target: pollUri,
     collection: "app.reddwarf.poll.vote.a",
     path: ".subject.uri",
+    customkey: "constellation-polls",
   });
 
   const { data: voteCountsB } = useQueryConstellation({
@@ -2166,6 +2169,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     target: pollUri,
     collection: "app.reddwarf.poll.vote.b",
     path: ".subject.uri",
+    customkey: "constellation-polls",
   });
 
   const { data: voteCountsC } = useQueryConstellation({
@@ -2173,6 +2177,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     target: pollUri,
     collection: "app.reddwarf.poll.vote.c",
     path: ".subject.uri",
+    customkey: "constellation-polls",
   });
 
   const { data: voteCountsD } = useQueryConstellation({
@@ -2180,20 +2185,37 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     target: pollUri,
     collection: "app.reddwarf.poll.vote.d",
     path: ".subject.uri",
+    customkey: "constellation-polls",
   });
 
   // Query first page of voters for Avatars
   const { data: votersA } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.a", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.a",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
   const { data: votersB } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.b", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.b",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
   const { data: votersC } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.c", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.c",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
   const { data: votersD } = useQueryConstellation({
-    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.d", path: ".subject.uri",
+    method: "/links",
+    target: pollUri,
+    collection: "app.reddwarf.poll.vote.d",
+    path: ".subject.uri",
+    customkey: "constellation-polls",
   });
 
   // --- 2. Prepare Data ---
@@ -2226,7 +2248,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     pollUri,
     pollRecord?.cid,
     !!poll.multiple,
-    serverCounts
+    serverCounts,
   );
 
   // --- 4. Render ---
@@ -2366,36 +2388,59 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
             )}
             {poll.multiple ? "Select one or more options" : "Select one option"}
           </span>
+
+          {/* Refresh Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              refreshPollData(pollUri);
+            }}
+            className="ml-auto rounded-full h-8 outline outline-gray-200 text-gray-700 dark:outline-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-3 py-1 text-[12px] flex items-center gap-1"
+            title="Refresh poll data"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+            </svg>
+            Refresh
+          </button>
         </div>
 
         {/* Options List with Results */}
         <div className="space-y-3">
           {options.map((optionText, index) => {
-            const optionKey = ["a", "b", "c", "d"][index] as "a" | "b" | "c" | "d";
+            const optionKey = ["a", "b", "c", "d"][index] as
+              | "a"
+              | "b"
+              | "c"
+              | "d";
             const { topVoterDids } = results[optionKey];
             const optionState = results[optionKey];
             const hasVotedForOption = optionState.hasVoted;
-            const votePercentage = totalVotes > 0 ? (optionState.count / totalVotes) * 100 : 0;
+            const votePercentage =
+              totalVotes > 0 ? (optionState.count / totalVotes) * 100 : 0;
 
             // Helper to get voters for avatars
             const votersData = (() => {
-              if (optionKey === 'a') return votersA?.linking_records || [];
-              if (optionKey === 'b') return votersB?.linking_records || [];
-              if (optionKey === 'c') return votersC?.linking_records || [];
-              if (optionKey === 'd') return votersD?.linking_records || [];
+              if (optionKey === "a") return votersA?.linking_records || [];
+              if (optionKey === "b") return votersB?.linking_records || [];
+              if (optionKey === "c") return votersC?.linking_records || [];
+              if (optionKey === "d") return votersD?.linking_records || [];
               return [];
             })();
-            const topVoters = votersData.filter((v: any) => !!v.did).slice(0, 5);
+            const topVoters = votersData
+              .filter((v: any) => !!v.did)
+              .slice(0, 5);
 
             return (
               <div
                 key={index}
-                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${!isExpired
+                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
+                  !isExpired
                     ? hasVotedForOption
                       ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
                       : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
                     : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                  }`}
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!isExpired) {
@@ -2423,18 +2468,18 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
                 <div className="relative z-[2] flex items-center gap-2">
                   {/* Avatar circles - semi overlapping */}
                   {topVoterDids.length > 0 && (
-                  <div className="flex -space-x-2">
-                    {topVoterDids.map((did, idx) => (
-                      <div
-                        key={did}
-                        className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
-                        style={{ zIndex: 5 - idx }}
-                      >
-                        <PollOptionAvatar did={did} />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                    <div className="flex -space-x-2">
+                      {topVoterDids.map((did, idx) => (
+                        <div
+                          key={did}
+                          className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
+                          style={{ zIndex: 5 - idx }}
+                        >
+                          <PollOptionAvatar did={did} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Vote count */}
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -2846,10 +2891,10 @@ function PostEmbeds({
                 width: "100%",
                 aspectRatio: image.aspectRatio
                   ? (() => {
-                    const { width, height } = image.aspectRatio;
-                    const ratio = width / height;
-                    return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                  })()
+                      const { width, height } = image.aspectRatio;
+                      const ratio = width / height;
+                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                    })()
                   : "1 / 1", // fallback to square
                 //backgroundColor: theme.background, // fallback letterboxing color
                 borderRadius: 12,
@@ -3547,8 +3592,9 @@ const SmartHLSPlayer = ({
             borderRadius: 12,
             overflow: "hidden",
             //border: `1px solid ${theme.border}`,
-            paddingTop: `${100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-              }%`, // 16:9 = 56.25%, 4:3 = 75%
+            paddingTop: `${
+              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
+            }%`, // 16:9 = 56.25%, 4:3 = 75%
           }}
           className="border border-gray-200 dark:border-gray-800 was7"
         >
