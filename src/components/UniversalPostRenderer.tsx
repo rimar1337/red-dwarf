@@ -14,7 +14,6 @@ import {
   enableWafrnTextAtom,
   imgCDNAtom,
 } from "~/utils/atoms";
-import { useGetOneToOneState } from "~/utils/followState";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
   useQueryArbitrary,
@@ -409,7 +408,7 @@ export function UniversalPostRendererATURILoader({
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-            ?.records || 0
+          ?.records || 0
         : null,
     );
   }, [links]);
@@ -457,13 +456,13 @@ export function UniversalPostRendererATURILoader({
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
-        page
-          ? page.linking_records.map((record) => {
-              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-              return aturi;
-            })
-          : [],
-      )
+      page
+        ? page.linking_records.map((record) => {
+          const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+          return aturi;
+        })
+        : [],
+    )
     : [];
 
   //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
@@ -623,7 +622,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
             opacity: 0.5,
           }}
           className="dark:bg-[repeating-linear-gradient(to_bottom,var(--color-gray-500)_0,var(--color-gray-400)_4px,transparent_4px,transparent_8px)]"
-          //className="border-gray-400 dark:border-gray-500"
+        //className="border-gray-400 dark:border-gray-500"
         />
       </div>
 
@@ -769,11 +768,11 @@ export function UniversalPostRendererRawRecordShim({
   const isQuotewithImages =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-      "app.bsky.embed.images";
+    "app.bsky.embed.images";
   const isQuotewithVideo =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-      "app.bsky.embed.video";
+    "app.bsky.embed.video";
 
   const hasMedia =
     hasEmbed &&
@@ -1259,7 +1258,6 @@ import ReactPlayer from "react-player";
 import defaultpfp from "~/../public/favicon.png";
 import {
   usePollData,
-  usePollMutationQueue,
 } from "~/providers/PollMutationQueueProvider";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
@@ -1496,18 +1494,18 @@ function UniversalPostRenderer({
 
   const tags = unfediwafrnTags
     ? unfediwafrnTags
-        .split("\n")
-        .map((t) => t.trim())
-        .filter(Boolean)
+      .split("\n")
+      .map((t) => t.trim())
+      .filter(Boolean)
     : undefined;
 
   const links = tags
     ? tags
-        .map((tag) => {
-          const encoded = encodeURIComponent(tag);
-          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
-        })
-        .join("<br>")
+      .map((tag) => {
+        const encoded = encodeURIComponent(tag);
+        return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
+      })
+      .join("<br>")
     : "";
 
   const unfediwafrn = unfediwafrnPartial
@@ -1520,7 +1518,7 @@ function UniversalPostRenderer({
 
   /* fuck you */
   const isMainItem = false;
-  const setMainItem = (any: any) => {};
+  const setMainItem = (any: any) => { };
   // eslint-disable-next-line react-hooks/refs
   //console.log("Received ref in UniversalPostRenderer:", usedref);
   return (
@@ -1534,12 +1532,12 @@ function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                    setMainItem({ post: post });
-                    onPostClick(e);
-                  }
+                  setMainItem({ post: post });
+                  onPostClick(e);
+                }
                 : () => {
-                    setMainItem({ post: post });
-                  }
+                  setMainItem({ post: post });
+                }
               : undefined
         }
         style={{
@@ -2022,10 +2020,10 @@ function UniversalPostRenderer({
                         try {
                           await navigator.clipboard.writeText(
                             "https://bsky.app" +
-                              "/profile/" +
-                              post.author.handle +
-                              "/post/" +
-                              post.uri.split("/").pop(),
+                            "/profile/" +
+                            post.author.handle +
+                            "/post/" +
+                            post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -2133,7 +2131,7 @@ type Embed =
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
-  | { $type: string; [k: string]: unknown };
+  | { $type: string;[k: string]: unknown };
 
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
@@ -2152,9 +2150,10 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   const { agent } = useAuth();
   const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
   const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
-  const { castVote } = usePollMutationQueue();
 
-  // Query vote counts for each option
+  // --- 1. Fetch Aggregate Counts & Avatars (Public Data) ---
+  // (We still fetch these here as they are View-specific data dependencies)
+
   const { data: voteCountsA } = useQueryConstellation({
     method: "/links/count/distinct-dids",
     target: pollUri,
@@ -2183,80 +2182,21 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     path: ".subject.uri",
   });
 
-  // Query first page of voters for each option to get PFPs
+  // Query first page of voters for Avatars
   const { data: votersA } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.a",
-    path: ".subject.uri",
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.a", path: ".subject.uri",
   });
-
   const { data: votersB } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.b",
-    path: ".subject.uri",
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.b", path: ".subject.uri",
   });
-
   const { data: votersC } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.c",
-    path: ".subject.uri",
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.c", path: ".subject.uri",
   });
-
   const { data: votersD } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.d",
-    path: ".subject.uri",
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.d", path: ".subject.uri",
   });
 
-  // Check if user has already voted for each option in this poll
-  const userVotesA = useGetOneToOneState(
-    agent?.did
-      ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.a",
-          path: ".subject.uri",
-        }
-      : undefined,
-  );
-
-  const userVotesB = useGetOneToOneState(
-    agent?.did
-      ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.b",
-          path: ".subject.uri",
-        }
-      : undefined,
-  );
-
-  const userVotesC = useGetOneToOneState(
-    agent?.did
-      ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.c",
-          path: ".subject.uri",
-        }
-      : undefined,
-  );
-
-  const userVotesD = useGetOneToOneState(
-    agent?.did
-      ? {
-          target: pollUri,
-          user: agent?.did,
-          collection: "app.reddwarf.poll.vote.d",
-          path: ".subject.uri",
-        }
-      : undefined,
-  );
-
+  // --- 2. Prepare Data ---
   // todo: hardcoded to multiple for all public polls
   const poll = {
     ...(pollRecord?.value ?? {}),
@@ -2273,38 +2213,6 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
 
   const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
 
-  // // Calculate vote counts
-  // const voteData = [
-  //   {
-  //     option: "a",
-  //     count: parseInt((voteCountsA as any)?.total || "0"),
-  //     voters: votersA?.linking_records || [],
-  //   },
-  //   {
-  //     option: "b",
-  //     count: parseInt((voteCountsB as any)?.total || "0"),
-  //     voters: votersB?.linking_records || [],
-  //   },
-  //   {
-  //     option: "c",
-  //     count: parseInt((voteCountsC as any)?.total || "0"),
-  //     voters: votersC?.linking_records || [],
-  //   },
-  //   {
-  //     option: "d",
-  //     count: parseInt((voteCountsD as any)?.total || "0"),
-  //     voters: votersD?.linking_records || [],
-  //   },
-  // ].slice(0, options.length);
-
-  const serverUserVotes = [
-    ...(userVotesA || []),
-    ...(userVotesB || []),
-    ...(userVotesC || []),
-    ...(userVotesD || []),
-  ];
-
-  // Flatten counts
   const serverCounts = {
     a: parseInt((voteCountsA as any)?.total || "0"),
     b: parseInt((voteCountsB as any)?.total || "0"),
@@ -2312,29 +2220,16 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
     d: parseInt((voteCountsD as any)?.total || "0"),
   };
 
-  // 3. THE MAGIC HOOK
-  const pollState = usePollData(
+  // --- 3. THE MAGIC HOOK (Now centralized) ---
+  // This hook now fetches self-votes internally and merges them with the serverCounts we passed in
+  const { results, totalVotes, handleVote } = usePollData(
     pollUri,
+    pollRecord?.cid,
     !!poll.multiple,
-    serverCounts,
-    serverUserVotes,
+    serverCounts
   );
 
-  // 4. Handle Vote Wrapper
-  const handleVote = async (optionKey: string) => {
-    if (!pollRecord) return;
-    // Expiry check
-    if (isExpired) return;
-
-    // Trigger the Provider logic
-    await castVote(
-      pollUri,
-      pollRecord.cid,
-      optionKey,
-      !!poll.multiple,
-      serverUserVotes,
-    );
-  };
+  // --- 4. Render ---
 
   if (isLoading) {
     return (
@@ -2476,51 +2371,31 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
         {/* Options List with Results */}
         <div className="space-y-3">
           {options.map((optionText, index) => {
-            const optionKey = ["a", "b", "c", "d"][index] as
-              | "a"
-              | "b"
-              | "c"
-              | "d";
+            const optionKey = ["a", "b", "c", "d"][index] as "a" | "b" | "c" | "d";
 
-            // Get the state from the hook
-            const optionState = pollState.results[optionKey];
+            const optionState = results[optionKey];
             const hasVotedForOption = optionState.hasVoted;
-            const voteCount = optionState.count;
-            const votePercentage =
-              pollState.totalVotes > 0
-                ? (voteCount / pollState.totalVotes) * 100
-                : 0;
+            const votePercentage = totalVotes > 0 ? (optionState.count / totalVotes) * 100 : 0;
 
-            // Get the voters data for displaying avatars
+            // Helper to get voters for avatars
             const votersData = (() => {
-              switch (optionKey) {
-                case "a":
-                  return votersA?.linking_records || [];
-                case "b":
-                  return votersB?.linking_records || [];
-                case "c":
-                  return votersC?.linking_records || [];
-                case "d":
-                  return votersD?.linking_records || [];
-                default:
-                  return [];
-              }
+              if (optionKey === 'a') return votersA?.linking_records || [];
+              if (optionKey === 'b') return votersB?.linking_records || [];
+              if (optionKey === 'c') return votersC?.linking_records || [];
+              if (optionKey === 'd') return votersD?.linking_records || [];
+              return [];
             })();
-
-            // Extract just the DIDs we want to show (top 5)
-            const topVoters =
-              votersData.filter((v) => !!v.did).slice(0, 5) || [];
+            const topVoters = votersData.filter((v: any) => !!v.did).slice(0, 5);
 
             return (
               <div
                 key={index}
-                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
-                  !isExpired
+                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${!isExpired
                     ? hasVotedForOption
                       ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
                       : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
                     : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                }`}
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!isExpired) {
@@ -2530,7 +2405,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
               >
                 {/* Vote percentage bar - always show */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-gray-300 dark:bg-gray-700 group-hover:bg-gray-400 dark:group-hover:bg-gray-600"
+                  className="absolute inset-y-0 left-0 bg-gray-300 dark:bg-gray-700 group-hover:bg-gray-400 dark:group-hover:bg-gray-600 transition-[width]"
                   style={{ width: `${votePercentage}%` }}
                 />
 
@@ -2609,7 +2484,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
             }}
             className="rounded-full h-10 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-4 py-2 text-[14px]"
           >
-            View all {pollState.totalVotes} votes
+            View all {totalVotes} votes
           </button>
         </div>
       </div>
@@ -2973,10 +2848,10 @@ function PostEmbeds({
                 width: "100%",
                 aspectRatio: image.aspectRatio
                   ? (() => {
-                      const { width, height } = image.aspectRatio;
-                      const ratio = width / height;
-                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                    })()
+                    const { width, height } = image.aspectRatio;
+                    const ratio = width / height;
+                    return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                  })()
                   : "1 / 1", // fallback to square
                 //backgroundColor: theme.background, // fallback letterboxing color
                 borderRadius: 12,
@@ -3674,9 +3549,8 @@ const SmartHLSPlayer = ({
             borderRadius: 12,
             overflow: "hidden",
             //border: `1px solid ${theme.border}`,
-            paddingTop: `${
-              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-            }%`, // 16:9 = 56.25%, 4:3 = 75%
+            paddingTop: `${100 / (aspect ? aspect.width / aspect.height : 16 / 9)
+              }%`, // 16:9 = 56.25%, 4:3 = 75%
           }}
           className="border border-gray-200 dark:border-gray-800 was7"
         >
