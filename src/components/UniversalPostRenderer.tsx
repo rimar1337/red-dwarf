@@ -1268,6 +1268,7 @@ import {
 } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 import { useFastLike } from "~/utils/likeMutationQueue";
+
 // import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
 // import type {
 //   ViewRecord,
@@ -2260,7 +2261,11 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
 
 
 
-  const poll = pollRecord?.value as {
+  // todo: hardcoded to multiple for all public polls
+  const poll = {
+    ...(pollRecord?.value ?? {}),
+    multiple: true,
+  } as {
     a: string;
     b: string;
     c?: string;
@@ -2413,137 +2418,140 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
   };
 
   return (
-    <div className="my-4">
-      {/* Header */}
-      <div className="mb-4 flex items-center gap-3">
-        {/* Type Pill */}
-        <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1 text-sm font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
-          <IconMdiGlobe />
-          <span>Public Poll</span>
+    <>
+      <div className="my-4">
+        {/* Header */}
+        <div className="mb-4 flex items-center gap-3">
+          {/* Type Pill */}
+          <div className="flex items-center gap-1.5 rounded-lg border-gray-300 dark:border-gray-600 pl-2 pr-2.5 py-1 text-sm font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
+            <IconMdiGlobe />
+            <span>Public Poll</span>
+          </div>
+
+          {/* Multiplicity */}
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 flex flex-row items-center gap-1">
+            {poll.multiple ? (<IconMdiCheckboxMultipleMarked />) : (<IconMdiCheckCircle />)}
+            {poll.multiple ? "Select one or more options" : "Select one option"}
+          </span>
+
         </div>
 
-        {/* Multiplicity */}
-        <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-          {poll.multiple ? "Select multiple options" : "Select one option"}
-        </span>
+        {/* Options List with Results */}
+        <div className="space-y-3">
+          {options.map((optionText, index) => {
+            const optionKey = ["a", "b", "c", "d"][index];
 
-        {/* Total Votes */}
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
-        </span>
-      </div>
+            // Check if user has voted for this option
+            const userVotesForOption = (() => {
+              switch (optionKey) {
+                case "a":
+                  return userVotesA;
+                case "b":
+                  return userVotesB;
+                case "c":
+                  return userVotesC;
+                case "d":
+                  return userVotesD;
+                default:
+                  return [];
+              }
+            })();
 
-      {/* Options List with Results */}
-      <div className="space-y-3">
-        {options.map((optionText, index) => {
-          const optionKey = ["a", "b", "c", "d"][index];
+            const rowData = voteData.find((v) => v.option === optionKey);
+            const hasVotedForOption =
+              userVotesForOption && userVotesForOption.length > 0;
+            const voteCount =
+              voteData.find((v) => v.option === optionKey)?.count ?? 0;
+            const votePercentage =
+              totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
 
-          // Check if user has voted for this option
-          const userVotesForOption = (() => {
-            switch (optionKey) {
-              case "a":
-                return userVotesA;
-              case "b":
-                return userVotesB;
-              case "c":
-                return userVotesC;
-              case "d":
-                return userVotesD;
-              default:
-                return [];
-            }
-          })();
+            // Extract just the DIDs we want to show (top 2)
+            const topVoters = rowData?.voters
+              .filter(v => !!v.did)
+              .slice(0, 5) || [];
 
-          const rowData = voteData.find((v) => v.option === optionKey);
-          const hasVotedForOption =
-            userVotesForOption && userVotesForOption.length > 0;
-          const voteCount =
-            voteData.find((v) => v.option === optionKey)?.count ?? 0;
-          const votePercentage =
-            totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
-
-          // Extract just the DIDs we want to show (top 2)
-          const topVoters = rowData?.voters
-            .filter(v => !!v.did)
-            .slice(0, 2) || [];
-
-          return (
-            <div
-              key={index}
-              className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${!isExpired
-                ? hasVotedForOption
-                  ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
-                  : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
-                : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                }`}
-              onClick={() => !isExpired && handleVote(optionKey)}
-            >
-              {/* Vote percentage bar - always show */}
+            return (
               <div
-                className="absolute inset-y-0 left-0 bg-gray-300 dark:bg-gray-700 group-hover:bg-gray-400 dark:group-hover:bg-gray-600"
-                style={{ width: `${votePercentage}%` }}
-              />
+                key={index}
+                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${!isExpired
+                  ? hasVotedForOption
+                    ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
+                    : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
+                  : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                  }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isExpired) {
+                    handleVote(optionKey)
+                  }
+                }}
+              >
+                {/* Vote percentage bar - always show */}
+                <div
+                  className="absolute inset-y-0 left-0 bg-gray-300 dark:bg-gray-700 group-hover:bg-gray-400 dark:group-hover:bg-gray-600"
+                  style={{ width: `${votePercentage}%` }}
+                />
 
-              {/* Option text */}
-              <span className="relative z-10 text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {optionText}
-                {hasVotedForOption && (
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">
-                    {poll.multiple ? "✓" : "✓ (click to remove)"}
-                  </span>
-                )}
-              </span>
-
-              {/* Avatar circles and vote count */}
-              <div className="relative z-10 flex items-center gap-2">
-                {/* Avatar circles - semi overlapping */}
-
-                {topVoters.length > 0 && (
-                  <div className="flex -space-x-2">
-                    {topVoters.map((voter, idx) => (
-                      <div
-                        key={voter.did} // Use DID as key, it's stable
-                        className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
-                        style={{ zIndex: 2 - idx }}
-                      >
-                        {/* The Component handles the async fetch! */}
-                        <PollOptionAvatar
-                          did={voter.did}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Vote count */}
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {votePercentage.toFixed(0)}%
+                {/* Option text */}
+                <span className="relative z-[2] text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  {optionText}
+                  {hasVotedForOption && (
+                    <span className="ml-2 text-gray-600 dark:text-gray-400">
+                      {poll.multiple ? "✓" : "✓ (click to remove)"}
+                    </span>
+                  )}
                 </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
-      {/* Footer */}
-      <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        {/* Expiry */}
-        <div className="flex items-center gap-2">
-          <IconMdiClockOutline />
-          {/* <span>Expires {formattedDate}</span> */}
-          {formattedDate ? (
-            !isExpired ? (
-              <span>Expires {formattedDate}</span>
-            ) : (
-              <span>Expired at {formattedDate}</span>
-            )
-          ) : (
-            <span>Never expires</span>
-          )}
+                {/* Avatar circles and vote count */}
+                <div className="relative z-[2] flex items-center gap-2">
+                  {/* Avatar circles - semi overlapping */}
+
+                  {topVoters.length > 0 && (
+                    <div className="flex -space-x-2">
+                      {topVoters.map((voter, idx) => (
+                        <div
+                          key={voter.did} // Use DID as key, it's stable
+                          className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
+                          style={{ zIndex: 5 - idx }}
+                        >
+                          {/* The Component handles the async fetch! */}
+                          <PollOptionAvatar
+                            did={voter.did}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Vote count */}
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {votePercentage.toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Status */}
-        <div className="flex items-center gap-2">
+        {/* Footer */}
+        <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+          {/* Expiry */}
+          <div className="flex items-center gap-2">
+            <IconMdiClockOutline />
+            {/* <span>Expires {formattedDate}</span> */}
+            {formattedDate ? (
+              !isExpired ? (
+                <span>Expires {formattedDate}</span>
+              ) : (
+                <span>Expired at {formattedDate}</span>
+              )
+            ) : (
+              <span>Never expires</span>
+            )}
+          </div>
+
+          {/* Status */}
+          {/* <div className="flex items-center gap-2">
           {isExpired ? (
             <span className="text-red-500 dark:text-red-400 font-medium">
               Poll ended
@@ -2553,9 +2561,27 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
               All votes are public
             </span>
           )}
+        </div> */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              // open the route to the view all stuff
+            }}
+            className="rounded-full h-10 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-4 py-2 text-[14px]"
+          >
+            View all {totalVotes} votes
+          </button>
         </div>
       </div>
-    </div>
+      {/* <div className=" scale-[56%] -translate-x-[120px] -translate-y-[80px]">
+        <RawOGC
+          multiple
+          a={poll.a || ""}
+          b={poll.b || ""}
+          c={poll.c}
+          d={poll.d} />
+      </div> */}
+    </>
   );
 }
 

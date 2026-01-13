@@ -20,6 +20,8 @@ declare global {
   const IconMdiAccountCircle: typeof import('~icons/mdi/account-circle.jsx').default
   const IconMdiAccountPlus: typeof import('~icons/mdi/account-plus.jsx').default
   const IconMdiCheck: typeof import('~icons/mdi/check.jsx').default
+  const IconMdiCheckCircle: typeof import('~icons/mdi/check-circle.jsx').default
+  const IconMdiCheckboxMultipleMarked: typeof import('~icons/mdi/checkbox-multiple-marked.jsx').default
   const IconMdiClock: typeof import('~icons/mdi/clock.jsx').default
   const IconMdiClockOutline: typeof import('~icons/mdi/clock-outline.jsx').default
   const IconMdiClose: typeof import('~icons/mdi/close.jsx').default

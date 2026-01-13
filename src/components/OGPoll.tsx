@@ -45,8 +45,14 @@ export function RawOGC({
         </div>
         
         {/* Multiplicity */}
-        <span className="text-2xl font-normal text-gray-300">
-          {multiple || !privateProviderHandle ? 'Select multiple options' : 'Select one option'}
+        <span className="text-2xl font-normal text-gray-300 flex flex-row gap-2 items-center">
+          {multiple || !privateProviderHandle ? (<IconMdiCheckboxMultipleMarked />) : (<IconMdiCheckCircle />)}
+          {multiple || !privateProviderHandle ? "Select one or more options" : "Select one option"}
+        </span>
+
+
+        <span className="text-3xl font-medium text-gray-100 ml-auto">
+          All votes are public
         </span>
       </div>
 
@@ -55,7 +61,7 @@ export function RawOGC({
         {options.map((optionText, index) => (
           <div 
             key={index} 
-            className="flex h-[76px] items-center justify-start truncate rounded-2xl bg-gray-800 px-8 text-3xl font-medium text-gray-50"
+            className="flex h-[76px] items-center justify-start truncate rounded-2xl bg-gray-700 px-8 text-3xl font-medium text-gray-50"
           >
             <span className="truncate">{optionText}</span>
           </div>
@@ -84,9 +90,11 @@ export function RawOGC({
               </div>
             </>
           ) : (
-            <span className="text-3xl font-medium text-gray-100">
-              All votes are public
-            </span>
+            <div
+              className="rounded-full h-16 bg-gray-600 text-gray-200 px-8 py-4 text-2xl"
+            >
+              View all votes
+            </div>
           )}
         </div>
       </div>
