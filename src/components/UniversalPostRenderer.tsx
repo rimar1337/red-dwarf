@@ -2372,7 +2372,7 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
         <div className="space-y-3">
           {options.map((optionText, index) => {
             const optionKey = ["a", "b", "c", "d"][index] as "a" | "b" | "c" | "d";
-
+            const { topVoterDids } = results[optionKey];
             const optionState = results[optionKey];
             const hasVotedForOption = optionState.hasVoted;
             const votePercentage = totalVotes > 0 ? (optionState.count / totalVotes) * 100 : 0;
@@ -2422,21 +2422,19 @@ function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
                 {/* Avatar circles and vote count */}
                 <div className="relative z-[2] flex items-center gap-2">
                   {/* Avatar circles - semi overlapping */}
-
-                  {topVoters.length > 0 && (
-                    <div className="flex -space-x-2">
-                      {topVoters.map((voter, idx) => (
-                        <div
-                          key={voter.did} // Use DID as key, it's stable
-                          className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
-                          style={{ zIndex: 5 - idx }}
-                        >
-                          {/* The Component handles the async fetch! */}
-                          <PollOptionAvatar did={voter.did} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {topVoterDids.length > 0 && (
+                  <div className="flex -space-x-2">
+                    {topVoterDids.map((did, idx) => (
+                      <div
+                        key={did}
+                        className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
+                        style={{ zIndex: 5 - idx }}
+                      >
+                        <PollOptionAvatar did={did} />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                   {/* Vote count */}
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">

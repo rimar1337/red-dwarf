@@ -5,6 +5,7 @@ import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 import { localPollVotesAtom, type LocalVote } from "~/utils/atoms";
 import { useGetOneToOneState } from "~/utils/followState";
+import { useQueryConstellation } from "~/utils/useQuery";
 
 // ------------------------------------------------------------------
 // Types
@@ -254,6 +255,7 @@ function usePollSelfVotes(pollUri: string) {
     ];
   }, [userVotesA, userVotesB, userVotesC, userVotesD]);
 }
+type VoterRef = { did: string };
 
 export function usePollData(
   pollUri: string,
@@ -261,9 +263,27 @@ export function usePollData(
   isMultiple: boolean,
   serverCounts: { a: number; b: number; c: number; d: number },
 ) {
+  const { agent } = useAuth();
+  const myDid = agent?.did;
+
   const { castVoteRaw, getLocalVotes } = usePollMutationQueue();
-  const serverUserVotes = usePollSelfVotes(pollUri);
-  const localVotes = getLocalVotes(pollUri); // Returns ExtendedLocalVote[]
+  const serverUserVotes = usePollSelfVotes(pollUri); // Our own votes from server
+  const localVotes = getLocalVotes(pollUri); // Pending local actions
+
+  // 1. FETCHING - Move the logic here
+  // We only need the first page/subset to show avatars
+  const { data: votersA } = useQueryConstellation({
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.a", path: ".subject.uri",
+  });
+  const { data: votersB } = useQueryConstellation({
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.b", path: ".subject.uri",
+  });
+  const { data: votersC } = useQueryConstellation({
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.c", path: ".subject.uri",
+  });
+  const { data: votersD } = useQueryConstellation({
+    method: "/links", target: pollUri, collection: "app.reddwarf.poll.vote.d", path: ".subject.uri",
+  });
 
   const handleVote = useCallback((optionKey: string) => {
     if (!pollCid) return;
@@ -271,47 +291,65 @@ export function usePollData(
   }, [pollUri, pollCid, isMultiple, serverUserVotes, castVoteRaw]);
 
   return useMemo(() => {
-    const calculateOptionState = (option: "a" | "b" | "c" | "d") => {
-      const localEntry = localVotes.find((v) => v.option === option);
-      const isServerVoted = serverUserVotes.some((uri) => uri.includes(`app.reddwarf.poll.vote.${option}`));
+    // Helper to clean a raw list: extract DIDs, Deduplicate, Remove Self
+    const processServerList = (data: any) => {
+      const records = data?.linking_records || [];
+      const dids = records.map((r: any) => r.did).filter(Boolean) as string[];
 
-      // --- MERGE STATUS LOGIC ---
+      // 2. Deduplicate everyone (Set removes duplicates)
+      // 3. Remove self from the list (to ensure we don't appear twice or when we shouldn't)
+      const uniqueOthers = new Set(dids.filter((did) => did !== myDid));
+
+      return Array.from(uniqueOthers);
+    };
+
+    const serverLists = {
+      a: processServerList(votersA),
+      b: processServerList(votersB),
+      c: processServerList(votersC),
+      d: processServerList(votersD),
+    };
+
+    const calculateOptionState = (option: "a" | "b" | "c" | "d") => {
+      // --- LOGIC: Determine if we have voted (Boolean) ---
+      const localEntry = localVotes.find((v) => v.option === option);
+      const isServerVoted = serverUserVotes.some((uri) =>
+        uri.includes(`app.reddwarf.poll.vote.${option}`)
+      );
+
       let hasVoted = false;
 
       if (localEntry) {
-        // 1. If we have an explicit local action, it overrides everything for this option
-        // 'create' = true, 'delete' = false
         hasVoted = localEntry.action === "create";
       } else {
-        // 2. If no local action for this specific option...
         if (isMultiple) {
-          // In multiple choice, server truth stands unless explicitly deleted (checked above)
           hasVoted = isServerVoted;
         } else {
-          // In single choice, we must check if we voted for *something else* locally
-          const hasSwitchedToOther = localVotes.some(v => v.option !== option && v.action === "create");
-          if (hasSwitchedToOther) {
-            hasVoted = false; // Implicitly unvoted because we switched
-          } else {
-            hasVoted = isServerVoted;
-          }
+          // Single choice: if we created a vote elsewhere locally, this one is false
+          const hasSwitched = localVotes.some((v) => v.option !== option && v.action === "create");
+          hasVoted = hasSwitched ? false : isServerVoted;
         }
       }
 
-      // --- MERGE COUNT LOGIC ---
+      // --- LOGIC: Calculate Count ---
       let count = serverCounts[option] || 0;
+      if (hasVoted && !isServerVoted) count++;
+      if (!hasVoted && isServerVoted) count = Math.max(0, count - 1);
 
-      // Adjust counts based on our "Virtual" state vs "Server" state
-      // If we are Voted locally but Server doesn't know -> +1
-      if (hasVoted && !isServerVoted) {
-        count++;
-      }
-      // If we are NOT Voted locally (e.g. unvoted or switched) but Server thinks we are -> -1
-      if (!hasVoted && isServerVoted) {
-        count = Math.max(0, count - 1);
+      // --- LOGIC: Finalize Avatar List ---
+      // 4. Add back self purely using the hasVoted state
+      let finalVoters = serverLists[option];
+
+      if (hasVoted && myDid) {
+        finalVoters = [myDid, ...finalVoters];
       }
 
-      return { hasVoted, count };
+      return {
+        hasVoted,
+        count,
+        // We only return the DIDs now, top 5
+        topVoterDids: finalVoters.slice(0, 5)
+      };
     };
 
     const stateA = calculateOptionState("a");
@@ -325,5 +363,13 @@ export function usePollData(
       totalVotes: stateA.count + stateB.count + stateC.count + stateD.count,
       handleVote,
     };
-  }, [localVotes, serverUserVotes, serverCounts, isMultiple, handleVote]);
+  }, [
+    localVotes,
+    serverUserVotes,
+    serverCounts,
+    votersA, votersB, votersC, votersD, // Dependencies for fetching
+    isMultiple,
+    handleVote,
+    myDid,
+  ]);
 }
