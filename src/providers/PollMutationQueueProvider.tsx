@@ -111,7 +111,13 @@ export function PollMutationQueueProvider({
       isMultiple: boolean,
       currentServerVotes: string[],
     ) => {
-      if (!agent?.did) return;
+      if (!agent?.did) {
+        renderSnack({
+          title: "Please log in to vote",
+          description: "You need to be authenticated to participate in polls",
+        });
+        return;
+      }
 
       const optionKey = option as "a" | "b" | "c" | "d";
       const timestamp = Date.now();
@@ -343,7 +349,6 @@ function usePollSelfVotes(pollUri: string) {
     ];
   }, [userVotesA, userVotesB, userVotesC, userVotesD]);
 }
-type VoterRef = { did: string };
 
 export function usePollData(
   pollUri: string,
