@@ -11,9 +11,6 @@ import {
   useReusableTabScrollRestore,
 } from "~/components/ReusableTabRoute";
 import {
-  MdiCardsHeartOutline,
-  MdiCommentOutline,
-  MdiRepeat,
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
@@ -544,11 +541,11 @@ function InteractionsButton({
       className="flex-1 border-t py-2 px-4 flex flex-row items-center gap-2 transition-colors hover:bg-gray-100 hover:dark:bg-gray-800"
     >
       {type === "like" ? (
-        <MdiCardsHeartOutline height={22} width={22} />
+        <IconMdiCardsHeartOutline height={22} width={22} />
       ) : type === "repost" ? (
-        <MdiRepeat height={22} width={22} />
+        <IconMdiRepeat height={22} width={22} />
       ) : type === "reply" ? (
-        <MdiCommentOutline height={22} width={22} />
+        <IconMdiCommentOutline height={22} width={22} />
       ) : type === "quote" ? (
         <IconMdiMessageReplyTextOutline
           height={22}

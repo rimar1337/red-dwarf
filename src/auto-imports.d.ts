@@ -19,16 +19,27 @@ declare global {
   const IconMaterialSymbolsTag: typeof import('~icons/material-symbols/tag.jsx').default
   const IconMdiAccountCircle: typeof import('~icons/mdi/account-circle.jsx').default
   const IconMdiAccountPlus: typeof import('~icons/mdi/account-plus.jsx').default
+  const IconMdiCardsHeart: typeof import('~icons/mdi/cards-heart.jsx').default
+  const IconMdiCardsHeartOutline: typeof import('~icons/mdi/cards-heart-outline.jsx').default
   const IconMdiCheck: typeof import('~icons/mdi/check.jsx').default
   const IconMdiCheckCircle: typeof import('~icons/mdi/check-circle.jsx').default
   const IconMdiCheckboxMultipleMarked: typeof import('~icons/mdi/checkbox-multiple-marked.jsx').default
   const IconMdiClock: typeof import('~icons/mdi/clock.jsx').default
   const IconMdiClockOutline: typeof import('~icons/mdi/clock-outline.jsx').default
   const IconMdiClose: typeof import('~icons/mdi/close.jsx').default
+  const IconMdiCommentOutline: typeof import('~icons/mdi/comment-outline.jsx').default
   const IconMdiGlobe: typeof import('~icons/mdi/globe.jsx').default
   const IconMdiLock: typeof import('~icons/mdi/lock.jsx').default
   const IconMdiMessageReplyTextOutline: typeof import('~icons/mdi/message-reply-text-outline.jsx').default
+  const IconMdiMoreHoriz: typeof import('~icons/mdi/more-horiz.jsx').default
   const IconMdiPencilOutline: typeof import('~icons/mdi/pencil-outline.jsx').default
+  const IconMdiPlayCircle: typeof import('~icons/mdi/play-circle.jsx').default
+  const IconMdiRepeat: typeof import('~icons/mdi/repeat.jsx').default
+  const IconMdiRepeatGreen: typeof import('~icons/mdi/repeat-green.jsx').default
+  const IconMdiReply: typeof import('~icons/mdi/reply.jsx').default
+  const IconMdiRepost: typeof import('~icons/mdi/repost.jsx').default
+  const IconMdiShareVariant: typeof import('~icons/mdi/share-variant.jsx').default
   const IconMdiShield: typeof import('~icons/mdi/shield.jsx').default
   const IconMdiShieldOutline: typeof import('~icons/mdi/shield-outline.jsx').default
+  const IconMdiVerified: typeof import('~icons/mdi/verified.jsx').default
 }

@@ -13,9 +13,9 @@ import {
   useReusableTabScrollRestore,
 } from "~/components/ReusableTabRoute";
 import {
-  renderTextWithFacets,
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
+import { renderTextWithFacets } from "~/components/UtilityFunctions";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { enableBitesAtom, imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
 import {

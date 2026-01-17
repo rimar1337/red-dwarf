@@ -22,8 +22,8 @@ import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { Import } from "~/components/Import";
 import Login from "~/components/Login";
+import Logo from "~/components/LogoSvg";
 import { NotFound } from "~/components/NotFound";
-import { FluentEmojiHighContrastGlowingStar } from "~/components/Star";
 import { LikeMutationQueueProvider } from "~/providers/LikeMutationQueueProvider";
 import { PollMutationQueueProvider } from "~/providers/PollMutationQueueProvider";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
@@ -249,7 +249,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950">
         <nav className="hidden lg:flex h-screen w-[250px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
-            <FluentEmojiHighContrastGlowingStar
+            <Logo
               className="h-8 w-8"
               style={{
                 color:
@@ -506,7 +506,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
         <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-2 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4">
-            <FluentEmojiHighContrastGlowingStar
+            <Logo
               className="h-8 w-8"
               style={{
                 color:
@@ -843,7 +843,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-0 shadow border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 z-10">
           <div className="flex items-center gap-2">
-            <FluentEmojiHighContrastGlowingStar
+            <Logo
               className="h-6 w-6"
               style={{
                 color:

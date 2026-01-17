@@ -1,12 +1,28 @@
 import * as ATPAPI from "@atproto/api";
+import {
+  AppBskyActorDefs,
+  AppBskyFeedDefs,
+  AppBskyFeedPost,
+  AtUri,
+  type Facet,
+} from "@atproto/api";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import DOMPurify from "dompurify";
 import { useAtom } from "jotai";
 import { DropdownMenu } from "radix-ui";
 import { HoverCard } from "radix-ui";
 import * as React from "react";
-import { type SVGProps } from "react";
+import { useEffect, useState } from "react";
 
+import defaultpfp from "~/../public/favicon.png";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
+import { renderSnack } from "~/routes/__root";
+import {
+  FollowButton,
+  Mutual,
+} from "~/routes/profile.$did";
+import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 import {
   composerAtom,
   constellationURLAtom,
@@ -14,9 +30,9 @@ import {
   enableWafrnTextAtom,
   imgCDNAtom,
 } from "~/utils/atoms";
+import { useFastLike } from "~/utils/likeMutationQueue";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
-  useQueryArbitrary,
   useQueryConstellation,
   useQueryIdentity,
   useQueryPost,
@@ -24,12 +40,15 @@ import {
   yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
 } from "~/utils/useQuery";
 
-function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
-  return obj as $Typed<T>;
-}
-
-export const CACHE_TIMEOUT = 5 * 60 * 1000;
-const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
+import { PostEmbeds } from "./PostEmbeds";
+import {
+  btnstyle,
+  fullDateTimeFormat,
+  HitSlopButton,
+  randomString,
+  renderTextWithFacets,
+  shortTimeAgo,
+} from "./UtilityFunctions";
 
 export interface UniversalPostRendererATURILoaderProps {
   atUri: string;
@@ -53,99 +72,6 @@ export interface UniversalPostRendererATURILoaderProps {
   filterMustBeReply?: boolean;
 }
 
-// export async function cachedGetRecord({
-//   atUri,
-//   cacheTimeout = CACHE_TIMEOUT,
-//   get,
-//   set,
-// }: {
-//   atUri: string;
-//   //resolved: { pdsUrl: string; did: string } | null | undefined;
-//   cacheTimeout?: number;
-//   get: (key: string) => any;
-//   set: (key: string, value: string) => void;
-// }): Promise<any> {
-//   const cacheKey = `record:${atUri}`;
-//   const cached = get(cacheKey);
-//   const now = Date.now();
-//   if (
-//     cached &&
-//     cached.value &&
-//     cached.time &&
-//     now - cached.time < cacheTimeout
-//   ) {
-//     try {
-//       return JSON.parse(cached.value);
-//     } catch {
-//       // fall through to fetch
-//     }
-//   }
-//   const parsed = parseAtUri(atUri);
-//   if (!parsed) return null;
-//   const resolved = await cachedResolveIdentity({
-//     didOrHandle: parsed.did,
-//     get,
-//     set,
-//   });
-//   if (!resolved?.pdsUrl || !resolved?.did)
-//     throw new Error("Missing resolved PDS info");
-
-//   if (!parsed) throw new Error("Invalid atUri");
-//   const { collection, rkey } = parsed;
-//   const url = `${
-//     resolved.pdsUrl
-//   }/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(
-//     resolved.did,
-//   )}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(
-//     rkey,
-//   )}`;
-//   const res = await fetch(url);
-//   if (!res.ok) throw new Error("Failed to fetch base record");
-//   const data = await res.json();
-//   set(cacheKey, JSON.stringify(data));
-//   return data;
-// }
-
-// export async function cachedResolveIdentity({
-//   didOrHandle,
-//   cacheTimeout = HANDLE_DID_CACHE_TIMEOUT,
-//   get,
-//   set,
-// }: {
-//   didOrHandle: string;
-//   cacheTimeout?: number;
-//   get: (key: string) => any;
-//   set: (key: string, value: string) => void;
-// }): Promise<any> {
-//   const isDidInput = didOrHandle.startsWith("did:");
-//   const cacheKey = `handleDid:${didOrHandle}`;
-//   const now = Date.now();
-//   const cached = get(cacheKey);
-//   if (
-//     cached &&
-//     cached.value &&
-//     cached.time &&
-//     now - cached.time < cacheTimeout
-//   ) {
-//     try {
-//       return JSON.parse(cached.value);
-//     } catch {}
-//   }
-//   const url = `https://free-fly-24.deno.dev/?${
-//     isDidInput
-//       ? `did=${encodeURIComponent(didOrHandle)}`
-//       : `handle=${encodeURIComponent(didOrHandle)}`
-//   }`;
-//   const res = await fetch(url);
-//   if (!res.ok) throw new Error("Failed to resolve handle/did");
-//   const data = await res.json();
-//   set(cacheKey, JSON.stringify(data));
-//   if (!isDidInput && data.did) {
-//     set(`handleDid:${data.did}`, JSON.stringify(data));
-//   }
-//   return data;
-// }
-
 export function UniversalPostRendererATURILoader({
   atUri,
   onConstellation,
@@ -167,234 +93,33 @@ export function UniversalPostRendererATURILoader({
   filterMustHaveMedia,
   filterMustBeReply,
 }: UniversalPostRendererATURILoaderProps) {
-  // todo remove this once tree rendering is implemented, use a prop like isTree
   const TEMPLINEAR = true;
-  // /*mass comment*/ console.log("atUri", atUri);
-  //const { get, set } = usePersistentStore();
-  //const [record, setRecord] = React.useState<any>(null);
-  //const [links, setLinks] = React.useState<any>(null);
-  //const [error, setError] = React.useState<string | null>(null);
-  //const [cacheTime, setCacheTime] = React.useState<number | null>(null);
-  //const [resolved, setResolved] = React.useState<any>(null); // { did, pdsUrl, bskyPds, handle }
-  //const [opProfile, setOpProfile] = React.useState<any>(null);
-  // const [opProfileCacheTime, setOpProfileCacheTime] = React.useState<
-  //   number | null
-  // >(null);
-  //const router = useRouter();
-
-  //const parsed = React.useMemo(() => parseAtUri(atUri), [atUri]);
   const parsed = new AtUri(atUri);
   const did = parsed?.host;
   const rkey = parsed?.rkey;
-  // /*mass comment*/ console.log("did", did);
-  // /*mass comment*/ console.log("rkey", rkey);
-
-  // React.useEffect(() => {
-  //   const checkCache = async () => {
-  //     const postUri = atUri;
-  //     const cacheKey = `record:${postUri}`;
-  //     const cached = await get(cacheKey);
-  //     const now = Date.now();
-  //     // /*mass comment*/ console.log(
-  //       "UniversalPostRenderer checking cache for",
-  //       cacheKey,
-  //       "cached:",
-  //       !!cached,
-  //     );
-  //     if (
-  //       cached &&
-  //       cached.value &&
-  //       cached.time &&
-  //       now - cached.time < CACHE_TIMEOUT
-  //     ) {
-  //       try {
-  //         // /*mass comment*/ console.log("UniversalPostRenderer found cached data for", cacheKey);
-  //         setRecord(JSON.parse(cached.value));
-  //       } catch {
-  //         setRecord(null);
-  //       }
-  //     }
-  //   };
-  //   checkCache();
-  // }, [atUri, get]);
 
   const {
     data: postQuery,
     isLoading: isPostLoading,
     isError: isPostError,
   } = useQueryPost(atUri);
-  //const record = postQuery?.value;
-
-  // React.useEffect(() => {
-  //   if (!did || record) return;
-  //   (async () => {
-  //     try {
-  //       const resolvedData = await cachedResolveIdentity({
-  //         didOrHandle: did,
-  //         get,
-  //         set,
-  //       });
-  //       setResolved(resolvedData);
-  //     } catch (e: any) {
-  //       //setError("Failed to resolve handle/did: " + e?.message);
-  //     }
-  //   })();
-  // }, [did, get, set, record]);
 
   const { data: resolved } = useQueryIdentity(did || "");
-
-  // React.useEffect(() => {
-  //   if (!resolved || !resolved.pdsUrl || !resolved.did || !rkey || record)
-  //     return;
-  //   let ignore = false;
-  //   (async () => {
-  //     try {
-  //       const data = await cachedGetRecord({
-  //         atUri,
-  //         get,
-  //         set,
-  //       });
-  //       if (!ignore) setRecord(data);
-  //     } catch (e: any) {
-  //       //if (!ignore) setError("Failed to fetch base record: " + e?.message);
-  //     }
-  //   })();
-  //   return () => {
-  //     ignore = true;
-  //   };
-  // }, [resolved, rkey, atUri, record]);
-
-  // React.useEffect(() => {
-  //   if (!resolved || !resolved.did || !rkey) return;
-  //   const fetchLinks = async () => {
-  //     const postUri = atUri;
-  //     const cacheKey = `constellation:${postUri}`;
-  //     const cached = await get(cacheKey);
-  //     const now = Date.now();
-  //     if (
-  //       cached &&
-  //       cached.value &&
-  //       cached.time &&
-  //       now - cached.time < CACHE_TIMEOUT
-  //     ) {
-  //       try {
-  //         const data = JSON.parse(cached.value);
-  //         setLinks(data);
-  //         if (onConstellation) onConstellation(data);
-  //       } catch {
-  //         setLinks(null);
-  //       }
-  //       //setCacheTime(cached.time);
-  //       return;
-  //     }
-  //     try {
-  //       const url = `https://constellation.microcosm.blue/links/all?target=${encodeURIComponent(
-  //         atUri,
-  //       )}`;
-  //       const res = await fetch(url);
-  //       if (!res.ok) throw new Error("Failed to fetch constellation links");
-  //       const data = await res.json();
-  //       setLinks(data);
-  //       //setCacheTime(now);
-  //       set(cacheKey, JSON.stringify(data));
-  //       if (onConstellation) onConstellation(data);
-  //     } catch (e: any) {
-  //       //setError("Failed to fetch constellation links: " + e?.message);
-  //     }
-  //   };
-  //   fetchLinks();
-  // }, [resolved, rkey, get, set, atUri, onConstellation]);
 
   const { data: links } = useQueryConstellation({
     method: "/links/all",
     target: atUri,
   });
 
-  // React.useEffect(() => {
-  //   if (!record || !resolved || !resolved.did) return;
-  //   const fetchOpProfile = async () => {
-  //     const opDid = resolved.did;
-  //     const postUri = atUri;
-  //     const cacheKey = `profile:${postUri}`;
-  //     const cached = await get(cacheKey);
-  //     const now = Date.now();
-  //     if (
-  //       cached &&
-  //       cached.value &&
-  //       cached.time &&
-  //       now - cached.time < CACHE_TIMEOUT
-  //     ) {
-  //       try {
-  //         setOpProfile(JSON.parse(cached.value));
-  //       } catch {
-  //         setOpProfile(null);
-  //       }
-  //       //setOpProfileCacheTime(cached.time);
-  //       return;
-  //     }
-  //     try {
-  //       let opResolvedRaw = await get(`handleDid:${opDid}`);
-  //       let opResolved: any = null;
-  //       if (
-  //         opResolvedRaw &&
-  //         opResolvedRaw.value &&
-  //         opResolvedRaw.time &&
-  //         now - opResolvedRaw.time < HANDLE_DID_CACHE_TIMEOUT
-  //       ) {
-  //         try {
-  //           opResolved = JSON.parse(opResolvedRaw.value);
-  //         } catch {
-  //           opResolved = null;
-  //         }
-  //       } else {
-  //         const url = `https://free-fly-24.deno.dev/?did=${encodeURIComponent(
-  //           opDid,
-  //         )}`;
-  //         const res = await fetch(url);
-  //         if (!res.ok) throw new Error("Failed to resolve OP did");
-  //         opResolved = await res.json();
-  //         set(`handleDid:${opDid}`, JSON.stringify(opResolved));
-  //       }
-  //       if (!opResolved || !opResolved.pdsUrl)
-  //         throw new Error("OP did resolution failed or missing pdsUrl");
-  //       const profileUrl = `${
-  //         opResolved.pdsUrl
-  //       }/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(
-  //         opDid,
-  //       )}&collection=app.bsky.actor.profile&rkey=self`;
-  //       const profileRes = await fetch(profileUrl);
-  //       if (!profileRes.ok) throw new Error("Failed to fetch OP profile");
-  //       const profileData = await profileRes.json();
-  //       setOpProfile(profileData);
-  //       //setOpProfileCacheTime(now);
-  //       set(cacheKey, JSON.stringify(profileData));
-  //     } catch (e: any) {
-  //       //setError("Failed to fetch OP profile: " + e?.message);
-  //     }
-  //   };
-  //   fetchOpProfile();
-  // }, [record, get, set, rkey, resolved, atUri]);
-
   const { data: opProfile } = useQueryProfile(
     resolved ? `at://${resolved?.did}/app.bsky.actor.profile/self` : undefined,
   );
-
-  // const displayName =
-  //   opProfile?.value?.displayName || resolved?.handle || resolved?.did;
-  // const handle = resolved?.handle ? `@${resolved.handle}` : resolved?.did;
-
-  // const postText = record?.value?.text || "";
-  // const createdAt = record?.value?.createdAt
-  //   ? new Date(record.value.createdAt)
-  //   : null;
-  // const langTags = record?.value?.langs || [];
 
   const [likes, setLikes] = React.useState<number | null>(null);
   const [reposts, setReposts] = React.useState<number | null>(null);
   const [replies, setReplies] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    // /*mass comment*/ console.log(JSON.stringify(links, null, 2));
     setLikes(
       links
         ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
@@ -413,13 +138,6 @@ export function UniversalPostRendererATURILoader({
     );
   }, [links]);
 
-  // const { data: repliesData } = useQueryConstellation({
-  //   method: "/links",
-  //   target: atUri,
-  //   collection: "app.bsky.feed.post",
-  //   path: ".reply.parent.uri",
-  // });
-
   const [constellationurl] = useAtom(constellationURLAtom);
 
   const infinitequeryresults = useInfiniteQuery({
@@ -435,14 +153,8 @@ export function UniversalPostRendererATURILoader({
     enabled: !!atUri && !!maxReplies && !isQuote,
   });
 
-  const {
-    data: repliesData,
-    // fetchNextPage,
-    // hasNextPage,
-    // isFetchingNextPage,
-  } = infinitequeryresults;
+  const { data: repliesData } = infinitequeryresults;
 
-  // auto-fetch all pages
   useEffect(() => {
     if (!maxReplies || isQuote || TEMPLINEAR) return;
     if (
@@ -465,8 +177,6 @@ export function UniversalPostRendererATURILoader({
       )
     : [];
 
-  //const [oldestOpsReply, setOldestOpsReply] = useState<string | undefined>(undefined);
-
   const { oldestOpsReply, oldestOpsReplyElseNewestNonOpsReply } = (() => {
     if (isQuote || !replyAturis || replyAturis.length === 0 || !maxReplies)
       return {
@@ -474,10 +184,7 @@ export function UniversalPostRendererATURILoader({
         oldestOpsReplyElseNewestNonOpsReply: undefined,
       };
 
-    const opdid = new AtUri(
-      //postQuery?.value.reply?.root.uri ?? postQuery?.uri ?? atUri
-      atUri,
-    ).host;
+    const opdid = new AtUri(atUri).host;
 
     const opReplies = replyAturis.filter(
       (aturi) => new AtUri(aturi).host === opdid,
@@ -485,7 +192,6 @@ export function UniversalPostRendererATURILoader({
 
     if (opReplies.length > 0) {
       const opreply = opReplies[opReplies.length - 1];
-      //setOldestOpsReply(opreply);
       return {
         oldestOpsReply: opreply,
         oldestOpsReplyElseNewestNonOpsReply: opreply,
@@ -498,23 +204,12 @@ export function UniversalPostRendererATURILoader({
     }
   })();
 
-  // const navigateToProfile = (e: React.MouseEvent) => {
-  //   e.stopPropagation();
-  //   if (resolved?.did) {
-  //     router.navigate({
-  //       to: "/profile/$did",
-  //       params: { did: resolved.did },
-  //     });
-  //   }
-  // };
   if (!postQuery?.value) {
-    // deleted post more often than a non-resolvable post
     return <></>;
   }
 
   return (
     <>
-      {/* <span>uprrs {maxReplies} {!!maxReplies&&!!oldestOpsReplyElseNewestNonOpsReply ? "true" : "false"}</span> */}
       <UniversalPostRendererRawRecordShim
         detailed={detailed}
         postRecord={postQuery}
@@ -535,7 +230,6 @@ export function UniversalPostRendererATURILoader({
                 : bottomReplyLine
         }
         topReplyLine={topReplyLine}
-        //bottomBorder={maxReplies&&oldestOpsReplyElseNewestNonOpsReply ? false : bottomBorder}
         bottomBorder={
           maxReplies && oldestOpsReplyElseNewestNonOpsReply
             ? false
@@ -545,7 +239,6 @@ export function UniversalPostRendererATURILoader({
         }
         feedviewpost={feedviewpost}
         repostedby={repostedby}
-        //style={{...style, background: oldestOpsReply === atUri ? "Red" : undefined}}
         style={style}
         ref={ref}
         dataIndexPropPass={dataIndexPropPass}
@@ -561,7 +254,6 @@ export function UniversalPostRendererATURILoader({
       <>
         {maxReplies && maxReplies === 0 && replies && replies > 0 ? (
           <>
-            {/* <div>hello</div> */}
             <MoreReplies atUri={atUri} />
           </>
         ) : (
@@ -570,9 +262,7 @@ export function UniversalPostRendererATURILoader({
       </>
       {!isQuote && oldestOpsReplyElseNewestNonOpsReply && (
         <>
-          {/* <span>hello {maxReplies}</span> */}
           <UniversalPostRendererATURILoader
-            //detailed={detailed}
             atUri={oldestOpsReplyElseNewestNonOpsReply}
             bottomReplyLine={(maxReplies ?? 0) > 0}
             topReplyLine={
@@ -622,7 +312,6 @@ function MoreReplies({ atUri }: { atUri: string }) {
             opacity: 0.5,
           }}
           className="dark:bg-[repeating-linear-gradient(to_bottom,var(--color-gray-500)_0,var(--color-gray-400)_4px,transparent_4px,transparent_8px)]"
-          //className="border-gray-400 dark:border-gray-500"
         />
       </div>
 
@@ -692,74 +381,7 @@ export function UniversalPostRendererRawRecordShim({
   filterMustHaveMedia?: boolean;
   filterMustBeReply?: boolean;
 }) {
-  // /*mass comment*/ console.log(`received aturi: ${aturi} of post content: ${postRecord}`);
   const navigate = useNavigate();
-
-  //const { get, set } = usePersistentStore();
-  // const [hydratedEmbed, setHydratedEmbed] = useState<any>(undefined);
-
-  // useEffect(() => {
-  //   const run = async () => {
-  //     if (!postRecord?.value?.embed) return;
-  //     const embed = postRecord?.value?.embed;
-  //     if (!embed || !embed.$type) {
-  //       setHydratedEmbed(undefined);
-  //       return;
-  //     }
-
-  //     try {
-  //       let result: any;
-
-  //       if (embed?.$type === "app.bsky.embed.recordWithMedia") {
-  //         const mediaEmbed = embed.media;
-
-  //         let hydratedMedia;
-  //         if (mediaEmbed?.$type === "app.bsky.embed.images") {
-  //           hydratedMedia = hydrateEmbedImages(mediaEmbed, resolved?.did);
-  //         } else if (mediaEmbed?.$type === "app.bsky.embed.external") {
-  //           hydratedMedia = hydrateEmbedExternal(mediaEmbed, resolved?.did);
-  //         } else if (mediaEmbed?.$type === "app.bsky.embed.video") {
-  //           hydratedMedia = hydrateEmbedVideo(mediaEmbed, resolved?.did);
-  //         } else {
-  //           throw new Error("idiot");
-  //         }
-  //         if (!hydratedMedia) throw new Error("idiot");
-
-  //         // hydrate the outer recordWithMedia now using the hydrated media
-  //         result = await hydrateEmbedRecordWithMedia(
-  //           embed,
-  //           resolved?.did,
-  //           hydratedMedia,
-  //           get,
-  //           set,
-  //         );
-  //       } else {
-  //         const hydrated =
-  //           embed?.$type === "app.bsky.embed.images"
-  //             ? hydrateEmbedImages(embed, resolved?.did)
-  //             : embed?.$type === "app.bsky.embed.external"
-  //               ? hydrateEmbedExternal(embed, resolved?.did)
-  //               : embed?.$type === "app.bsky.embed.video"
-  //                 ? hydrateEmbedVideo(embed, resolved?.did)
-  //                 : embed?.$type === "app.bsky.embed.record"
-  //                   ? hydrateEmbedRecord(embed, resolved?.did, get, set)
-  //                   : undefined;
-
-  //         result = hydrated instanceof Promise ? await hydrated : hydrated;
-  //       }
-
-  //       // /*mass comment*/ console.log(
-  //         String(result) + " hydrateEmbedRecordWithMedia hey hyeh ye",
-  //       );
-  //       setHydratedEmbed(result);
-  //     } catch (e) {
-  //       console.error("Error hydrating embed", e);
-  //       setHydratedEmbed(undefined);
-  //     }
-  //   };
-
-  //   run();
-  // }, [postRecord, resolved?.did]);
 
   const hasEmbed = (postRecord?.value as ATPAPI.AppBskyFeedPost.Record)?.embed;
   const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
@@ -786,7 +408,7 @@ export function UniversalPostRendererRawRecordShim({
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
-  const parsedaturi = new AtUri(aturi); //parseAtUri(aturi);
+  const parsedaturi = new AtUri(aturi);
 
   const fakeprofileviewbasic = React.useMemo<AppBskyActorDefs.ProfileViewBasic>(
     () => ({
@@ -841,35 +463,6 @@ export function UniversalPostRendererRawRecordShim({
     ],
   );
 
-  //const [feedviewpostreplyhandle, setFeedviewpostreplyhandle] = useState<string | undefined>(undefined);
-
-  // useEffect(() => {
-  //   if(!feedviewpost) return;
-  //   let cancelled = false;
-
-  //   const run = async () => {
-  //     const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent?.uri;
-  //     const feedviewpostreplydid = thereply ? new AtUri(thereply).host : undefined;
-
-  //     if (feedviewpostreplydid) {
-  //       const opi = await cachedResolveIdentity({
-  //         didOrHandle: feedviewpostreplydid,
-  //         get,
-  //         set,
-  //       });
-
-  //       if (!cancelled) {
-  //         setFeedviewpostreplyhandle(opi?.handle);
-  //       }
-  //     }
-  //   };
-
-  //   run();
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [fakepost, get, set]);
   const thereply = (fakepost?.record as AppBskyFeedPost.Record)?.reply?.parent
     ?.uri;
   const feedviewpostreplydid =
@@ -893,11 +486,6 @@ export function UniversalPostRendererRawRecordShim({
 
   return (
     <>
-      {/* <p>
-        {postRecord?.value?.embed.$type + " " + JSON.stringify(hydratedEmbed)}
-      </p> */}
-      {/* <span>filtermustbereply is {filterMustBeReply ? "true" : "false"}</span>
-      <span>thereply is {thereply ? "true" : "false"}</span> */}
       <UniversalPostRenderer
         expanded={detailed}
         onPostClick={() =>
@@ -907,9 +495,6 @@ export function UniversalPostRendererRawRecordShim({
             params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
           })
         }
-        // onProfileClick={() => parsedaturi && navigate({to: "/profile/$did",
-        //   params: {did: parsedaturi.did}
-        // })}
         onProfileClick={(e) => {
           e.stopPropagation();
           if (parsedaturi) {
@@ -925,7 +510,6 @@ export function UniversalPostRendererRawRecordShim({
         bottomReplyLine={bottomReplyLine}
         topReplyLine={topReplyLine}
         bottomBorder={bottomBorder}
-        //extraOptionalItemInfo={{reply: postRecord?.value?.reply as AppBskyFeedDefs.ReplyRef, post: fakepost}}
         feedviewpostreplyhandle={feedviewpostreplyhandle}
         repostedby={feedviewpostrepostedbyhandle}
         style={style}
@@ -942,450 +526,13 @@ export function UniversalPostRendererRawRecordShim({
   );
 }
 
-// export function parseAtUri(
-//   atUri: string
-// ): { did: string; collection: string; rkey: string } | null {
-//   const PREFIX = "at://";
-//   if (!atUri.startsWith(PREFIX)) {
-//     return null;
-//   }
-
-//   const parts = atUri.slice(PREFIX.length).split("/");
-
-//   if (parts.length !== 3) {
-//     return null;
-//   }
-
-//   const [did, collection, rkey] = parts;
-
-//   if (!did || !collection || !rkey) {
-//     return null;
-//   }
-
-//   return { did, collection, rkey };
-// }
-
-export function MdiCommentOutline(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M9 22a1 1 0 0 1-1-1v-3H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6.1l-3.7 3.71c-.2.19-.45.29-.7.29zm1-6v3.08L13.08 16H20V4H4v12z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiRepeat(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M17 17H7v-3l-4 4l4 4v-3h12v-6h-2M7 7h10v3l4-4l-4-4v3H5v6h2z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiRepeatGreen(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="#5CEFAA"
-        d="M17 17H7v-3l-4 4l4 4v-3h12v-6h-2M7 7h10v3l4-4l-4-4v3H5v6h2z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiCardsHeart(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="#EC4899"
-        d="m12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.53z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiCardsHeartOutline(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="m12.1 18.55l-.1.1l-.11-.1C7.14 14.24 4 11.39 4 8.5C4 6.5 5.5 5 7.5 5c1.54 0 3.04 1 3.57 2.36h1.86C13.46 6 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5c0 2.89-3.14 5.74-7.9 10.05M16.5 3c-1.74 0-3.41.81-4.5 2.08C10.91 3.81 9.24 3 7.5 3C4.42 3 2 5.41 2 8.5c0 3.77 3.4 6.86 8.55 11.53L12 21.35l1.45-1.32C18.6 15.36 22 12.27 22 8.5C22 5.41 19.58 3 16.5 3"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiShareVariant(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3a3 3 0 0 0-3-3a3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3a3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66c0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiMoreHoriz(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M16 12a2 2 0 0 1 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2m-6 0a2 2 0 0 1 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2m-6 0a2 2 0 0 1 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiGlobe(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={12}
-      height={12}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41a7.984 7.984 0 0 1 2.9 12.8M11 19.93c-3.95-.49-7-3.85-7-7.93c0-.62.08-1.22.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiVerified(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="#1297ff"
-        d="m23 12l-2.44-2.78l.34-3.68l-3.61-.82l-1.89-3.18L12 3L8.6 1.54L6.71 4.72l-3.61.81l.34 3.68L1 12l2.44 2.78l-.34 3.69l3.61.82l1.89 3.18L12 21l3.4 1.46l1.89-3.18l3.61-.82l-.34-3.68zm-13 5l-4-4l1.41-1.41L10 14.17l6.59-6.59L18 9z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiReply(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={14}
-      height={14}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M10 9V5l-7 7l7 7v-4.1c5 0 8.5 1.6 11 5.1c-1-5-4-10-11-11"
-      ></path>
-    </svg>
-  );
-}
-
-export function LineMdLoadingLoop(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="none"
-        stroke="#1297ff"
-        strokeDasharray={16}
-        strokeDashoffset={16}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 3c4.97 0 9 4.03 9 9"
-      >
-        <animate
-          fill="freeze"
-          attributeName="stroke-dashoffset"
-          dur="0.2s"
-          values="16;0"
-        ></animate>
-        <animateTransform
-          attributeName="transform"
-          dur="1.5s"
-          repeatCount="indefinite"
-          type="rotate"
-          values="0 12 12;360 12 12"
-        ></animateTransform>
-      </path>
-    </svg>
-  );
-}
-
-export function MdiRepost(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={14}
-      height={14}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M17 17H7v-3l-4 4l4 4v-3h12v-6h-2M7 7h10v3l4-4l-4-4v3H5v6h2z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiRepeatVariant(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={14}
-      height={14}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="var(--color-gray-400)"
-        d="M6 5.75L10.25 10H7v6h6.5l2 2H7a2 2 0 0 1-2-2v-6H1.75zm12 12.5L13.75 14H17V8h-6.5l-2-2H17a2 2 0 0 1 2 2v6h3.25z"
-      ></path>
-    </svg>
-  );
-}
-
-export function MdiPlayCircle(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={64}
-      height={64}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="#edf2f5"
-        d="M10 16.5v-9l6 4.5M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"
-      ></path>
-    </svg>
-  );
-}
-
-/* what imported from testfront */
-//import Masonry from "@mui/lab/Masonry";
-import {
-  type $Typed,
-  AppBskyActorDefs,
-  AppBskyEmbedDefs,
-  AppBskyEmbedExternal,
-  AppBskyEmbedImages,
-  AppBskyEmbedRecord,
-  AppBskyEmbedRecordWithMedia,
-  AppBskyEmbedVideo,
-  AppBskyFeedDefs,
-  AppBskyFeedPost,
-  AppBskyGraphDefs,
-  AtUri,
-  type Facet,
-  //AppBskyLabelerDefs,
-  //AtUri,
-  //ComAtprotoRepoStrongRef,
-  ModerationDecision,
-} from "@atproto/api";
-import type {
-  //BlockedPost,
-  FeedViewPost,
-  //NotFoundPost,
-  PostView,
-  //ThreadViewPost,
-} from "@atproto/api/dist/client/types/app/bsky/feed/defs";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import ReactPlayer from "react-player";
-
-import defaultpfp from "~/../public/favicon.png";
-import {
-  usePollData,
-  usePollMutationQueue,
-} from "~/providers/PollMutationQueueProvider";
-import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { renderSnack } from "~/routes/__root";
-import {
-  FeedItemRenderAturiLoader,
-  FollowButton,
-  Mutual,
-} from "~/routes/profile.$did";
-import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
-import { useFastLike } from "~/utils/likeMutationQueue";
-
-// import type { OutputSchema } from "@atproto/api/dist/client/types/app/bsky/feed/getFeed";
-// import type {
-//   ViewRecord,
-//   ViewNotFound,
-//   ViewBlocked,
-//   ViewDetached,
-// } from "@atproto/api/dist/client/types/app/bsky/embed/record";
-//import type { MasonryItemData } from "./onemason/masonry.types";
-//import { MasonryLayout } from "./onemason/MasonryLayout";
-// const agent = new AtpAgent({
-//   service: 'https://public.api.bsky.app'
-// })
-type HitSlopButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  hitSlop?: number;
-};
-
-const HitSlopButtonCustom: React.FC<HitSlopButtonProps> = ({
-  children,
-  hitSlop = 8,
-  style,
-  ...rest
-}) => (
-  <button
-    {...rest}
-    style={{
-      position: "relative",
-      background: "none",
-      border: "none",
-      padding: 0,
-      cursor: "pointer",
-      ...style,
-    }}
-  >
-    {/* Invisible hit slop area */}
-    <span
-      style={{
-        position: "absolute",
-        top: -hitSlop,
-        left: -hitSlop,
-        right: -hitSlop,
-        bottom: -hitSlop,
-      }}
-    />
-    {/* Actual button content stays positioned normally */}
-    <span style={{ position: "relative", zIndex: 1 }}>{children}</span>
-  </button>
-);
-
-const HitSlopButton = ({
-  onClick,
-  children,
-  style = {},
-  ...rest
-}: React.HTMLAttributes<HTMLSpanElement> & {
-  onClick?: (e: React.MouseEvent) => void;
-  children: React.ReactNode;
-  style?: React.CSSProperties;
-}) => (
-  <span
-    style={{ position: "relative", display: "inline-block", cursor: "pointer" }}
-  >
-    <span
-      style={{
-        position: "absolute",
-        top: -8,
-        left: -8,
-        right: -8,
-        bottom: -8,
-        zIndex: 0,
-      }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.(e);
-      }}
-    />
-    <span
-      style={{
-        ...style,
-        position: "relative",
-        zIndex: 1,
-        pointerEvents: "none",
-      }}
-      {...rest}
-    >
-      {children}
-    </span>
-  </span>
-);
-
-const btnstyle = {
-  display: "flex",
-  gap: 4,
-  cursor: "pointer",
-  alignItems: "center",
-  fontSize: 14,
-};
-function randomString(length = 8) {
-  const chars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  return Array.from(
-    { length },
-    () => chars[Math.floor(Math.random() * chars.length)],
-  ).join("");
-}
-
-function UniversalPostRenderer({
+export function UniversalPostRenderer({
   post,
   uprrrsauthor,
-  //setMainItem,
-  //isMainItem,
   onPostClick,
   onProfileClick,
   expanded,
-  //expanded,
   isQuote,
-  //isQuote,
   extraOptionalItemInfo,
   bottomReplyLine,
   topReplyLine,
@@ -1403,18 +550,13 @@ function UniversalPostRenderer({
   maxReplies,
   constellationLinks,
 }: {
-  post: PostView;
+  post: AppBskyFeedDefs.PostView;
   uprrrsauthor?: AppBskyActorDefs.ProfileViewDetailed;
-  // optional for now because i havent ported every use to this yet
-  // setMainItem?: React.Dispatch<
-  //   React.SetStateAction<AppBskyFeedDefs.FeedViewPost>
-  // >;
-  //isMainItem?: boolean;
   onPostClick?: (e: React.MouseEvent) => void;
   onProfileClick?: (e: React.MouseEvent) => void;
   expanded?: boolean;
   isQuote?: boolean;
-  extraOptionalItemInfo?: FeedViewPost;
+  extraOptionalItemInfo?: AppBskyFeedDefs.FeedViewPost;
   bottomReplyLine?: boolean;
   topReplyLine?: boolean;
   salt: string;
@@ -1442,12 +584,6 @@ function UniversalPostRenderer({
     post.viewer?.repost,
   );
   const { liked, toggle, backfill } = useFastLike(post.uri, post.cid);
-  // const bovref = useBackfillOnView(post.uri, post.cid);
-  // React.useLayoutEffect(()=>{
-  //   if (expanded && !isQuote) {
-  //     backfill();
-  //   }
-  // },[backfill, expanded, isQuote])
 
   const repostOrUnrepostPost = async () => {
     if (!agent) {
@@ -1517,15 +653,12 @@ function UniversalPostRenderer({
     (showBridgyText ? unfedibridgy : undefined) ??
     (showWafrnText ? unfediwafrn : undefined);
 
-  /* fuck you */
   const isMainItem = false;
   const setMainItem = (any: any) => {};
-  // eslint-disable-next-line react-hooks/refs
-  //console.log("Received ref in UniversalPostRenderer:", usedref);
+
   return (
     <div ref={ref} style={style} data-index={dataIndexPropPass}>
       <div
-        //ref={ref}
         key={salt + "-" + (post.uri || emergencySalt)}
         onClick={
           isMainItem
@@ -1542,21 +675,14 @@ function UniversalPostRenderer({
               : undefined
         }
         style={{
-          //...style,
-          //border: "1px solid #e1e8ed",
-          //borderRadius: 12,
           opacity: "1 !important",
           background: "transparent",
           paddingLeft: isQuote ? 12 : 16,
           paddingRight: isQuote ? 12 : 16,
-          //paddingTop: 16,
           paddingTop: isRepost ? 10 : isQuote ? 12 : topReplyLine ? 8 : 16,
-          //paddingBottom: bottomReplyLine ? 0 : 16,
           paddingBottom: 0,
           fontFamily: "system-ui, sans-serif",
-          //boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
           position: "relative",
-          // dont cursor: "pointer",
           borderBottomWidth: bottomBorder ? (isQuote ? 0 : 1) : 0,
         }}
         className="border-gray-300 dark:border-gray-800"
@@ -1571,34 +697,27 @@ function UniversalPostRenderer({
               fontSize: 14,
               maxHeight: "1rem",
               justifyContent: "flex-start",
-              //color: theme.textSecondary,
               gap: 4,
               alignItems: "center",
             }}
             className="text-gray-500 dark:text-gray-400"
           >
-            <MdiRepost /> Reposted by @{isRepost}{" "}
+            <IconMdiRepost /> Reposted by @{isRepost}
           </div>
         )}
         {!isQuote && (
           <div
             style={{
-              opacity:
-                topReplyLine || isReply /*&& (true || expanded)*/ ? 0.5 : 0,
+              opacity: topReplyLine || isReply ? 0.5 : 0,
               position: "absolute",
               top: 0,
-              left: 36, // why 36 ???
-              //left: 16 + (42 / 2),
+              left: 36,
               width: 2,
-              //height: "100%",
               height: isRepost
                 ? "calc(16px + 1rem - 6px)"
                 : topReplyLine
                   ? 8 - 6
                   : 16 - 6,
-              // background: theme.textSecondary,
-              //opacity: 0.5,
-              // no flex here
             }}
             className="bg-gray-500 dark:bg-gray-400"
           />
@@ -1651,11 +770,11 @@ function UniversalPostRenderer({
                 <div className="flex flex-col gap-3">
                   <div>
                     <div className="text-gray-900 dark:text-gray-100 font-medium text-md">
-                      {post.author.displayName || post.author.handle}{" "}
+                      {post.author.displayName || post.author.handle}
                     </div>
                     <div className="text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1">
                       <Mutual targetdidorhandle={post.author.did} />@
-                      {post.author.handle}{" "}
+                      {post.author.handle}
                     </div>
                   </div>
                   {uprrrsauthor?.description && (
@@ -1663,28 +782,8 @@ function UniversalPostRenderer({
                       {uprrrsauthor.description}
                     </div>
                   )}
-                  {/* <div className="flex gap-4">
-                    <div className="flex gap-1">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        0
-                      </div>
-                      <div className="text-gray-500 dark:text-gray-400">
-                        Following
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        2,900
-                      </div>
-                      <div className="text-gray-500 dark:text-gray-400">
-                        Followers
-                      </div>
-                    </div>
-                  </div> */}
                 </div>
               </div>
-
-              {/* <HoverCard.Arrow className="fill-gray-50 dark:fill-gray-900" /> */}
             </HoverCard.Content>
           </HoverCard.Portal>
         </HoverCard.Root>
@@ -1701,33 +800,17 @@ function UniversalPostRenderer({
               marginRight: expanded || isQuote ? 0 : 12,
             }}
           >
-            {/* dummy for later use */}
             <div style={{ width: 42, height: 42 + 6, minHeight: 42 + 6 }} />
-            {/* reply line !!!!  bottomReplyLine */}
             {bottomReplyLine && (
               <div
                 style={{
                   width: 2,
                   height: "100%",
-                  //background: theme.textSecondary,
                   opacity: 0.5,
-                  // no flex here
-                  //color: "Red",
-                  //zIndex: 99
                 }}
                 className="bg-gray-500 dark:bg-gray-400"
               />
             )}
-            {/* <div
-            layout
-            transition={{ duration: 0.2 }}
-            animate={{ height: expanded ? 0 : '100%' }}
-            style={{
-              width: 2.4,
-              background: theme.border,
-              // no flex here
-            }}
-          /> */}
           </div>
           <div style={{ flex: 1, maxWidth: "100%" }}>
             <div
@@ -1745,7 +828,6 @@ function UniversalPostRenderer({
               <div
                 style={{
                   display: "flex",
-                  //overflow: "hidden", // hey why is overflow hidden unapplied
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   flexShrink: 1,
@@ -1770,20 +852,17 @@ function UniversalPostRenderer({
                     minWidth: 0,
                     gap: 4,
                     alignItems: "center",
-                    //color: theme.text,
                   }}
                   className="text-gray-900 dark:text-gray-100"
                 >
-                  {/* verified checkmark */}
-                  {post.author.displayName || post.author.handle}{" "}
+                  {post.author.displayName || post.author.handle}
                   {post.author.verification?.verifiedStatus == "valid" && (
-                    <MdiVerified />
+                    <IconMdiVerified />
                   )}
                 </span>
 
                 <span
                   style={{
-                    //color: theme.textSecondary,
                     fontSize: 16,
                     overflowX: "hidden",
                     textOverflow: "ellipsis",
@@ -1806,7 +885,6 @@ function UniversalPostRenderer({
               >
                 <span
                   style={{
-                    //color: theme.textSecondary,
                     fontSize: 16,
                     marginLeft: 8,
                     whiteSpace: "nowrap",
@@ -1815,12 +893,10 @@ function UniversalPostRenderer({
                   }}
                   className="text-gray-500 dark:text-gray-400"
                 >
-                  · {/* time placeholder */}
-                  {shortTimeAgo(post.indexedAt)}
+                  · {shortTimeAgo(post.indexedAt)}
                 </span>
               </div>
             </div>
-            {/* reply indicator */}
             {!!feedviewpostreplyhandle && (
               <div
                 style={{
@@ -1829,10 +905,8 @@ function UniversalPostRenderer({
                   paddingBottom: 2,
                   fontSize: 14,
                   justifyContent: "flex-start",
-                  //color: theme.textSecondary,
                   gap: 4,
                   alignItems: "center",
-                  //marginLeft: 36,
                   height:
                     !(expanded || isQuote) && !!feedviewpostreplyhandle
                       ? "1rem"
@@ -1842,7 +916,7 @@ function UniversalPostRenderer({
                 }}
                 className="text-gray-500 dark:text-gray-400"
               >
-                <MdiReply /> Reply to @{feedviewpostreplyhandle}
+                <IconMdiReply /> Reply to @{feedviewpostreplyhandle}
               </div>
             )}
             <div
@@ -1884,7 +958,6 @@ function UniversalPostRenderer({
             {post.embed && depth < 1 && !concise ? (
               <PostEmbeds
                 embed={post.embed}
-                //moderation={moderation}
                 viewContext={PostEmbedViewContext.Feed}
                 salt={salt}
                 navigate={navigate}
@@ -1895,9 +968,6 @@ function UniversalPostRenderer({
               />
             ) : null}
             {post.embed && depth > 0 && (
-              /*  pretty bad hack imo. its trying to sync up with how the embed shim doesnt
-                hydrate embeds this deep but the connection here is implicit
-                todo: idk make this a real part of the embed shim so its not implicit */
               <>
                 <div className="border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px]">
                   (there is an embed here thats too deep to render)
@@ -1914,18 +984,14 @@ function UniversalPostRenderer({
                   <div
                     style={{
                       overflow: "hidden",
-                      //color: theme.textSecondary,
                       fontSize: 14,
                       display: "flex",
                       borderBottomStyle: "solid",
-                      //borderBottomColor: theme.border,
-                      //background: "#f00",
-                      // height: "1rem",
                       paddingTop: 4,
                       paddingBottom: 8,
                       borderBottomWidth: 1,
                       marginBottom: 8,
-                    }} // important for height animation
+                    }}
                     className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 was7"
                   >
                     {fullDateTimeFormat(post.indexedAt)}
@@ -1938,10 +1004,8 @@ function UniversalPostRenderer({
                     display: "flex",
                     gap: 32,
                     paddingTop: 8,
-                    //color: theme.textSecondary,
                     fontSize: 15,
                     justifyContent: "space-between",
-                    //background: "#0f0",
                   }}
                   className="text-gray-500 dark:text-gray-400"
                 >
@@ -1953,7 +1017,7 @@ function UniversalPostRenderer({
                       ...btnstyle,
                     }}
                   >
-                    <MdiCommentOutline />
+                    <IconMdiCommentOutline />
                     {post.replyCount}
                   </HitSlopButton>
                   <DropdownMenu.Root modal={false}>
@@ -1965,7 +1029,7 @@ function UniversalPostRenderer({
                         }}
                         aria-label="Repost or quote post"
                       >
-                        {hasRetweeted ? <MdiRepeatGreen /> : <MdiRepeat />}
+                        {hasRetweeted ? <IconMdiRepeat color="#5CEFAA" /> : <IconMdiRepeat />}
                         {post.repostCount ?? 0}
                       </div>
                     </DropdownMenu.Trigger>
@@ -1980,7 +1044,7 @@ function UniversalPostRenderer({
                           onSelect={repostOrUnrepostPost}
                           className="px-3 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700"
                         >
-                          <MdiRepeat
+                          <IconMdiRepeat
                             className={hasRetweeted ? "text-green-400" : ""}
                           />
                           <span>{hasRetweeted ? "Undo Repost" : "Repost"}</span>
@@ -1995,8 +1059,7 @@ function UniversalPostRenderer({
                           }}
                           className="px-3 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700"
                         >
-                          {/* You might want a specific quote icon here */}
-                          <MdiCommentOutline />
+                          <IconMdiCommentOutline />
                           <span>Quote</span>
                         </DropdownMenu.Item>
                       </DropdownMenu.Content>
@@ -2011,7 +1074,7 @@ function UniversalPostRenderer({
                       ...(liked ? { color: "#EC4899" } : {}),
                     }}
                   >
-                    {liked ? <MdiCardsHeart /> : <MdiCardsHeartOutline />}
+                    {liked ? <IconMdiCardsHeart /> : <IconMdiCardsHeartOutline />}
                     {(post.likeCount || 0) + (liked ? 1 : 0)}
                   </HitSlopButton>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -2030,7 +1093,6 @@ function UniversalPostRenderer({
                             title: "Copied to clipboard!",
                           });
                         } catch (_e) {
-                          // idk
                           renderSnack({
                             title: "Failed to copy link",
                           });
@@ -2040,7 +1102,7 @@ function UniversalPostRenderer({
                         ...btnstyle,
                       }}
                     >
-                      <MdiShareVariant />
+                      <IconMdiShareVariant />
                     </HitSlopButton>
                     <HitSlopButton
                       onClick={() => {
@@ -2050,7 +1112,7 @@ function UniversalPostRenderer({
                       }}
                     >
                       <span style={btnstyle}>
-                        <MdiMoreHoriz />
+                        <IconMdiMoreHoriz />
                       </span>
                     </HitSlopButton>
                   </div>
@@ -2059,7 +1121,6 @@ function UniversalPostRenderer({
             </div>
             <div
               style={{
-                //height: bottomReplyLine ? 16 : 0
                 height: isQuote ? 12 : 16,
               }}
             />
@@ -2070,1563 +1131,8 @@ function UniversalPostRenderer({
   );
 }
 
-const fullDateTimeFormat = (iso: string) => {
-  const date = new Date(iso);
-  return date.toLocaleString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
-const shortTimeAgo = (iso: string) => {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d`;
-};
-
-// const toAtUri = (url: string) =>
-//   url
-//     .replace("https://bsky.app/profile/", "at://")
-//     .replace("/feed/", "/app.bsky.feed.generator/");
-
-// function PostSizedElipsis() {
-//   return (
-//     <div
-//       style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
-//     >
-//       <div
-//         style={{
-//           width: 2,
-//           height: 40,
-//           //background: theme.textSecondary,
-//           background: `repeating-linear-gradient(to bottom, var(--color-gray-400) 0px, var(--color-gray-400) 6px, transparent 6px, transparent 10px)`,
-//           backgroundSize: "100% 10px",
-//           opacity: 0.5,
-//           marginLeft: 36, // why 36 ???
-//         }}
-//       />
-//       <span
-//         style={{
-//           //color: theme.textSecondary,
-//           marginLeft: 34,
-//         }}
-//         className="text-gray-500 dark:text-gray-400"
-//       >
-//         more posts
-//       </span>
-//     </div>
-//   );
-// }
-
-type Embed =
-  | AppBskyEmbedRecord.View
-  | AppBskyEmbedImages.View
-  | AppBskyEmbedVideo.View
-  | AppBskyEmbedExternal.View
-  | AppBskyEmbedRecordWithMedia.View
-  | { $type: string; [k: string]: unknown };
-
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
   Feed = "Feed",
   FeedEmbedRecordWithMedia = "FeedEmbedRecordWithMedia",
 }
-const stopgap = {
-  display: "flex",
-  justifyContent: "center",
-  padding: "32px 12px",
-  borderRadius: 12,
-  border: "1px solid rgba(161, 170, 174, 0.38)",
-};
-
-function PollEmbed({ did, rkey }: { did: string; rkey: string }) {
-  const { agent } = useAuth();
-  const { refreshPollData } = usePollMutationQueue();
-  const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
-  const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
-
-  // --- 1. Fetch Aggregate Counts & Avatars (Public Data) ---
-  // (We still fetch these here as they are View-specific data dependencies)
-
-  const { data: voteCountsA } = useQueryConstellation({
-    method: "/links/count/distinct-dids",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.a",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-
-  const { data: voteCountsB } = useQueryConstellation({
-    method: "/links/count/distinct-dids",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.b",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-
-  const { data: voteCountsC } = useQueryConstellation({
-    method: "/links/count/distinct-dids",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.c",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-
-  const { data: voteCountsD } = useQueryConstellation({
-    method: "/links/count/distinct-dids",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.d",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-
-  // Query first page of voters for Avatars
-  const { data: votersA } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.a",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-  const { data: votersB } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.b",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-  const { data: votersC } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.c",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-  const { data: votersD } = useQueryConstellation({
-    method: "/links",
-    target: pollUri,
-    collection: "app.reddwarf.poll.vote.d",
-    path: ".subject.uri",
-    customkey: "constellation-polls",
-  });
-
-  // --- 2. Prepare Data ---
-  // todo: hardcoded to multiple for all public polls
-  const poll = {
-    ...(pollRecord?.value ?? {}),
-    multiple: true,
-  } as {
-    a: string;
-    b: string;
-    c?: string;
-    d?: string;
-    expiry?: string;
-    multiple?: boolean;
-    createdAt: string;
-  };
-
-  const options = [poll.a, poll.b, poll.c, poll.d].filter(Boolean);
-
-  const serverCounts = {
-    a: parseInt((voteCountsA as any)?.total || "0"),
-    b: parseInt((voteCountsB as any)?.total || "0"),
-    c: parseInt((voteCountsC as any)?.total || "0"),
-    d: parseInt((voteCountsD as any)?.total || "0"),
-  };
-
-  // --- 3. THE MAGIC HOOK (Now centralized) ---
-  // This hook now fetches self-votes internally and merges them with the serverCounts we passed in
-  const { results, totalVotes, handleVote } = usePollData(
-    pollUri,
-    pollRecord?.cid,
-    !!poll.multiple,
-    serverCounts,
-  );
-
-  // --- 4. Render ---
-
-  if (isLoading) {
-    return (
-      <div className="animate-pulse">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
-          <div className="h-6 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
-        </div>
-        <div className="space-y-2">
-          <div className="h-12 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
-          <div className="h-12 bg-gray-300 dark:bg-gray-600 rounded-lg w-3/4"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !pollRecord?.value) {
-    return <div className="text-red-500 text-sm p-2">Failed to load poll</div>;
-  }
-  const isExpired = false; //poll.expiry ? new Date(poll.expiry) < new Date() : false;
-
-  // todo unused waiting for private polls
-  // undefined for public polls which equals never expires
-  const formattedDate = undefined;
-  // const formattedDate = poll.expiry
-  //   ? new Date(poll.expiry).toLocaleDateString("en-US", {
-  //     month: "short",
-  //     day: "numeric",
-  //     hour: "numeric",
-  //     minute: "2-digit",
-  //   })
-  //   : null;
-
-  // const totalVotes = voteData.reduce((sum, item) => sum + item.count, 0);
-
-  // const handleVote = async (option: string) => {
-  //   if (!agent || isExpired) return;
-
-  //   try {
-  //     // Get existing votes for this option
-  //     const existingVotes = (() => {
-  //       switch (option) {
-  //         case "a":
-  //           return userVotesA;
-  //         case "b":
-  //           return userVotesB;
-  //         case "c":
-  //           return userVotesC;
-  //         case "d":
-  //           return userVotesD;
-  //         default:
-  //           return [];
-  //       }
-  //     })();
-
-  //     // If user has already voted for this option, delete all votes (unvote)
-  //     if (existingVotes && existingVotes.length > 0) {
-  //       for (const voteUri of existingVotes) {
-  //         const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
-  //         if (match) {
-  //           const [, did, collection, rkey] = match;
-  //           await agent.com.atproto.repo.deleteRecord({
-  //             repo: did,
-  //             collection,
-  //             rkey,
-  //           });
-  //         }
-  //       }
-  //     } else {
-  //       // If not voted for this option, create new vote
-  //       // First, delete votes from other options if poll doesn't allow multiple votes
-  //       if (!poll.multiple) {
-  //         const otherVotes = [
-  //           ...(userVotesA || []),
-  //           ...(userVotesB || []),
-  //           ...(userVotesC || []),
-  //           ...(userVotesD || []),
-  //         ].filter((vote) => {
-  //           // Filter out votes for the current option
-  //           return !vote.includes(`app.reddwarf.poll.vote.${option}`);
-  //         });
-
-  //         for (const voteUri of otherVotes) {
-  //           const match = voteUri.match(/at:\/\/(.+)\/(.+)\/(.+)/);
-  //           if (match) {
-  //             const [, did, collection, rkey] = match;
-  //             await agent.com.atproto.repo.deleteRecord({
-  //               repo: did,
-  //               collection,
-  //               rkey,
-  //             });
-  //           }
-  //         }
-  //       }
-
-  //       // Create new vote
-  //       await agent.com.atproto.repo.createRecord({
-  //         collection: `app.reddwarf.poll.vote.${option}`,
-  //         repo: agent.assertDid,
-  //         record: {
-  //           $type: `app.reddwarf.poll.vote.${option}`,
-  //           subject: {
-  //             $type: "com.atproto.repo.strongRef",
-  //             uri: pollUri,
-  //             cid: pollRecord.cid,
-  //           },
-  //           createdAt: new Date().toISOString(),
-  //         },
-  //         // Let PDS generate rkey automatically
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to vote:", error);
-  //   }
-  // };
-
-  return (
-    <>
-      <div className="my-4">
-        {/* Header */}
-        <div className="mb-4 flex items-center gap-3">
-          {/* Type Pill */}
-          <div className="flex items-center gap-1.5 rounded-lg border-gray-300 dark:border-gray-600 pl-2 pr-2.5 py-1 text-sm font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
-            <IconMdiGlobe />
-            <span>Public Poll</span>
-          </div>
-
-          {/* Multiplicity */}
-          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 flex flex-row items-center gap-1">
-            {poll.multiple ? (
-              <IconMdiCheckboxMultipleMarked />
-            ) : (
-              <IconMdiCheckCircle />
-            )}
-            <span className="md:flex hidden">
-              {poll.multiple
-                ? "Select one or more options"
-                : "Select one option"}
-            </span>
-          </span>
-
-          {/* Refresh Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              refreshPollData(pollUri);
-            }}
-            className="ml-auto rounded-full h-8 outline outline-gray-200 text-gray-700 dark:outline-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-3 py-1 text-[12px] flex items-center gap-1"
-            title="Refresh poll data"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
-            </svg>
-            Refresh
-          </button>
-        </div>
-
-        {/* Options List with Results */}
-        <div className="space-y-3">
-          {options.map((optionText, index) => {
-            const optionKey = ["a", "b", "c", "d"][index] as
-              | "a"
-              | "b"
-              | "c"
-              | "d";
-            const { topVoterDids } = results[optionKey];
-            const optionState = results[optionKey];
-            const hasVotedForOption = optionState.hasVoted;
-            const votePercentage =
-              totalVotes > 0 ? (optionState.count / totalVotes) * 100 : 0;
-
-            // Helper to get voters for avatars
-            const votersData = (() => {
-              if (optionKey === "a") return votersA?.linking_records || [];
-              if (optionKey === "b") return votersB?.linking_records || [];
-              if (optionKey === "c") return votersC?.linking_records || [];
-              if (optionKey === "d") return votersD?.linking_records || [];
-              return [];
-            })();
-            const topVoters = votersData
-              .filter((v: any) => !!v.did)
-              .slice(0, 5);
-
-            return (
-              <div
-                key={index}
-                className={`group relative h-12 items-center justify-between rounded-lg border px-4 flex overflow-hidden ${
-                  !isExpired
-                    ? hasVotedForOption
-                      ? "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer outline-2 outline-gray-500 dark:outline-gray-400"
-                      : "bg-gray-100 dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900 cursor-pointer"
-                    : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!isExpired) {
-                    handleVote(optionKey);
-                  }
-                }}
-              >
-                {/* Vote percentage bar - always show */}
-                <div
-                  className="absolute inset-y-0 left-0 bg-gray-300 dark:bg-gray-700 group-hover:bg-gray-400 dark:group-hover:bg-gray-600 transition-[width]"
-                  style={{ width: `${votePercentage}%` }}
-                />
-
-                {/* Option text */}
-                <span className="relative z-[2] text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {optionText}
-                  {hasVotedForOption && (
-                    <span className="ml-2 text-gray-600 dark:text-gray-400">
-                      {poll.multiple ? "✓" : "✓ (click to remove)"}
-                    </span>
-                  )}
-                </span>
-
-                {/* Avatar circles and vote count */}
-                <div className="relative z-[2] flex items-center gap-2">
-                  {/* Avatar circles - semi overlapping */}
-                  {topVoterDids.length > 0 && (
-                    <div className="flex -space-x-2">
-                      {topVoterDids.map((did, idx) => (
-                        <div
-                          key={did}
-                          className="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200"
-                          style={{ zIndex: 5 - idx }}
-                        >
-                          <PollOptionAvatar did={did} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Vote count */}
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {votePercentage.toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          {/* Expiry */}
-          <div className="flex items-center gap-2">
-            <IconMdiClockOutline />
-            {/* <span>Expires {formattedDate}</span> */}
-            {formattedDate ? (
-              !isExpired ? (
-                <span>Expires {formattedDate}</span>
-              ) : (
-                <span>Expired at {formattedDate}</span>
-              )
-            ) : (
-              <span>Never expires</span>
-            )}
-          </div>
-
-          {/* Status */}
-          {/* <div className="flex items-center gap-2">
-          {isExpired ? (
-            <span className="text-red-500 dark:text-red-400 font-medium">
-              Poll ended
-            </span>
-          ) : (
-            <span className="text-gray-500 dark:text-gray-400">
-              All votes are public
-            </span>
-          )}
-        </div> */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              // todo: implement the proper votes page here thanks
-              renderSnack({
-                title: "Not implemented yet...",
-                description: "Opening PDSLS",
-              });
-              const pdslsUrl = `https://pdsls.dev/at://${did}/app.reddwarf.embed.poll/${rkey}#backlinks`;
-              window.open(pdslsUrl, "_blank");
-            }}
-            className="rounded-full h-10 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors px-4 py-2 text-[14px]"
-          >
-            View all {totalVotes} votes
-          </button>
-        </div>
-      </div>
-      {/* <div className=" scale-[56%] -translate-x-[120px] -translate-y-[80px]">
-        <RawOGC
-          multiple
-          a={poll.a || ""}
-          b={poll.b || ""}
-          c={poll.c}
-          d={poll.d} />
-      </div> */}
-    </>
-  );
-}
-
-function PollOptionAvatar({ did }: { did: string }) {
-  const [imgcdn] = useAtom(imgCDNAtom);
-  // Each avatar handles its own data fetching
-  // If this specific DID is already in cache, it loads instantly
-  const { data: profileRecord } = useQueryProfile(
-    `at://${did}/app.bsky.actor.profile/self`,
-  );
-
-  //const profile = profileRecord?.value as ATPAPI.AppBskyActorProfile.Record;
-  const avatarUrl = getAvatarUrl(profileRecord, did, imgcdn);
-
-  if (!avatarUrl) {
-    // Fallback grey circle
-    return <div className="w-full h-full bg-gray-500" />;
-  }
-
-  return (
-    <img
-      src={avatarUrl}
-      alt="voter"
-      className="w-full h-full object-cover"
-      onError={(e) => {
-        const target = e.target as HTMLImageElement;
-        target.style.display = "none";
-        target.parentElement!.style.backgroundColor = "#6b7280";
-      }}
-    />
-  );
-}
-
-function PostEmbeds({
-  embed,
-  moderation,
-  onOpen,
-  allowNestedQuotes,
-  viewContext,
-  salt,
-  navigate,
-  postid,
-  nopics,
-  lightboxCallback,
-  constellationLinks,
-}: {
-  embed?: Embed;
-  moderation?: ModerationDecision;
-  onOpen?: () => void;
-  allowNestedQuotes?: boolean;
-  viewContext?: PostEmbedViewContext;
-  salt: string;
-  navigate: (_: any) => void;
-  postid?: { did: string; rkey: string };
-  nopics?: boolean;
-  lightboxCallback?: (d: LightboxProps) => void;
-  constellationLinks?: any;
-}) {
-  //const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  function setLightboxIndex(number: number) {
-    navigate({
-      to: "/profile/$did/post/$rkey/image/$i",
-      params: {
-        did: postid?.did,
-        rkey: postid?.rkey,
-        i: number.toString(),
-      },
-    });
-  }
-  if (
-    AppBskyEmbedRecordWithMedia.isView(embed) &&
-    AppBskyEmbedRecord.isViewRecord(embed.record.record) &&
-    AppBskyFeedPost.isRecord(embed.record.record.value) //&&
-    //AppBskyFeedPost.validateRecord(embed.record.record.value).success
-  ) {
-    const post: PostView = {
-      $type: "app.bsky.feed.defs#postView", // lmao lies
-      uri: embed.record.record.uri,
-      cid: embed.record.record.cid,
-      author: embed.record.record.author,
-      record: embed.record.record.value as { [key: string]: unknown },
-      embed: embed.record.record.embeds
-        ? embed.record.record.embeds?.[0]
-        : undefined, // quotes handles embeds differently, its an array for some reason
-      replyCount: embed.record.record.replyCount,
-      repostCount: embed.record.record.repostCount,
-      likeCount: embed.record.record.likeCount,
-      quoteCount: embed.record.record.quoteCount,
-      indexedAt: embed.record.record.indexedAt,
-      // we dont have a viewer, so this is a best effort conversion, still requires full query later on
-      labels: embed.record.record.labels,
-      // neither do we have threadgate. remember to please fetch the full post later
-    };
-    return (
-      <div>
-        <PostEmbeds
-          embed={embed.media}
-          moderation={moderation}
-          onOpen={onOpen}
-          viewContext={viewContext}
-          salt={salt}
-          navigate={navigate}
-          postid={postid}
-          nopics={nopics}
-          lightboxCallback={lightboxCallback}
-          constellationLinks={constellationLinks}
-        />
-        {/* padding empty div of 8px height */}
-        <div style={{ height: 12 }} />
-        {/* stopgap sorry*/}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            borderRadius: 12,
-            //border: `1px solid ${theme.border}`,
-            //boxShadow: theme.cardShadow,
-            overflow: "hidden",
-          }}
-          className="shadow border border-gray-200 dark:border-gray-800 was7"
-        >
-          <UniversalPostRenderer
-            post={post}
-            isQuote
-            salt={salt}
-            onPostClick={(e) => {
-              e.stopPropagation();
-              const parsed = new AtUri(post.uri); //parseAtUri(post.uri);
-              if (parsed) {
-                navigate({
-                  to: "/profile/$did/post/$rkey",
-                  params: { did: parsed.host, rkey: parsed.rkey },
-                });
-              }
-            }}
-            depth={1}
-          />
-        </div>
-        {/* <QuotePostRenderer
-          record={embed.record.record}
-          moderation={moderation}
-        /> */}
-        {/* stopgap sorry */}
-        {/* <div style={stopgap}>quote post placeholder</div> */}
-        {/* {<MaybeQuoteEmbed
-          embed={embed.record}
-          onOpen={onOpen}
-          viewContext={
-            viewContext === PostEmbedViewContext.Feed
-              ? QuoteEmbedViewContext.FeedEmbedRecordWithMedia
-              : undefined
-          }
-        {/* <div style={stopgap}>quote post placeholder</div> */}
-        {/* {<MaybeQuoteEmbed
-          embed={embed.record}
-          onOpen={onOpen}
-          viewContext={
-            viewContext === PostEmbedViewContext.Feed
-              ? QuoteEmbedViewContext.FeedEmbedRecordWithMedia
-              : undefined
-          }
-        />} */}
-      </div>
-    );
-  }
-
-  if (AppBskyEmbedRecord.isView(embed)) {
-    // hey im really lazy and im gonna do it the bad way
-    const reallybaduri = (embed?.record as any)?.uri as string | undefined;
-    const reallybadaturi = reallybaduri ? new AtUri(reallybaduri) : undefined;
-
-    // custom feed embed (i.e. generator view)
-    if (AppBskyFeedDefs.isGeneratorView(embed.record)) {
-      // stopgap sorry
-      return <div style={stopgap}>feedgen placeholder</div>;
-      // return (
-      //   <div style={{ marginTop: '1rem' }}>
-      //     <MaybeFeedCard view={embed.record} />
-      //   </div>
-      // )
-    } else if (
-      !!reallybaduri &&
-      !!reallybadaturi &&
-      reallybadaturi.collection === "app.bsky.feed.generator"
-    ) {
-      return (
-        <div className="rounded-xl border">
-          <FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder />
-        </div>
-      );
-    }
-
-    // list embed
-    if (AppBskyGraphDefs.isListView(embed.record)) {
-      // stopgap sorry
-      return <div style={stopgap}>list placeholder</div>;
-      // return (
-      //   <div style={{ marginTop: '1rem' }}>
-      //     <MaybeListCard view={embed.record} />
-      //   </div>
-      // )
-    } else if (
-      !!reallybaduri &&
-      !!reallybadaturi &&
-      reallybadaturi.collection === "app.bsky.graph.list"
-    ) {
-      return (
-        <div className="rounded-xl border">
-          <FeedItemRenderAturiLoader
-            aturi={reallybaduri}
-            disableBottomBorder
-            listmode
-            disablePropagation
-          />
-        </div>
-      );
-    }
-
-    // starter pack embed
-    if (AppBskyGraphDefs.isStarterPackViewBasic(embed.record)) {
-      // stopgap sorry
-      return <div style={stopgap}>starter pack card placeholder</div>;
-      // return (
-      //   <div style={{ marginTop: '1rem' }}>
-      //     <StarterPackCard starterPack={embed.record} />
-      //   </div>
-      // )
-    } else if (
-      !!reallybaduri &&
-      !!reallybadaturi &&
-      reallybadaturi.collection === "app.bsky.graph.starterpack"
-    ) {
-      return (
-        <div className="rounded-xl border">
-          <FeedItemRenderAturiLoader
-            aturi={reallybaduri}
-            disableBottomBorder
-            listmode
-            disablePropagation
-          />
-        </div>
-      );
-    }
-
-    // quote post
-    // =
-    // stopgap sorry
-
-    if (
-      AppBskyEmbedRecord.isViewRecord(embed.record) &&
-      AppBskyFeedPost.isRecord(embed.record.value) // &&
-      //AppBskyFeedPost.validateRecord(embed.record.value).success
-    ) {
-      const post: PostView = {
-        $type: "app.bsky.feed.defs#postView", // lmao lies
-        uri: embed.record.uri,
-        cid: embed.record.cid,
-        author: embed.record.author,
-        record: embed.record.value as { [key: string]: unknown },
-        embed: embed.record.embeds ? embed.record.embeds?.[0] : undefined, // quotes handles embeds differently, its an array for some reason
-        replyCount: embed.record.replyCount,
-        repostCount: embed.record.repostCount,
-        likeCount: embed.record.likeCount,
-        quoteCount: embed.record.quoteCount,
-        indexedAt: embed.record.indexedAt,
-        // we dont have a viewer, so this is a best effort conversion, still requires full query later on
-        labels: embed.record.labels,
-        // neither do we have threadgate. remember to please fetch the full post later
-      };
-
-      return (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            borderRadius: 12,
-            //border: `1px solid ${theme.border}`,
-            //boxShadow: theme.cardShadow,
-            overflow: "hidden",
-          }}
-          className="shadow border border-gray-200 dark:border-gray-800 was7"
-        >
-          <UniversalPostRenderer
-            post={post}
-            isQuote
-            salt={salt}
-            onPostClick={(e) => {
-              e.stopPropagation();
-              const parsed = new AtUri(post.uri); //parseAtUri(post.uri);
-              if (parsed) {
-                navigate({
-                  to: "/profile/$did/post/$rkey",
-                  params: { did: parsed.host, rkey: parsed.rkey },
-                });
-              }
-            }}
-            depth={1}
-          />
-        </div>
-      );
-    } else {
-      console.log("what the hell is a ", embed);
-      return <>sorry</>;
-    }
-    //return <QuotePostRenderer record={embed.record} moderation={moderation} />;
-
-    //return <div style={stopgap}>quote post placeholder</div>;
-    // return (
-    //   <MaybeQuoteEmbed
-    //     embed={embed}
-    //     onOpen={onOpen}
-    //     allowNestedQuotes={allowNestedQuotes}
-    //   />
-    // )
-  }
-
-  // image embed
-  // =
-  if (AppBskyEmbedImages.isView(embed)) {
-    const { images } = embed;
-
-    const lightboxImages = images.map((img) => ({
-      src: img.fullsize,
-      alt: img.alt,
-    }));
-    console.log("rendering images");
-    if (lightboxCallback) {
-      lightboxCallback({ images: lightboxImages });
-      console.log("rendering images");
-    }
-
-    if (nopics) return;
-
-    if (images.length > 0) {
-      // const items = embed.images.map(img => ({
-      //   uri: img.fullsize,
-      //   thumbUri: img.thumb,
-      //   alt: img.alt,
-      //   dimensions: img.aspectRatio ?? null,
-      // }))
-
-      if (images.length === 1) {
-        const image = images[0];
-        return (
-          <div style={{ marginTop: 0 }}>
-            <div
-              style={{
-                position: "relative",
-                width: "100%",
-                aspectRatio: image.aspectRatio
-                  ? (() => {
-                      const { width, height } = image.aspectRatio;
-                      const ratio = width / height;
-                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                    })()
-                  : "1 / 1", // fallback to square
-                //backgroundColor: theme.background, // fallback letterboxing color
-                borderRadius: 12,
-                //border: `1px solid ${theme.border}`,
-                overflow: "hidden",
-              }}
-              className="border border-gray-200 dark:border-gray-800 was7 bg-gray-200 dark:bg-gray-900"
-            >
-              {/* {lightboxIndex !== null && (
-                <Lightbox
-                  images={lightboxImages}
-                  index={lightboxIndex}
-                  onClose={() => setLightboxIndex(null)}
-                  onNavigate={(newIndex) => setLightboxIndex(newIndex)}
-                  post={postid}
-                />
-              )} */}
-              <img
-                src={image.fullsize}
-                alt={image.alt}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain", // letterbox or scale to fit
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(0);
-                }}
-              />
-            </div>
-          </div>
-        );
-      }
-      // 2 images: side by side, both 1:1, cropped
-      if (images.length === 2) {
-        return (
-          <div
-            style={{
-              display: "flex",
-              gap: 4,
-              marginTop: 0,
-              width: "100%",
-              borderRadius: 12,
-              overflow: "hidden",
-              //border: `1px solid ${theme.border}`,
-            }}
-            className="border border-gray-200 dark:border-gray-800 was7"
-          >
-            {/* {lightboxIndex !== null && (
-              <Lightbox
-                images={lightboxImages}
-                index={lightboxIndex}
-                onClose={() => setLightboxIndex(null)}
-                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
-                post={postid}
-              />
-            )} */}
-            {images.map((img, i) => (
-              <div
-                key={i}
-                style={{ flex: 1, aspectRatio: "1 / 1", position: "relative" }}
-              >
-                <img
-                  src={img.fullsize}
-                  alt={img.alt}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex(i);
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        );
-      }
-
-      // 3 images: left is 1:1, right is two stacked 2:1
-      if (images.length === 3) {
-        return (
-          <div
-            style={{
-              display: "flex",
-              gap: 4,
-              marginTop: 0,
-              width: "100%",
-              borderRadius: 12,
-              overflow: "hidden",
-              //border: `1px solid ${theme.border}`,
-              // height: 240, // fixed height for cropping
-            }}
-            className="border border-gray-200 dark:border-gray-800 was7"
-          >
-            {/* {lightboxIndex !== null && (
-              <Lightbox
-                images={lightboxImages}
-                index={lightboxIndex}
-                onClose={() => setLightboxIndex(null)}
-                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
-                post={postid}
-              />
-            )} */}
-            {/* Left: 1:1 */}
-            <div
-              style={{ flex: 1, aspectRatio: "1 / 1", position: "relative" }}
-            >
-              <img
-                src={images[0].fullsize}
-                alt={images[0].alt}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: "12px 0 0 12px",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(0);
-                }}
-              />
-            </div>
-            {/* Right: two stacked 2:1 */}
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-              }}
-            >
-              {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    flex: 1,
-                    aspectRatio: "2 / 1",
-                    position: "relative",
-                  }}
-                >
-                  <img
-                    src={images[i].fullsize}
-                    alt={images[i].alt}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      borderRadius: i === 1 ? "0 12px 0 0" : "0 0 12px 0",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLightboxIndex(i + 1);
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      }
-
-      // 4 images: 2x2 grid, all 3:2
-      if (images.length === 4) {
-        return (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridTemplateRows: "1fr 1fr",
-              gap: 4,
-              marginTop: 0,
-              width: "100%",
-              borderRadius: 12,
-              overflow: "hidden",
-              //border: `1px solid ${theme.border}`,
-              //aspectRatio: "3 / 2", // overall grid aspect
-            }}
-            className="border border-gray-200 dark:border-gray-800 was7"
-          >
-            {/* {lightboxIndex !== null && (
-              <Lightbox
-                images={lightboxImages}
-                index={lightboxIndex}
-                onClose={() => setLightboxIndex(null)}
-                onNavigate={(newIndex) => setLightboxIndex(newIndex)}
-                post={postid}
-              />
-            )} */}
-            {images.map((img, i) => (
-              <div
-                key={i}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  aspectRatio: "3 / 2",
-                  position: "relative",
-                }}
-              >
-                <img
-                  src={img.fullsize}
-                  alt={img.alt}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius:
-                      i === 0
-                        ? "12px 0 0 0"
-                        : i === 1
-                          ? "0 12px 0 0"
-                          : i === 2
-                            ? "0 0 0 12px"
-                            : "0 0 12px 0",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex(i);
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        );
-      }
-
-      // stopgap sorry
-      return <div style={stopgap}>image count more than one placeholder</div>;
-      // return (
-      //   <div style={{ marginTop: '1rem' }}>
-      //     <ImageLayoutGrid
-      //       images={images}
-      //       viewContext={viewContext}
-      //     />
-      //   </div>
-      // )
-    }
-  }
-
-  // external link embed
-  // =
-  if (AppBskyEmbedExternal.isView(embed)) {
-    // Check for poll embed record in constellation links
-    const pollLinks = constellationLinks?.links?.["app.reddwarf.embed.poll"];
-    const hasPollLink = pollLinks && Object.keys(pollLinks).length > 0;
-
-    if (hasPollLink && postid) {
-      // Return poll embed instead of external embed
-      return <PollEmbed did={postid.did} rkey={postid.rkey} />;
-    }
-
-    const link = embed.external;
-    return (
-      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} />
-    );
-  }
-
-  // video embed
-  // =
-  if (AppBskyEmbedVideo.isView(embed)) {
-    // hls playlist
-    if (nopics) return;
-    const playlist = embed.playlist;
-    return (
-      <SmartHLSPlayer
-        url={playlist}
-        thumbnail={embed.thumbnail}
-        aspect={embed.aspectRatio}
-      />
-    );
-    // stopgap sorry
-    //return (<div>video</div>)
-    // return (
-    //   <VideoEmbed
-    //     embed={embed}
-    //     crop={
-    //       viewContext === PostEmbedViewContext.ThreadHighlighted
-    //         ? 'none'
-    //         : viewContext === PostEmbedViewContext.FeedEmbedRecordWithMedia
-    //         ? 'square'
-    //         : 'constrained'
-    //     }
-    //   />
-    // )
-  }
-
-  return <div />;
-}
-
-function getDomain(url: string) {
-  try {
-    const { hostname } = new URL(url);
-    return hostname;
-  } catch (e) {
-    // In case it's a bare domain like "example.com"
-    if (!url.startsWith("http")) {
-      try {
-        const { hostname } = new URL("http://" + url);
-        return hostname;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-}
-function getByteToCharMap(text: string): number[] {
-  const encoder = new TextEncoder();
-  //const utf8 = encoder.encode(text);
-
-  const map: number[] = [];
-  let byteIndex = 0;
-  let charIndex = 0;
-
-  for (const char of text) {
-    const bytes = encoder.encode(char);
-    for (let i = 0; i < bytes.length; i++) {
-      map[byteIndex++] = charIndex;
-    }
-    charIndex += char.length;
-  }
-
-  return map;
-}
-
-function facetByteRangeToCharRange(
-  byteStart: number,
-  byteEnd: number,
-  byteToCharMap: number[],
-): [number, number] {
-  return [
-    byteToCharMap[byteStart] ?? 0,
-    byteToCharMap[byteEnd - 1]! + 1, // inclusive end -> exclusive char end
-  ];
-}
-
-interface FacetRange {
-  start: number;
-  end: number;
-  feature: Facet["features"][number];
-}
-
-function extractFacetRanges(text: string, facets: Facet[]): FacetRange[] {
-  const map = getByteToCharMap(text);
-  return facets.map((f) => {
-    const [start, end] = facetByteRangeToCharRange(
-      f.index.byteStart,
-      f.index.byteEnd,
-      map,
-    );
-    return { start, end, feature: f.features[0] };
-  });
-}
-export function renderTextWithFacets({
-  text,
-  facets,
-  navigate,
-}: {
-  text: string;
-  facets: Facet[];
-  navigate: (_: any) => void;
-}) {
-  const ranges = extractFacetRanges(text, facets).sort(
-    (a: any, b: any) => a.start - b.start,
-  );
-
-  const result: React.ReactNode[] = [];
-  let current = 0;
-
-  for (const { start, end, feature } of ranges) {
-    if (current < start) {
-      result.push(<span key={current}>{text.slice(current, start)}</span>);
-    }
-
-    const fragment = text.slice(start, end);
-    // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
-    if (feature.$type === "app.bsky.richtext.facet#link" && feature.uri) {
-      result.push(
-        <a
-          // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
-          href={feature.uri}
-          key={start}
-          className="link"
-          style={{
-            textDecoration: "none",
-            color: "var(--link-text-color)",
-            wordBreak: "break-all",
-          }}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          {fragment}
-        </a>,
-      );
-    } else if (
-      feature.$type === "app.bsky.richtext.facet#mention" &&
-      // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
-      feature.did
-    ) {
-      result.push(
-        <span
-          key={start}
-          style={{ color: "var(--link-text-color)" }}
-          className=" cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate({
-              to: "/profile/$did",
-              // @ts-expect-error i didnt bother with the correct types here sorry. bsky api types are cursed
-              params: { did: feature.did },
-            });
-          }}
-        >
-          {fragment}
-        </span>,
-      );
-    } else if (feature.$type === "app.bsky.richtext.facet#tag") {
-      result.push(
-        <span
-          key={start}
-          style={{ color: "var(--link-text-color)" }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          {fragment}
-        </span>,
-      );
-    } else {
-      result.push(<span key={start}>{fragment}</span>);
-    }
-
-    current = end;
-  }
-
-  if (current < text.length) {
-    result.push(<span key={current}>{text.slice(current)}</span>);
-  }
-
-  return result;
-}
-function ExternalLinkEmbed({
-  link,
-  onOpen,
-  style,
-}: {
-  link: AppBskyEmbedExternal.ViewExternal;
-  onOpen?: () => void;
-  style?: React.CSSProperties;
-}) {
-  //const { theme } = useTheme();
-  const { uri, title, description, thumb } = link;
-  const thumbAspectRatio = 1.91;
-  const titleStyle = {
-    fontSize: 16,
-    fontWeight: 700,
-    marginBottom: 4,
-    //color: theme.text,
-    wordBreak: "break-word",
-    textAlign: "left",
-    maxHeight: "4em", // 2 lines * 1.5em line-height
-    // stupid shit
-    display: "-webkit-box",
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-    WebkitLineClamp: 2,
-  };
-  const descriptionStyle = {
-    fontSize: 14,
-    //color: theme.textSecondary,
-    marginBottom: 8,
-    wordBreak: "break-word",
-    textAlign: "left",
-    maxHeight: "5em", // 3 lines * 1.5em line-height
-    // stupid shit
-    display: "-webkit-box",
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-    WebkitLineClamp: 3,
-  };
-  const linkStyle = {
-    textDecoration: "none",
-    //color: theme.textSecondary,
-    wordBreak: "break-all",
-    textAlign: "left",
-  };
-  const containerStyle = {
-    display: "flex",
-    flexDirection: "column",
-    //backgroundColor: theme.background,
-    //background: '#eee',
-    borderRadius: 12,
-    //border: `1px solid ${theme.border}`,
-    //boxShadow: theme.cardShadow,
-    maxWidth: "100%",
-    overflow: "hidden",
-    ...style,
-  };
-  return (
-    <a
-      href={uri}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => {
-        e.stopPropagation();
-        if (onOpen) onOpen();
-      }}
-      /* @ts-expect-error css arent typed or something idk fuck you */
-      style={linkStyle}
-      className="text-gray-500 dark:text-gray-400"
-    >
-      <div
-        style={containerStyle as React.CSSProperties}
-        className="border border-gray-200 dark:border-gray-800 was7"
-      >
-        {thumb && (
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              aspectRatio: thumbAspectRatio,
-              overflow: "hidden",
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-              marginBottom: 8,
-              //borderBottom: `1px solid ${theme.border}`,
-            }}
-            className="border-b border-gray-200 dark:border-gray-800 was7"
-          >
-            <img
-              src={thumb}
-              alt={description}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
-            />
-          </div>
-        )}
-        <div
-          style={{
-            paddingBottom: 12,
-            paddingLeft: 12,
-            paddingRight: 12,
-            paddingTop: thumb ? 0 : 12,
-          }}
-        >
-          {/* @ts-expect-error css */}
-          <div style={titleStyle} className="text-gray-900 dark:text-gray-100">
-            {title}
-          </div>
-          <div
-            style={descriptionStyle as React.CSSProperties}
-            className="text-gray-500 dark:text-gray-400"
-          >
-            {description}
-          </div>
-          {/* small 1px divider here */}
-          <div
-            style={{
-              height: 1,
-              //backgroundColor: theme.border,
-              marginBottom: 8,
-            }}
-            className="bg-gray-200 dark:bg-gray-700"
-          />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            <MdiGlobe />
-            <span
-              style={{
-                fontSize: 12,
-                //color: theme.textSecondary
-              }}
-              className="text-gray-500 dark:text-gray-400"
-            >
-              {getDomain(uri)}
-            </span>
-          </div>
-        </div>
-      </div>
-    </a>
-  );
-}
-
-const SmartHLSPlayer = ({
-  url,
-  thumbnail,
-  aspect,
-}: {
-  url: string;
-  thumbnail?: string;
-  aspect?: AppBskyEmbedDefs.AspectRatio;
-}) => {
-  const [playing, setPlaying] = useState(false);
-  const containerRef = useRef(null);
-
-  // pause the player if it goes out of viewport
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting && playing) {
-          setPlaying(false);
-        }
-      },
-      {
-        root: null,
-        threshold: 0.25,
-      },
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
-      }
-    };
-  }, [playing]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: "relative",
-        width: "100%",
-        maxWidth: 640,
-        cursor: "pointer",
-      }}
-    >
-      {!playing && (
-        <>
-          <img
-            src={thumbnail}
-            alt="Video thumbnail"
-            style={{
-              width: "100%",
-              display: "block",
-              aspectRatio: aspect ? aspect?.width / aspect?.height : 16 / 9,
-              borderRadius: 12,
-              //border: `1px solid ${theme.border}`,
-            }}
-            className="border border-gray-200 dark:border-gray-800 was7"
-            onClick={async (e) => {
-              e.stopPropagation();
-              setPlaying(true);
-            }}
-          />
-          <div
-            onClick={async (e) => {
-              e.stopPropagation();
-              setPlaying(true);
-            }}
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              //fontSize: 48,
-              color: "white",
-              //textShadow: theme.cardShadow,
-              pointerEvents: "none",
-              userSelect: "none",
-            }}
-            className="text-shadow-md"
-          >
-            {/*▶️*/}
-            <MdiPlayCircle />
-          </div>
-        </>
-      )}
-      {playing && (
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            borderRadius: 12,
-            overflow: "hidden",
-            //border: `1px solid ${theme.border}`,
-            paddingTop: `${
-              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-            }%`, // 16:9 = 56.25%, 4:3 = 75%
-          }}
-          className="border border-gray-200 dark:border-gray-800 was7"
-        >
-          <ReactPlayer
-            src={url}
-            playing={true}
-            controls={true}
-            width="100%"
-            height="100%"
-            style={{ position: "absolute", top: 0, left: 0 }}
-          />
-          {/* <ReactPlayer
-            url={url}
-            playing={true}
-            controls={true}
-            width="100%"
-            style={{width: "100% !important", aspectRatio: aspect ? aspect?.width/aspect?.height : 16/9}}
-            onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
-          /> */}
-        </div>
-      )}
-    </div>
-  );
-};
