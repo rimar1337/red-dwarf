@@ -353,13 +353,18 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   const [isAtTop] = useAtom(isAtTopAtom);
 
+
+  // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
+  const selectedFeedComputed = selectedFeed === "following" ? "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds" : selectedFeed;
+  const feedServiceDidComputed = selectedFeed === "following" ? "did:web:rinds.whey.party" : feedServiceDid;
+
   return (
     <div
       className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"}`}
     >
       {!isAuthRestoring && savedFeeds.length > 0 ? (
         <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
-          {savedFeeds.map((item: any, idx: number) => {return <FeedTabOnTop key={item} item={item} idx={idx} />})}
+          {savedFeeds.map((item: any, idx: number) => { return <FeedTabOnTop key={item} item={item} idx={idx} /> })}
         </div>
       ) : (
         // <span className="text-xl font-bold ml-2">Home</span>
@@ -377,7 +382,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
         />
       ))} */}
 
-      {isAuthRestoring || authed && (!identity?.pds || !feedServiceDid) && (
+      {isAuthRestoring || authed && (!identity?.pds || !feedServiceDidComputed) && (
         <div className="p-4 text-center text-gray-500">
           Preparing your feed...
         </div>
@@ -385,16 +390,27 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
       {!isAuthRestoring && (isReadyForAuthedFeed || isReadyForUnauthedFeed) ? (
         <InfiniteCustomFeed
-          key={selectedFeed!}
-          feedUri={selectedFeed!}
+          key={selectedFeedComputed!}
+          feedUri={selectedFeedComputed!}
           pdsUrl={identity?.pds}
-          feedServiceDid={feedServiceDid}
+          feedServiceDid={feedServiceDidComputed}
+        />
+
+        // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
+      ) : selectedFeed === "following" ? (
+        <InfiniteCustomFeed
+          key={"at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"}
+          feedUri={"at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"}
+          pdsUrl={identity?.pds}
+          feedServiceDid={"did:web:rinds.whey.party"}
         />
       ) : (
         <div className="p-4 text-center text-gray-500">
           Loading.......
         </div>
-      )}
+      )
+
+      }
       {/* {false && restoringScrollPosition && (
         <div className="fixed top-1/2 left-1/2 right-1/2">
           restoringScrollPosition
@@ -407,7 +423,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
 // todo please use types this is dangerous very dangerous.
 // todo fix this whenever proper preferences is handled
-function FeedTabOnTop({item, idx}:{item: any, idx: number}) {
+function FeedTabOnTop({ item, idx }: { item: any, idx: number }) {
   const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
   const selectedFeed = persistentSelectedFeed
   const setSelectedFeed = setPersistentSelectedFeed
@@ -418,26 +434,24 @@ function FeedTabOnTop({item, idx}:{item: any, idx: number}) {
   return (
     <button
       key={item.value || idx}
-      className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${
-        isActive
-          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+      className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${isActive
+        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
         // ? "bg-gray-500 text-white"
         // : item.pinned
         //   ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
         //   : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
-      }`}
+        }`}
       onClick={() => setSelectedFeed(item.value)}
       title={item.value}
     >
       {label}
       {item.pinned && (
         <span
-          className={`ml-1 text-xs ${
-            isActive
-              ? "text-gray-900 dark:text-gray-100"
-              : "text-gray-600 dark:text-gray-400"
-          }`}
+          className={`ml-1 text-xs ${isActive
+            ? "text-gray-900 dark:text-gray-100"
+            : "text-gray-600 dark:text-gray-400"
+            }`}
         >
           ★
         </span>
