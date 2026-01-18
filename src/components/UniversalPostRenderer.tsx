@@ -15,7 +15,7 @@ import { HoverCard } from "radix-ui";
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-import defaultpfp from "~/../public/favicon.png";
+import defaultpfp from "~/../public/defaultpfp.png";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 import {

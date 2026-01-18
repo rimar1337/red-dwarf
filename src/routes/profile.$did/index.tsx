@@ -6,7 +6,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import React, { type ReactNode, useEffect, useState } from "react";
 
-import defaultpfp from "~/../public/favicon.png";
+import defaultpfp from "~/../public/defaultpfp.png";
 import { Header } from "~/components/Header";
 import {
   ReusableTabRoute,

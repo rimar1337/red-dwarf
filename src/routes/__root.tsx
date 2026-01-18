@@ -248,7 +248,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
       <div className="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950">
         <nav className="hidden lg:flex h-screen w-[250px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-4 pl-3">
             <Logo
               className="h-8 w-8"
               style={{
@@ -256,7 +256,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   "oklch(0.6616 0.2249 calc(25.88 + (var(--safe-hue) - 28))",
               }}
             />
-            <span className="font-extrabold text-2xl tracking-tight text-gray-900 dark:text-gray-100">
+            <span className="font-extrabold text-2xl text-gray-900 dark:text-gray-100">
               Red Dwarf{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
                 lite
