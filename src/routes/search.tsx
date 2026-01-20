@@ -4,6 +4,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { useEffect,useMemo } from "react";
 
+import { HOST_TITLE } from "~/../policy";
 import { Header } from "~/components/Header";
 import { Import } from "~/components/Import";
 import {
@@ -59,12 +60,12 @@ export function Search() {
   }, [lycanExists, authed, lycanReady, refetch]);
 
   const maintext = !lycanExists
-    ? "Sorry we dont have search. But instead, you can load some of these types of content into Red Dwarf:"
+    ? `Sorry we dont have search. But instead, you can load some of these types of content into ${HOST_TITLE}:`
     : authed
       ? lycanReady
-        ? "Lycan Search is enabled and ready! Type to search posts you've interacted with in the past. You can also load some of these types of content into Red Dwarf:"
-        : "Sorry, while Lycan Search is enabled, you are not indexed. Index below please. You can load some of these types of content into Red Dwarf:"
-      : "Sorry, while Lycan Search is enabled, you are unauthed. Please log in to use Lycan. You can load some of these types of content into Red Dwarf:";
+        ? `Lycan Search is enabled and ready! Type to search posts you've interacted with in the past. You can also load some of these types of content into ${HOST_TITLE}:`
+        : `Sorry, while Lycan Search is enabled, you are not indexed. Index below please. You can load some of these types of content into ${HOST_TITLE}:`
+      : `Sorry, while Lycan Search is enabled, you are unauthed. Please log in to use Lycan. You can load some of these types of content into ${HOST_TITLE}:`;
 
   async function index(opts: {
     agent?: Agent;

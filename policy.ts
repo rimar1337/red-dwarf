@@ -1,3 +1,9 @@
+// please change the branding if you are not it hosting on reddwarf.app
+export const HOST_TITLE = "Red Dwarf"
+// also replace favicon files and defaultpfp.png and check LogoSvg.tsx
+// todo generate manifest.json and index.html from this file 
+// todo have the bottom left and right blurbs on the desktop (should move it to settings for mobile) also customizable
+
 export const FORCED_LABELER_DIDS = [
   "did:plc:ar7c4by46qjdydhdevvrndac" // bluesky moderation
 ];

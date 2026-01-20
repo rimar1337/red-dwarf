@@ -18,6 +18,7 @@ import { toast as sonnerToast } from "sonner";
 import { Toaster } from "sonner";
 import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
+import { HOST_TITLE } from "~/../policy";
 import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { Import } from "~/components/Import";
@@ -45,7 +46,7 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1",
       },
       ...seo({
-        title: "Red Dwarf",
+        title: HOST_TITLE,
         description: `Distributed Bluesky Client`,
       }),
     ],
@@ -260,7 +261,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               }}
             />
             <span className="font-extrabold text-2xl text-gray-900 dark:text-gray-100">
-              Red Dwarf{" "}
+              {HOST_TITLE}{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
                 lite
               </span> */}
@@ -663,7 +664,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <Login />
           <div className="flex-1"></div>
           <p className="text-xs text-gray-400 dark:text-gray-500 text-justify mx-4 mb-4">
-            Red Dwarf is a Bluesky client that does not rely on any Bluesky API
+            {HOST_TITLE} is a Bluesky client that does not rely on any Bluesky API
             App Servers. Instead, it uses Microcosm to fetch records directly
             from each users' PDS (via Slingshot) and connect them using
             backlinks (via Constellation)
@@ -854,7 +855,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               }}
             />
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
-              Red Dwarf{" "}
+              {HOST_TITLE}{" "}
               {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
                   lite
                 </span> */}

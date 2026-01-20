@@ -3,6 +3,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Slider, Switch } from "radix-ui";
 import { useEffect, useState } from "react";
 
+import { HOST_TITLE } from "~/../policy";
 import { Header } from "~/components/Header";
 import Login from "~/components/Login";
 import {
@@ -89,28 +90,28 @@ export function Settings() {
         atom={constellationURLAtom}
         title={"Constellation"}
         description={
-          "Customize the Constellation instance to be used by Red Dwarf"
+          "Customize the Constellation instance to be used by " + HOST_TITLE
         }
         init={defaultconstellationURL}
       />
       <TextInputSetting
         atom={slingshotURLAtom}
         title={"Slingshot"}
-        description={"Customize the Slingshot instance to be used by Red Dwarf"}
+        description={"Customize the Slingshot instance to be used by " + HOST_TITLE}
         init={defaultslingshotURL}
       />
       <TextInputSetting
         atom={imgCDNAtom}
         title={"Image CDN"}
         description={
-          "Customize the Constellation instance to be used by Red Dwarf"
+          "Customize the Constellation instance to be used by " + HOST_TITLE
         }
         init={defaultImgCDN}
       />
       <TextInputSetting
         atom={videoCDNAtom}
         title={"Video CDN"}
-        description={"Customize the Slingshot instance to be used by Red Dwarf"}
+        description={"Customize the Slingshot instance to be used by " + HOST_TITLE}
         init={defaultVideoCDN}
       />
       <TextInputSetting
