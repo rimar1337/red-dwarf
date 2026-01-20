@@ -50,7 +50,7 @@ function RouteComponent() {
   return (
     <div>
       <Header
-        title={`Moderation`}
+        title={`Moderation (WIP)`}
         backButtonCallback={() => {
           if (window.history.length > 1) {
             window.history.back();
@@ -108,12 +108,12 @@ function RouteComponent() {
           </Switch.Root>
         </div>
 
-        <TestModeration subject="did:plc:q7suwaz53ztc4mbiqyygbn43" />
+        {/* <TestModeration subject="did:plc:q7suwaz53ztc4mbiqyygbn43" />
         <TestModeration subject="did:plc:fpruhuo22xkm5o7ttr2ktxdo" />
         <TestModeration subject="did:plc:6ayddqghxhciedbaofoxkcbs" />
         <TestModeration subject="did:plc:za2ezszbzyqer7eylvtgapd5" />
         <TestModeration subject="did:plc:ia76kvnndjutgedggx2ibrem" />
-        <TestModeration subject="did:plc:w2wbinubagmo4hlxx2ik5rrp" />
+        <TestModeration subject="did:plc:w2wbinubagmo4hlxx2ik5rrp" /> */}
         <div className="">
           {Object.entries(parsedPref?.contentLabelPrefs ?? {}).map(
             ([label, visibility]) => (

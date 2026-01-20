@@ -8,6 +8,8 @@ import type { LabelerDefinition, LabelPreference, LabelValueDefinition } from "~
 import { useQueryIdentity } from "~/utils/useQuery";
 import { useQueryPreferences } from "~/utils/useQuery";
 
+export const BSKY_LABELER_DID = "did:plc:ar7c4by46qjdydhdevvrndac";
+
 // Manual DID document resolution
 const fetchDidDocument = async (did: string): Promise<any> => {
   if (did.startsWith("did:plc:")) {
@@ -47,14 +49,19 @@ export const ModerationInitializer = () => {
   });
 
   // 3. Identify Labeler DIDs from prefs
-  const labelerDids =
+  const userPrefDids =
     prefs?.preferences
       ?.find((pref: any) => pref.$type === "app.bsky.actor.defs#labelersPref")
       ?.labelers?.map((l: any) => l.did) ?? [];
 
+  // 2. MERGE: Force Bsky DID + User DIDs (Set removes duplicates)
+  const activeLabelerDids = Array.from(
+    new Set([BSKY_LABELER_DID, ...userPrefDids])
+  );
+
   // 4. Parallel fetch all Labeler DID Documents and Service Records
   const labelerDidDocQueries = useQueries({
-    queries: labelerDids.map((did: string) => ({
+    queries: activeLabelerDids.map((did: string) => ({
       queryKey: ["labelerDidDoc", did],
       queryFn: () => fetchDidDocument(did),
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -63,7 +70,7 @@ export const ModerationInitializer = () => {
   });
 
   const labelerServiceQueries = useQueries({
-    queries: labelerDids.map((did: string) => ({
+    queries: activeLabelerDids.map((did: string) => ({
       queryKey: ["labelerService", did],
       queryFn: async () => {
         if (!identity?.pds) throw new Error("No PDS URL");
@@ -99,7 +106,7 @@ export const ModerationInitializer = () => {
       globalPrefs[pref.label] = pref.visibility as LabelPreference;
     });
 
-    const definitions: LabelerDefinition[] = labelerDids
+    const definitions: LabelerDefinition[] = activeLabelerDids
       .map((did: string, index: number) => {
         const didDocQuery = labelerDidDocQueries[index];
         const serviceQuery = labelerServiceQueries[index];
@@ -158,7 +165,7 @@ export const ModerationInitializer = () => {
       .filter(Boolean) as LabelerDefinition[];
 
     setLabelerConfig(definitions);
-  }, [prefs, labelerDidDocQueries, labelerServiceQueries, setLabelerConfig, identity?.pds, labelerDids]);
+  }, [prefs, labelerDidDocQueries, labelerServiceQueries, setLabelerConfig, identity?.pds, activeLabelerDids]);
 
   return null; // Headless component
 };
