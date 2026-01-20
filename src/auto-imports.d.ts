@@ -24,6 +24,7 @@ declare global {
   const IconMdiCheck: typeof import('~icons/mdi/check.jsx').default
   const IconMdiCheckCircle: typeof import('~icons/mdi/check-circle.jsx').default
   const IconMdiCheckboxMultipleMarked: typeof import('~icons/mdi/checkbox-multiple-marked.jsx').default
+  const IconMdiChevronDown: typeof import('~icons/mdi/chevron-down.jsx').default
   const IconMdiClock: typeof import('~icons/mdi/clock.jsx').default
   const IconMdiClockOutline: typeof import('~icons/mdi/clock-outline.jsx').default
   const IconMdiClose: typeof import('~icons/mdi/close.jsx').default
@@ -42,4 +43,5 @@ declare global {
   const IconMdiShield: typeof import('~icons/mdi/shield.jsx').default
   const IconMdiShieldOutline: typeof import('~icons/mdi/shield-outline.jsx').default
   const IconMdiVerified: typeof import('~icons/mdi/verified.jsx').default
+  const IconMdiWarning: typeof import('~icons/mdi/warning.jsx').default
 }

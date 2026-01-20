@@ -21,10 +21,7 @@ import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 //import { ModerationInner } from "~/routes/moderation";
-import {
-  FollowButton,
-  Mutual,
-} from "~/routes/profile.$did";
+import { FollowButton, Mutual } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 import type { ContentLabel } from "~/types/moderation";
 import {
@@ -580,13 +577,21 @@ export function UniversalPostRenderer({
   const { isLoading: authorModLoading, labels: authorLabels } = useModeration(
     post.author.did,
   );
+  const { isLoading: contentModLoading, labels: contentLabels } = useModeration(
+    post.uri,
+  );
   const hideAuthorLabels = authorLabels.filter(
-    label => label.preference === 'hide'
+    (label) => label.preference === "hide",
   );
   const warnAuthorLabels = authorLabels.filter(
-    label => label.preference === 'warn'
+    (label) => label.preference === "warn",
   );
-
+  const hideContentLabels = contentLabels.filter(
+    (label) => label.preference === "hide",
+  );
+  const warnContentLabels = contentLabels.filter(
+    (label) => label.preference === "warn",
+  );
 
   const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
@@ -671,8 +676,13 @@ export function UniversalPostRenderer({
   const isMainItem = false;
   const setMainItem = (any: any) => { };
 
-  if (hideAuthorLabels.length > 0 ) {
-    return null
+  const showContentWarning = warnContentLabels.length > 0;
+
+  const [isOpen, setIsOpen] = useState(!showContentWarning);
+
+
+  if (hideAuthorLabels.length > 0 || hideContentLabels.length > 0) {
+    return null;
   }
 
   return (
@@ -917,13 +927,10 @@ export function UniversalPostRenderer({
               </div>
             </div>
             {/* <ModerationInner subject={post.author.did} /> */}
-            {authorModLoading ?
-              (
+            {authorModLoading ? (
               <div className="flex flex-wrap flex-row gap-1 my-1">
-                <div
-                    className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1"
-                  >
-                    {/* <img
+                <div className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1">
+                  {/* <img
                       src={resolvedpfp || defaultpfp}
                       alt="avatar"
                       className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
@@ -932,19 +939,19 @@ export function UniversalPostRenderer({
                         height: 12,
                       }}
                     /> */}
-                    <span className="font-medium">loading badges...</span>
-                  </div>
+                  <span className="font-medium">loading badges...</span>
                 </div>
-              )
-              :
-              (
-                <div className="flex flex-wrap flex-row gap-1 my-1">
-                  {warnAuthorLabels.map((label, index) => (
-                    <SmallAuthorLabelBadge label={label} key={label.cts + label.sourceDid + label.val} />
-                  ))}
-                </div>
-              )
-            }
+              </div>
+            ) : (
+              <div className="flex flex-wrap flex-row gap-1 my-1">
+                {warnAuthorLabels.map((label, index) => (
+                  <SmallAuthorLabelBadge
+                    label={label}
+                    key={label.cts + label.sourceDid + label.val}
+                  />
+                ))}
+              </div>
+            )}
             {!!feedviewpostreplyhandle && (
               <div
                 style={{
@@ -968,61 +975,73 @@ export function UniversalPostRenderer({
               </div>
             )}
             {/* <ModerationInner subject={post.uri} /> */}
-            <div
-              style={{
-                fontSize: 16,
-                marginBottom: !post.embed || concise ? 0 : 8,
-                whiteSpace: "pre-wrap",
-                textAlign: "left",
-                overflowWrap: "anywhere",
-                wordBreak: "break-word",
-                ...(concise && {
-                  display: "-webkit-box",
-                  WebkitBoxOrient: "vertical",
-                  WebkitLineClamp: 2,
-                  overflow: "hidden",
-                }),
-              }}
-              className="text-gray-900 dark:text-gray-100"
-            >
-              {fedi ? (
+            {showContentWarning && (
+              <ContentWarning
+                labels={warnContentLabels}
+                isOpen={isOpen}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(!isOpen)
+                }}
+              />
+            )}
+            {isOpen && (<>
+              <div
+                style={{
+                  fontSize: 16,
+                  marginBottom: !post.embed || concise ? 0 : 8,
+                  whiteSpace: "pre-wrap",
+                  textAlign: "left",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                  ...(concise && {
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 2,
+                    overflow: "hidden",
+                  }),
+                }}
+                className="text-gray-900 dark:text-gray-100"
+              >
+                {fedi ? (
+                  <>
+                    <span
+                      className="dangerousFediContent"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(fedi),
+                      }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {renderTextWithFacets({
+                      text: (post.record as { text?: string }).text ?? "",
+                      facets: (post.record.facets as Facet[]) ?? [],
+                      navigate: navigate,
+                    })}
+                  </>
+                )}
+              </div>
+              {post.embed && depth < 1 && !concise ? (
+                <PostEmbeds
+                  embed={post.embed}
+                  viewContext={PostEmbedViewContext.Feed}
+                  salt={salt}
+                  navigate={navigate}
+                  postid={{ did: post.author.did, rkey: parsed.rkey }}
+                  nopics={nopics}
+                  lightboxCallback={lightboxCallback}
+                  constellationLinks={constellationLinks}
+                />
+              ) : null}
+              {post.embed && depth > 0 && (
                 <>
-                  <span
-                    className="dangerousFediContent"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(fedi),
-                    }}
-                  />
-                </>
-              ) : (
-                <>
-                  {renderTextWithFacets({
-                    text: (post.record as { text?: string }).text ?? "",
-                    facets: (post.record.facets as Facet[]) ?? [],
-                    navigate: navigate,
-                  })}
+                  <div className="border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px]">
+                    (there is an embed here thats too deep to render)
+                  </div>
                 </>
               )}
-            </div>
-            {post.embed && depth < 1 && !concise ? (
-              <PostEmbeds
-                embed={post.embed}
-                viewContext={PostEmbedViewContext.Feed}
-                salt={salt}
-                navigate={navigate}
-                postid={{ did: post.author.did, rkey: parsed.rkey }}
-                nopics={nopics}
-                lightboxCallback={lightboxCallback}
-                constellationLinks={constellationLinks}
-              />
-            ) : null}
-            {post.embed && depth > 0 && (
-              <>
-                <div className="border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px]">
-                  (there is an embed here thats too deep to render)
-                </div>
-              </>
-            )}
+            </>)}
             <div
               style={{
                 paddingTop: post.embed && !concise && depth < 1 ? 4 : 0,
@@ -1078,7 +1097,11 @@ export function UniversalPostRenderer({
                         }}
                         aria-label="Repost or quote post"
                       >
-                        {hasRetweeted ? <IconMdiRepeat color="#5CEFAA" /> : <IconMdiRepeat />}
+                        {hasRetweeted ? (
+                          <IconMdiRepeat color="#5CEFAA" />
+                        ) : (
+                          <IconMdiRepeat />
+                        )}
                         {post.repostCount ?? 0}
                       </div>
                     </DropdownMenu.Trigger>
@@ -1123,7 +1146,11 @@ export function UniversalPostRenderer({
                       ...(liked ? { color: "#EC4899" } : {}),
                     }}
                   >
-                    {liked ? <IconMdiCardsHeart /> : <IconMdiCardsHeartOutline />}
+                    {liked ? (
+                      <IconMdiCardsHeart />
+                    ) : (
+                      <IconMdiCardsHeartOutline />
+                    )}
                     {(post.likeCount || 0) + (liked ? 1 : 0)}
                   </HitSlopButton>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -1186,8 +1213,68 @@ enum PostEmbedViewContext {
   FeedEmbedRecordWithMedia = "FeedEmbedRecordWithMedia",
 }
 
+export function ContentWarning({
+  labels,
+  isOpen,
+  onPress,
+}: {
+  labels: ContentLabel[];
+  isOpen: boolean;
+  onPress: React.MouseEventHandler<HTMLDivElement>;
+}) {
+  const { getLabelInfo } = useLabelInfo();
 
-export function SmallAuthorLabelBadge({ label, large }: { label: ContentLabel, large?: boolean }) {
+  // Pre-calculate text for cleaner JSX
+  const labelText = labels
+    .map((label) => getLabelInfo(label.sourceDid, label.val).name)
+    .join(", ");
+
+  return (
+    <div className="mb-2 w-full select-none" onClick={onPress}>
+      <div
+        className={`
+          group flex items-center justify-between
+          w-full px-4 py-3
+          rounded-full
+          border border-gray-200 dark:border-gray-700
+          bg-gray-100 dark:bg-gray-800
+          cursor-pointer
+          transition-all duration-200 ease-out
+          hover:bg-gray-200 dark:hover:bg-gray-700
+        `}
+      >
+        <div className="flex items-center gap-3 overflow-hidden">
+          {/* Icon Container */}
+          <div className="flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <IconMdiWarning className="text-xl" />
+          </div>
+
+          {/* Label Text */}
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {labelText}
+          </span>
+        </div>
+
+        {/* Chevron */}
+        <div className="flex items-center justify-center text-gray-500 dark:text-gray-400 pl-2 gap-2 text-sm">
+          {isOpen ? "hide" : "show"}
+          <IconMdiChevronDown
+            className={`text-xl transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isOpen ? "rotate-180" : ""
+              }`}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SmallAuthorLabelBadge({
+  label,
+  large,
+}: {
+  label: ContentLabel;
+  large?: boolean;
+}) {
   /*
    -{" "}
       {label.preference} (from {label.sourceDid})
@@ -1197,12 +1284,11 @@ export function SmallAuthorLabelBadge({ label, large }: { label: ContentLabel, l
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
-
   const { data: opProfile } = useQueryProfile(
     `at://${label.sourceDid}/app.bsky.actor.profile/self`,
   );
 
-  const resolvedpfp = getAvatarUrl(opProfile, label.sourceDid, imgcdn)
+  const resolvedpfp = getAvatarUrl(opProfile, label.sourceDid, imgcdn);
 
   return (
     <div
@@ -1219,5 +1305,5 @@ export function SmallAuthorLabelBadge({ label, large }: { label: ContentLabel, l
       />
       <span className="font-medium">{info.name || label.val}</span>
     </div>
-  )
+  );
 }
