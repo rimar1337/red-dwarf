@@ -15,6 +15,7 @@ import { HoverCard } from "radix-ui";
 import * as React from "react";
 import { useEffect, useState } from "react";
 
+import { UNAUTHED_PREVENT_OPENING_WARNS } from "~/../policy";
 import defaultpfp from "~/../public/defaultpfp.png";
 import { useLabelInfo } from "~/hooks/useLabelInfo";
 import { useModeration } from "~/hooks/useModeration";
@@ -599,7 +600,7 @@ export function UniversalPostRenderer({
     post.viewer?.repost ? true : false,
   );
   const [, setComposerPost] = useAtom(composerAtom);
-  const { agent } = useAuth();
+  const { agent, status } = useAuth();
   const [retweetUri, setRetweetUri] = useState<string | undefined>(
     post.viewer?.repost,
   );
@@ -676,9 +677,18 @@ export function UniversalPostRenderer({
   const isMainItem = false;
   const setMainItem = (any: any) => { };
 
+  const hideWarnsWhenUnauthed = UNAUTHED_PREVENT_OPENING_WARNS && status === "signedOut";
+
   const showContentWarning = warnContentLabels.length > 0;
 
   const [isOpen, setIsOpen] = useState(!showContentWarning);
+  const [hasUserTouchedToggleYet, setHasUserTouchedToggleYet] = useState(false);
+
+  useEffect(()=>{
+    if(!hasUserTouchedToggleYet && showContentWarning) {
+      setIsOpen(false);
+    }
+  },[hasUserTouchedToggleYet, showContentWarning])
 
 
   if (hideAuthorLabels.length > 0 || hideContentLabels.length > 0) {
@@ -977,11 +987,15 @@ export function UniversalPostRenderer({
             {/* <ModerationInner subject={post.uri} /> */}
             {showContentWarning && (
               <ContentWarning
+                unauthedgate={hideWarnsWhenUnauthed}
                 labels={warnContentLabels}
                 isOpen={isOpen}
                 onPress={(e) => {
                   e.stopPropagation();
-                  setIsOpen(!isOpen)
+                  setHasUserTouchedToggleYet(true);
+                  if (!hideWarnsWhenUnauthed) {
+                    setIsOpen(!isOpen)
+                  }
                 }}
               />
             )}
@@ -1214,10 +1228,12 @@ enum PostEmbedViewContext {
 }
 
 export function ContentWarning({
+  unauthedgate,
   labels,
   isOpen,
   onPress,
 }: {
+  unauthedgate?: boolean;
   labels: ContentLabel[];
   isOpen: boolean;
   onPress: React.MouseEventHandler<HTMLDivElement>;
@@ -1257,11 +1273,11 @@ export function ContentWarning({
 
         {/* Chevron */}
         <div className="flex items-center justify-center text-gray-500 dark:text-gray-400 pl-2 gap-2 text-sm">
-          {isOpen ? "hide" : "show"}
-          <IconMdiChevronDown
+          {unauthedgate ? "please login to view" : isOpen ? "hide" : "show"}
+          {!unauthedgate && (<IconMdiChevronDown
             className={`text-xl transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isOpen ? "rotate-180" : ""
               }`}
-          />
+          />)}
         </div>
       </div>
     </div>
