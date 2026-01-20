@@ -23,6 +23,8 @@ import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { Import } from "~/components/Import";
 import Login from "~/components/Login";
 import Logo from "~/components/LogoSvg";
+import { ModerationBatcher } from "~/components/ModerationBatcher";
+import { ModerationInitializer } from "~/components/ModerationInitializer";
 import { NotFound } from "~/components/NotFound";
 import { LikeMutationQueueProvider } from "~/providers/LikeMutationQueueProvider";
 import { PollMutationQueueProvider } from "~/providers/PollMutationQueueProvider";
@@ -85,6 +87,8 @@ function RootComponent() {
     <UnifiedAuthProvider>
       <LikeMutationQueueProvider>
         <PollMutationQueueProvider>
+          <ModerationInitializer />
+          <ModerationBatcher />
           <RootDocument>
             <KeepAliveProvider>
               <AppToaster />
@@ -207,9 +211,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { agent } = useAuth();
-  const authed = !!agent?.did;
-  const isHome = location.pathname === "/";
   const isNotifications = location.pathname.startsWith("/notifications");
+  const authed = !!agent?.did;
   const isProfile =
     agent &&
     (location.pathname === `/profile/${agent?.did}` ||

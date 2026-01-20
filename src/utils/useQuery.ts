@@ -15,14 +15,14 @@ import { constellationURLAtom, lycanURLAtom, slingshotURLAtom } from "./atoms";
 
 export function constructIdentityQuery(
   didorhandle?: string,
-  slingshoturl?: string
+  slingshoturl?: string,
 ) {
   return queryOptions({
     queryKey: ["identity", didorhandle],
     queryFn: async () => {
       if (!didorhandle) return undefined as undefined;
       const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`,
       );
       if (!res.ok) throw new Error("Failed to fetch post");
       try {
@@ -71,7 +71,7 @@ export function constructPostQuery(uri?: string, slingshoturl?: string) {
     queryFn: async () => {
       if (!uri) return undefined as undefined;
       const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
       );
       let data: any;
       try {
@@ -135,7 +135,7 @@ export function constructProfileQuery(uri?: string, slingshoturl?: string) {
     queryFn: async () => {
       if (!uri) return undefined as undefined;
       const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
       );
       let data: any;
       try {
@@ -269,7 +269,7 @@ export function constructConstellationQuery(query?: {
       const cursor = query.cursor;
       const dids = query?.dids;
       const res = await fetch(
-        `https://${query.constellation}${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`
+        `https://${query.constellation}${method}?target=${encodeURIComponent(target)}${collection ? `&collection=${encodeURIComponent(collection)}` : ""}${path ? `&path=${encodeURIComponent(path)}` : ""}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${dids ? dids.map((did) => `&did=${encodeURIComponent(did)}`).join("") : ""}`,
       );
       if (!res.ok) throw new Error("Failed to fetch post");
       try {
@@ -308,8 +308,8 @@ export function useQueryConstellationLinksCountDistinctDids(query?: {
   const [constellationurl] = useAtom(constellationURLAtom);
   const queryres = useQuery(
     constructConstellationQuery(
-      query && { constellation: constellationurl, ...query }
-    )
+      query && { constellation: constellationurl, ...query },
+    ),
   ) as unknown as UseQueryResult<linksCountResponse, Error>;
   if (!query) {
     return undefined as undefined;
@@ -389,8 +389,8 @@ export function useQueryConstellation(query?: {
   const [constellationurl] = useAtom(constellationURLAtom);
   return useQuery(
     constructConstellationQuery(
-      query && { constellation: constellationurl, ...query }
-    )
+      query && { constellation: constellationurl, ...query },
+    ),
   );
 }
 
@@ -446,7 +446,7 @@ export function constructFeedSkeletonQuery(options?: {
         // Authenticated flow
         if (!agent || !pdsUrl || !feedServiceDid) {
           throw new Error(
-            "Missing required info for authenticated feed fetch."
+            "Missing required info for authenticated feed fetch.",
           );
         }
         const url = `${pdsUrl}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${encodeURIComponent(feedUri)}`;
@@ -483,9 +483,47 @@ export function useQueryFeedSkeleton(options?: {
   return useQuery(constructFeedSkeletonQuery(options));
 }
 
+export function constructRecordQuery(
+  did?: string,
+  collection?: string,
+  rkey?: string,
+  pdsUrl?: string,
+) {
+  return queryOptions({
+    queryKey: ["record", did, collection, rkey],
+    queryFn: async () => {
+      if (!did || !collection || !rkey || !pdsUrl)
+        return undefined as undefined;
+      const url = `${pdsUrl}/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(rkey)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch record");
+      try {
+        return (await res.json()) as {
+          uri: string;
+          cid: string;
+          value: any;
+        };
+      } catch (_e) {
+        return undefined;
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000,
+  });
+}
+
+export function useQueryRecord(
+  did?: string,
+  collection?: string,
+  rkey?: string,
+  pdsUrl?: string,
+) {
+  return useQuery(constructRecordQuery(did, collection, rkey, pdsUrl));
+}
+
 export function constructPreferencesQuery(
   agent?: ATPAPI.Agent | undefined,
-  pdsUrl?: string | undefined
+  pdsUrl?: string | undefined,
 ) {
   return queryOptions({
     queryKey: ["preferences", agent?.did],
@@ -511,7 +549,7 @@ export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
     queryFn: async () => {
       if (!uri) return undefined as undefined;
       const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`
+        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
       );
       let data: any;
       try {
@@ -590,7 +628,7 @@ type ListRecordsResponse = {
 export function constructAuthorFeedQuery(
   did: string,
   pdsUrl: string,
-  collection: string = "app.bsky.feed.post"
+  collection: string = "app.bsky.feed.post",
 ) {
   return queryOptions({
     queryKey: ["authorFeed", did, collection],
@@ -613,12 +651,12 @@ export function constructAuthorFeedQuery(
 export function useInfiniteQueryAuthorFeed(
   did: string | undefined,
   pdsUrl: string | undefined,
-  collection?: string
+  collection?: string,
 ) {
   const { queryKey, queryFn } = constructAuthorFeedQuery(
     did!,
     pdsUrl!,
-    collection
+    collection,
   );
 
   return useInfiniteQuery({
@@ -655,7 +693,7 @@ export function constructInfiniteFeedSkeletonQuery(options: {
       if (isAuthed && !unauthedfeedurl) {
         if (!agent || !pdsUrl || !feedServiceDid) {
           throw new Error(
-            "Missing required info for authenticated feed fetch."
+            "Missing required info for authenticated feed fetch.",
           );
         }
         const url = `${pdsUrl}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${encodeURIComponent(feedUri)}${cursorParam}`;
@@ -748,7 +786,7 @@ export function yknowIReallyHateThisButWhateverGuardedConstructConstellationInfi
           collection ? `&collection=${encodeURIComponent(collection)}` : ""
         }${path ? `&path=${encodeURIComponent(path)}` : ""}${
           cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""
-        }`
+        }`,
       );
 
       if (!res.ok) throw new Error("Failed to fetch");
@@ -774,8 +812,8 @@ export function useQueryLycanStatus() {
       agent: agent || undefined,
       isAuthed: status === "signedIn",
       pdsUrl: identity?.pds,
-      feedServiceDid: "did:web:"+lycanurl,
-    })
+      feedServiceDid: "did:web:" + lycanurl,
+    }),
   );
 }
 
@@ -802,7 +840,7 @@ export function constructLycanStatusCheckQuery(options: {
         });
         if (!res.ok)
           throw new Error(
-            `Authenticated lycan status fetch failed: ${res.statusText}`
+            `Authenticated lycan status fetch failed: ${res.statusText}`,
           );
         return (await res.json()) as statuschek;
       }
@@ -816,15 +854,14 @@ type statuschek = {
   error?: "MethodNotImplemented";
   message?: "Method Not Implemented";
   status?: "finished" | "in_progress";
-  position?: string,
-  progress?: number,
-
+  position?: string;
+  progress?: number;
 };
 
 //{"status":"in_progress","position":"2025-08-30T06:53:18Z","progress":0.0878319661441268}
 type importtype = {
-  message?: "Import has already started" | "Import has been scheduled"
-}
+  message?: "Import has already started" | "Import has been scheduled";
+};
 
 export function constructLycanRequestIndexQuery(options: {
   agent?: ATPAPI.Agent;
@@ -849,9 +886,9 @@ export function constructLycanRequestIndexQuery(options: {
         });
         if (!res.ok)
           throw new Error(
-            `Authenticated lycan status fetch failed: ${res.statusText}`
+            `Authenticated lycan status fetch failed: ${res.statusText}`,
           );
-        return await res.json() as importtype;
+        return (await res.json()) as importtype;
       }
       return undefined;
     },
@@ -864,22 +901,22 @@ type LycanSearchPage = {
   cursor?: string;
 };
 
-
-export function useInfiniteQueryLycanSearch(options: { query: string, type: "likes" | "pins" | "reposts" | "quotes"}) {
-
-
+export function useInfiniteQueryLycanSearch(options: {
+  query: string;
+  type: "likes" | "pins" | "reposts" | "quotes";
+}) {
   const [lycanurl] = useAtom(lycanURLAtom);
   const { agent, status } = useAuth();
   const { data: identity } = useQueryIdentity(agent?.did);
 
   const { queryKey, queryFn } = constructLycanSearchQuery({
-      agent: agent || undefined,
-      isAuthed: status === "signedIn",
-      pdsUrl: identity?.pds,
-      feedServiceDid: "did:web:"+lycanurl,
-      query: options.query,
-      type: options.type,
-    })
+    agent: agent || undefined,
+    isAuthed: status === "signedIn",
+    pdsUrl: identity?.pds,
+    feedServiceDid: "did:web:" + lycanurl,
+    query: options.query,
+    type: options.type,
+  });
 
   return {
     ...useInfiniteQuery({
@@ -900,7 +937,6 @@ export function useInfiniteQueryLycanSearch(options: { query: string, type: "lik
     queryKey: queryKey,
   };
 }
-
 
 export function constructLycanSearchQuery(options: {
   agent?: ATPAPI.Agent;
@@ -929,7 +965,7 @@ export function constructLycanSearchQuery(options: {
         });
         if (!res.ok)
           throw new Error(
-            `Authenticated lycan status fetch failed: ${res.statusText}`
+            `Authenticated lycan status fetch failed: ${res.statusText}`,
           );
         return (await res.json()) as LycanSearchPage;
       }

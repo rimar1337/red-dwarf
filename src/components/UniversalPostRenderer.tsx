@@ -16,13 +16,17 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 
 import defaultpfp from "~/../public/defaultpfp.png";
+import { useLabelInfo } from "~/hooks/useLabelInfo";
+import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
+//import { ModerationInner } from "~/routes/moderation";
 import {
   FollowButton,
   Mutual,
 } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
+import type { ContentLabel } from "~/types/moderation";
 import {
   composerAtom,
   constellationURLAtom,
@@ -133,7 +137,7 @@ export function UniversalPostRendererATURILoader({
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-            ?.records || 0
+          ?.records || 0
         : null,
     );
   }, [links]);
@@ -168,13 +172,13 @@ export function UniversalPostRendererATURILoader({
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
-        page
-          ? page.linking_records.map((record) => {
-              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-              return aturi;
-            })
-          : [],
-      )
+      page
+        ? page.linking_records.map((record) => {
+          const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+          return aturi;
+        })
+        : [],
+    )
     : [];
 
   const { oldestOpsReply, oldestOpsReplyElseNewestNonOpsReply } = (() => {
@@ -390,11 +394,11 @@ export function UniversalPostRendererRawRecordShim({
   const isQuotewithImages =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-      "app.bsky.embed.images";
+    "app.bsky.embed.images";
   const isQuotewithVideo =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-      "app.bsky.embed.video";
+    "app.bsky.embed.video";
 
   const hasMedia =
     hasEmbed &&
@@ -573,6 +577,17 @@ export function UniversalPostRenderer({
   maxReplies?: number;
   constellationLinks?: any;
 }) {
+  const { isLoading: authorModLoading, labels: authorLabels } = useModeration(
+    post.author.did,
+  );
+  const hideAuthorLabels = authorLabels.filter(
+    label => label.preference === 'hide'
+  );
+  const warnAuthorLabels = authorLabels.filter(
+    label => label.preference === 'warn'
+  );
+
+
   const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
   const [hasRetweeted, setHasRetweeted] = useState<boolean>(
@@ -631,18 +646,18 @@ export function UniversalPostRenderer({
 
   const tags = unfediwafrnTags
     ? unfediwafrnTags
-        .split("\n")
-        .map((t) => t.trim())
-        .filter(Boolean)
+      .split("\n")
+      .map((t) => t.trim())
+      .filter(Boolean)
     : undefined;
 
   const links = tags
     ? tags
-        .map((tag) => {
-          const encoded = encodeURIComponent(tag);
-          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
-        })
-        .join("<br>")
+      .map((tag) => {
+        const encoded = encodeURIComponent(tag);
+        return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
+      })
+      .join("<br>")
     : "";
 
   const unfediwafrn = unfediwafrnPartial
@@ -654,7 +669,11 @@ export function UniversalPostRenderer({
     (showWafrnText ? unfediwafrn : undefined);
 
   const isMainItem = false;
-  const setMainItem = (any: any) => {};
+  const setMainItem = (any: any) => { };
+
+  if (hideAuthorLabels.length > 0 ) {
+    return null
+  }
 
   return (
     <div ref={ref} style={style} data-index={dataIndexPropPass}>
@@ -666,12 +685,12 @@ export function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                    setMainItem({ post: post });
-                    onPostClick(e);
-                  }
+                  setMainItem({ post: post });
+                  onPostClick(e);
+                }
                 : () => {
-                    setMainItem({ post: post });
-                  }
+                  setMainItem({ post: post });
+                }
               : undefined
         }
         style={{
@@ -897,6 +916,35 @@ export function UniversalPostRenderer({
                 </span>
               </div>
             </div>
+            {/* <ModerationInner subject={post.author.did} /> */}
+            {authorModLoading ?
+              (
+              <div className="flex flex-wrap flex-row gap-1 my-1">
+                <div
+                    className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1"
+                  >
+                    {/* <img
+                      src={resolvedpfp || defaultpfp}
+                      alt="avatar"
+                      className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
+                      style={{
+                        width: 12,
+                        height: 12,
+                      }}
+                    /> */}
+                    <span className="font-medium">loading badges...</span>
+                  </div>
+                </div>
+              )
+              :
+              (
+                <div className="flex flex-wrap flex-row gap-1 my-1">
+                  {warnAuthorLabels.map((label, index) => (
+                    <SmallAuthorLabelBadge label={label} key={label.cts + label.sourceDid + label.val} />
+                  ))}
+                </div>
+              )
+            }
             {!!feedviewpostreplyhandle && (
               <div
                 style={{
@@ -919,6 +967,7 @@ export function UniversalPostRenderer({
                 <IconMdiReply /> Reply to @{feedviewpostreplyhandle}
               </div>
             )}
+            {/* <ModerationInner subject={post.uri} /> */}
             <div
               style={{
                 fontSize: 16,
@@ -1084,10 +1133,10 @@ export function UniversalPostRenderer({
                         try {
                           await navigator.clipboard.writeText(
                             "https://bsky.app" +
-                              "/profile/" +
-                              post.author.handle +
-                              "/post/" +
-                              post.uri.split("/").pop(),
+                            "/profile/" +
+                            post.author.handle +
+                            "/post/" +
+                            post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -1135,4 +1184,40 @@ enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
   Feed = "Feed",
   FeedEmbedRecordWithMedia = "FeedEmbedRecordWithMedia",
+}
+
+
+export function SmallAuthorLabelBadge({ label, large }: { label: ContentLabel, large?: boolean }) {
+  /*
+   -{" "}
+      {label.preference} (from {label.sourceDid})
+      */
+  const { getLabelInfo } = useLabelInfo();
+  const info = getLabelInfo(label.sourceDid, label.val);
+
+  const [imgcdn] = useAtom(imgCDNAtom);
+
+
+  const { data: opProfile } = useQueryProfile(
+    `at://${label.sourceDid}/app.bsky.actor.profile/self`,
+  );
+
+  const resolvedpfp = getAvatarUrl(opProfile, label.sourceDid, imgcdn)
+
+  return (
+    <div
+      className={`text-xs bg-gray-100 dark:bg-gray-800 ${large ? "px-2 py-1" : "px-1 py-0.5"} rounded-full flex flex-row items-center gap-1`}
+    >
+      <img
+        src={resolvedpfp || defaultpfp}
+        alt="avatar"
+        className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
+        style={{
+          width: 12,
+          height: 12,
+        }}
+      />
+      <span className="font-medium">{info.name || label.val}</span>
+    </div>
+  )
 }

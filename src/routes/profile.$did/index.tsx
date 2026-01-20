@@ -13,9 +13,11 @@ import {
   useReusableTabScrollRestore,
 } from "~/components/ReusableTabRoute";
 import {
+  SmallAuthorLabelBadge,
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import { renderTextWithFacets } from "~/components/UtilityFunctions";
+import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { enableBitesAtom, imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
 import {
@@ -52,6 +54,17 @@ function ProfileComponent() {
     isLoading: isIdentityLoading,
     error: identityError,
   } = useQueryIdentity(did);
+
+
+  const { isLoading: authorModLoading, labels: authorLabels } = useModeration(
+    did,
+  );
+  const hideAuthorLabels = authorLabels.filter(
+    label => label.preference === 'hide'
+  );
+  const warnAuthorLabels = authorLabels.filter(
+    label => label.preference === 'warn'
+  );
 
   // i was gonna check the did doc but useQueryIdentity doesnt return that info (slingshot minidoc)
   // so instead we should query the labeler profile
@@ -100,11 +113,11 @@ function ProfileComponent() {
   const resultwhateversure = useQueryConstellationLinksCountDistinctDids(
     resolvedDid
       ? {
-          method: "/links/count/distinct-dids",
-          collection: "app.bsky.graph.follow",
-          target: resolvedDid,
-          path: ".subject",
-        }
+        method: "/links/count/distinct-dids",
+        collection: "app.bsky.graph.follow",
+        target: resolvedDid,
+        path: ".subject",
+      }
       : undefined
   );
 
@@ -221,6 +234,35 @@ function ProfileComponent() {
               <RichTextRenderer key={did} description={description} />
             </div>
           )}
+          {/* <ModerationInner subject={post.author.did} /> */}
+          {authorModLoading ?
+            (
+              <div className="flex flex-wrap flex-row gap-1">
+                <div
+                  className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1"
+                >
+                  {/* <img
+                                src={resolvedpfp || defaultpfp}
+                                alt="avatar"
+                                className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
+                                style={{
+                                  width: 12,
+                                  height: 12,
+                                }}
+                              /> */}
+                  <span className="font-medium">loading badges...</span>
+                </div>
+              </div>
+            )
+            :
+            (
+              <div className="flex flex-wrap flex-row gap-1">
+                {warnAuthorLabels.map((label, index) => (
+                  <SmallAuthorLabelBadge label={label} key={label.cts + label.sourceDid + label.val} large />
+                ))}
+              </div>
+            )
+          }
         </div>
       </div>
 
@@ -231,8 +273,8 @@ function ProfileComponent() {
           tabs={{
             ...(isLabeler
               ? {
-                  Labels: <LabelsTab did={did} labelerRecord={labelerRecord} />,
-                }
+                Labels: <LabelsTab did={did} labelerRecord={labelerRecord} />,
+              }
               : {}),
             ...{
               Posts: <PostsTab did={did} />,
@@ -696,11 +738,11 @@ export function FeedItemRender({
     // @ts-expect-error overloads sucks
     !listmode
       ? {
-          target: feed.uri,
-          method: "/links/count",
-          collection: "app.bsky.feed.like",
-          path: ".subject.uri",
-        }
+        target: feed.uri,
+        method: "/links/count",
+        collection: "app.bsky.feed.like",
+        path: ".subject.uri",
+      }
       : undefined
   );
 
@@ -1044,11 +1086,11 @@ export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
   const theyFollowYouRes = useGetOneToOneState(
     agent?.did
       ? {
-          target: agent?.did,
-          user: identity?.did ?? targetdidorhandle,
-          collection: "app.bsky.graph.follow",
-          path: ".subject",
-        }
+        target: agent?.did,
+        user: identity?.did ?? targetdidorhandle,
+        collection: "app.bsky.graph.follow",
+        path: ".subject",
+      }
       : undefined
   );
 

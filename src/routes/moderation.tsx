@@ -13,6 +13,7 @@ import { useAtom } from "jotai";
 import { Switch } from "radix-ui";
 
 import { Header } from "~/components/Header";
+import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { quickAuthAtom } from "~/utils/atoms";
 import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
@@ -28,11 +29,11 @@ export const Route = createFileRoute("/moderation")({
 function RouteComponent() {
   const { agent } = useAuth();
 
-  const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
+  const [quickAuth] = useAtom(quickAuthAtom);
   const isAuthRestoring = quickAuth ? status === "loading" : false;
 
   const identityresultmaybe = useQueryIdentity(
-    !isAuthRestoring ? agent?.did : undefined
+    !isAuthRestoring ? agent?.did : undefined,
   );
   const identity = identityresultmaybe?.data;
 
@@ -43,8 +44,6 @@ function RouteComponent() {
   const rawprefs = prefsresultmaybe?.data?.preferences as
     | ATPAPI.AppBskyActorGetPreferences.OutputSchema["preferences"]
     | undefined;
-
-  //console.log(JSON.stringify(prefs, null, 2))
 
   const parsedPref = parsePreferences(rawprefs);
 
@@ -96,7 +95,7 @@ function RouteComponent() {
           <Switch.Root
             id={`switch-${"hardcoded"}`}
             checked={parsedPref?.adultContentEnabled}
-            onCheckedChange={(v) => {
+            onCheckedChange={() => {
               renderSnack({
                 title: "Sorry... Modifying preferences is not implemented yet",
                 description: "You can use another app to change preferences",
@@ -108,6 +107,13 @@ function RouteComponent() {
             <Switch.Thumb className="m3switch thumb " />
           </Switch.Root>
         </div>
+
+        <TestModeration subject="did:plc:q7suwaz53ztc4mbiqyygbn43" />
+        <TestModeration subject="did:plc:fpruhuo22xkm5o7ttr2ktxdo" />
+        <TestModeration subject="did:plc:6ayddqghxhciedbaofoxkcbs" />
+        <TestModeration subject="did:plc:za2ezszbzyqer7eylvtgapd5" />
+        <TestModeration subject="did:plc:ia76kvnndjutgedggx2ibrem" />
+        <TestModeration subject="did:plc:w2wbinubagmo4hlxx2ik5rrp" />
         <div className="">
           {Object.entries(parsedPref?.contentLabelPrefs ?? {}).map(
             ([label, visibility]) => (
@@ -133,7 +139,7 @@ function RouteComponent() {
                   value={visibility as "ignore" | "warn" | "hide"}
                 />
               </div>
-            )
+            ),
           )}
         </div>
       </div>
@@ -174,11 +180,10 @@ export function TripleToggle({
               });
               onChange?.(opt);
             }}
-            className={`flex-1 px-3 py-1.5 rounded-full transition-colors ${
-              isActive
-                ? "bg-gray-400 dark:bg-gray-600 text-white"
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
-            }`}
+            className={`flex-1 px-3 py-1.5 rounded-full transition-colors ${isActive
+              ? "bg-gray-400 dark:bg-gray-600 text-white"
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
+              }`}
           >
             {" "}
             {opt.charAt(0).toUpperCase() + opt.slice(1)}
@@ -206,7 +211,7 @@ export interface NormalizedPreferences {
 }
 
 export function parsePreferences(
-  prefs?: PrefItem[]
+  prefs?: PrefItem[],
 ): NormalizedPreferences | undefined {
   if (!prefs) return undefined;
   const normalized: NormalizedPreferences = {
@@ -266,4 +271,50 @@ export function parsePreferences(
   }
 
   return normalized;
+}
+
+
+export function TestModeration({ subject }: { subject: string }) {
+  return (
+    <>
+      {/* Test the moderation system */}
+      <div className="px-4 py-2 border-b">
+        <div className="flex flex-col">
+          <span className="text-md font-medium">Moderation System Test</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Testing useModeration hook with example content
+          </span>
+          <ModerationInner subject={subject} />
+        </div>
+      </div>
+    </>
+  )
+
+}
+
+export function ModerationInner({ subject }: { subject: string }) {
+  const { isLoading: moderationLoading, labels: testLabels } = useModeration(
+    subject,
+  );
+
+  return (<>{moderationLoading ? (
+    <span className="text-sm text-blue-500">
+      Loading moderation data...
+    </span>
+  ) : (
+    <div className="mt-2">
+      <span className="text-sm">
+        Found {testLabels.length} labels for {subject}
+      </span>
+      {testLabels.map((label, index) => (
+        <div
+          key={index}
+          className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1"
+        >
+          <span className="font-medium">{label.val}</span> -{" "}
+          {label.preference} (from {label.sourceDid})
+        </div>
+      ))}
+    </div>
+  )}</>)
 }
