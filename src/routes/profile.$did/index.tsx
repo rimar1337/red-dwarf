@@ -182,6 +182,7 @@ function ProfileComponent() {
     : undefined;
   const { data: profileRecord } = useQueryProfile(profileUri);
   const profile = profileRecord?.value;
+  const pronoun = profile?.pronouns || undefined
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
@@ -450,6 +451,13 @@ function ProfileComponent() {
             (
               <div className="flex flex-wrap flex-row gap-1">
                 {/* authorLabels{JSON.stringify(authorLabels,null,2)} */}
+                {pronoun && (
+                  <SmallAuthorLabelBadgeInner
+                    text={pronoun}
+                    disablepfp={true}
+                    large
+                  />
+                )}
                 {informAuthorLabels.map((label, index) => (
                   <SmallAuthorLabelBadge label={label} key={label.cts + label.src + label.val} large />
                 ))}

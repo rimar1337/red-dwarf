@@ -474,6 +474,7 @@ export function UniversalPostRendererRawRecordShim({
       viewer: undefined,
       labels: profileRecord?.labels || undefined,
       verification: undefined,
+      pronouns: profileRecord?.value?.pronouns || undefined,
     }),
     [imgcdn, profileRecord, resolved?.did, resolved?.handle],
   );
@@ -710,6 +711,8 @@ export function UniversalPostRenderer({
     (label) => ghld(label.src, label.val)?.pref === "warn",
   );
 
+  // add user pronouns
+  const pronoun = post.author.pronouns || undefined
   const informCombinedLabels: LabelWithHydratedLocaleName[] = combinedLabels.flatMap(
     (label) => {
       if (ghld(label.src, label.val)?.severity === "inform" && ghld(label.src, label.val)?.pref === "warn") {
@@ -1263,6 +1266,12 @@ export function UniversalPostRenderer({
               </div>
             ) : (
               <div className={`flex flex-wrap flex-row gap-1 my-1 ${redactWhileLoading_name ? "animate-pulse blur" : ""}`}>
+                {pronoun && (
+                  <SmallAuthorLabelBadgeInner
+                    text={pronoun}
+                    disablepfp={true}
+                  />
+                )}
                 {informCombinedLabels.map((label, index) => (
                   <SmallAuthorLabelBadge
                     label={label}
