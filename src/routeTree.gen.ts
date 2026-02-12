@@ -14,6 +14,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as FeedsRouteImport } from './routes/feeds'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CallbackIndexRouteImport } from './routes/callback/index'
@@ -53,6 +54,11 @@ const ModerationRoute = ModerationRouteImport.update({
 const FeedsRoute = FeedsRouteImport.update({
   id: '/feeds',
   path: '/feeds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
@@ -138,6 +144,7 @@ const ProfileDidPostRkeyImageIRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/feeds': typeof FeedsRoute
   '/moderation': typeof ModerationRoute
   '/notifications': typeof NotificationsRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/feeds': typeof FeedsRoute
   '/moderation': typeof ModerationRoute
   '/notifications': typeof NotificationsRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_pathlessLayout': typeof PathlessLayoutRouteWithChildren
+  '/about': typeof AboutRoute
   '/feeds': typeof FeedsRoute
   '/moderation': typeof ModerationRoute
   '/notifications': typeof NotificationsRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/feeds'
     | '/moderation'
     | '/notifications'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/feeds'
     | '/moderation'
     | '/notifications'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_pathlessLayout'
+    | '/about'
     | '/feeds'
     | '/moderation'
     | '/notifications'
@@ -267,6 +279,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PathlessLayoutRoute: typeof PathlessLayoutRouteWithChildren
+  AboutRoute: typeof AboutRoute
   FeedsRoute: typeof FeedsRoute
   ModerationRoute: typeof ModerationRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -315,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/feeds'
       fullPath: '/feeds'
       preLoaderRoute: typeof FeedsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_pathlessLayout': {
@@ -475,6 +495,7 @@ const ProfileDidPostRkeyRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PathlessLayoutRoute: PathlessLayoutRouteWithChildren,
+  AboutRoute: AboutRoute,
   FeedsRoute: FeedsRoute,
   ModerationRoute: ModerationRoute,
   NotificationsRoute: NotificationsRoute,
