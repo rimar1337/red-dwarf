@@ -1,6 +1,6 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { useAtom } from "jotai";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { isAtTopAtom, reusableTabRouteScrollAtom } from "~/utils/atoms";
 
@@ -70,28 +70,35 @@ export function ReusableTabRoute({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <TabsPrimitive.Root
-      value={activeTab}
-      onValueChange={handleValueChange}
-      className={`w-full`}
-    >
-      <TabsPrimitive.List
-        className={`flex sticky top-[52px] bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] z-[9] border-0 sm:border-b ${!isAtTop && "shadow-sm"} sm:shadow-none sm:dark:bg-gray-950 sm:bg-white border-gray-200 dark:border-gray-700`}
-      >
-        {Object.entries(tabs).map(([key]) => (
-          <TabsPrimitive.Trigger key={key} value={key} className="m3tab">
-            {key}
-          </TabsPrimitive.Trigger>
-        ))}
-      </TabsPrimitive.List>
+  //const { sentinelRef, isStuck } = useSticky(52);
+  //bg-gray-100 dark:bg-gray-900
 
-      {Object.entries(tabs).map(([key, node]) => (
-        <TabsPrimitive.Content key={key} value={key} className="flex-1 min-h-[80dvh]">
-          {activeTab === key && node}
-        </TabsPrimitive.Content>
-      ))}
-    </TabsPrimitive.Root>
+  return (
+    <>
+      <TabsPrimitive.Root
+        value={activeTab}
+        onValueChange={handleValueChange}
+        className={`w-full`}
+      >
+        {/* <div ref={sentinelRef} className="h-[0.000000001px]" /> */}
+        <TabsPrimitive.List
+          className={`flex sticky top-[52px] bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] sm:dark:bg-gray-950 sm:bg-white z-[9] border-0 sm:border-b ${!isAtTop && "shadow-sm"} sm:shadow-none border-gray-200 dark:border-gray-700`}
+        >
+          {Object.entries(tabs).map(([key]) => (
+            <TabsPrimitive.Trigger key={key} value={key} className="m3tab">
+              {key}
+            </TabsPrimitive.Trigger>
+          ))}
+        </TabsPrimitive.List>
+
+        {Object.entries(tabs).map(([key, node]) => (
+          <TabsPrimitive.Content key={key} value={key} className="flex-1 min-h-[80dvh]">
+            {activeTab === key && node}
+          </TabsPrimitive.Content>
+        ))}
+      </TabsPrimitive.Root>
+    </>
+    
   );
 }
 
@@ -122,3 +129,27 @@ export function useReusableTabScrollRestore(route: string) {
   }, [activeTab, notifState.scrollPositions]);
 
  */
+
+
+
+export function useSticky(top: number = 0) {
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [isStuck, setIsStuck] = useState(false);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsStuck(!entry.isIntersecting),
+      {
+        rootMargin: `-${top}px 0px 0px 0px`,
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [top]);
+
+  return { sentinelRef, isStuck };
+}
