@@ -306,12 +306,13 @@ export function UniversalPostRendererATURILoader({
         filterMustBeReply={filterMustBeReply}
       />
       <>
-        {maxReplies && maxReplies === 0 && replies && replies > 0 ? (
+        {maxReplies !== undefined && maxReplies === 0 && replies && replies > 0 ? (
           <>
             <MoreReplies atUri={atUri} />
           </>
         ) : (
-          <></>
+          <>
+          </>
         )}
       </>
       {!isQuote && oldestOpsReplyElseNewestNonOpsReply && (
@@ -354,7 +355,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
           params: { did: aturio.host, rkey: aturio.rkey },
         })
       }
-      className="border-b border-gray-300 dark:border-gray-800 flex flex-row px-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+      className="border-b border-gray-200 dark:border-gray-800 flex flex-row px-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
     >
       <div className="w-[42px] h-12 flex flex-col items-center justify-center">
         <div

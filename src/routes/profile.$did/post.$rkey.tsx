@@ -409,6 +409,8 @@ export function ProfilePostComponent({
     }
   }, [parentsLoading, mainPost, showMainPostRoute]);
 
+  const directparent = mainPost?.value.reply?.parent.uri;
+
   React.useEffect(() => {
     if (!mainPost?.value?.reply?.parent?.uri) {
       setParents([]);
@@ -418,7 +420,7 @@ export function ProfilePostComponent({
     let ignore = false;
     const fetchParents = async () => {
       setParentsLoading(true);
-      const parentChain: any[] = [];
+      const parentChain: ({uri: string;cid: string;value: any;} | undefined)[] = [];
       let currentParentUri = mainPost?.value.reply?.parent.uri;
       const MAX_PARENTS = 25;
       let safetyCounter = 0;
@@ -433,6 +435,14 @@ export function ProfilePostComponent({
           currentParentUri = parentPost.value?.reply?.parent?.uri;
         } catch (error) {
           console.error("Failed to fetch a parent post:", error);
+          // its okay to always add one invalid parent then stop
+          if (currentParentUri){
+            parentChain.push({
+              uri: currentParentUri,
+              cid: "sorry",
+              value: "sorry",
+            })
+          }
           break;
         }
         safetyCounter++;
@@ -499,7 +509,7 @@ export function ProfilePostComponent({
           <UniversalPostRendererATURILoader
             atUri={atUri!}
             detailed={true}
-            topReplyLine={parentsLoading || parents.length > 0}
+            topReplyLine={parentsLoading || parents.length > 0 || !!directparent}
             nopics={!!nopics}
             lightboxCallback={lightboxCallback}
           />
