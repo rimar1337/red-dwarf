@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
@@ -22,6 +22,8 @@ import {
   useQueryIdentity,
   useQueryPreferences,
 } from "~/utils/useQuery";
+
+import { FeedIcon } from "./feeds";
 
 export const Route = createFileRoute("/")({
   // loader: async ({ context }) => {
@@ -179,6 +181,10 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     );
     return savedFeedsPref?.items || [];
   }, [prefs]);
+
+  const pinnedFeeds = React.useMemo(() => {
+      return savedFeeds.filter((feed: any) => feed.pinned);
+    }, [savedFeeds]);
 
   const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
   const [unauthedSelectedFeed, setUnauthedSelectedFeed] = useState(persistentSelectedFeed);
@@ -363,9 +369,9 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     <div
       className={`relative flex flex-col ${hidden && "hidden"}`}
     >
-      {!isAuthRestoring && savedFeeds.length > 0 ? (
+      {!isAuthRestoring && pinnedFeeds.length > 0 ? (
         <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
-          {savedFeeds.map((item: any, idx: number) => { return <FeedTabOnTop key={item} item={item} idx={idx} /> })}
+          {pinnedFeeds.map((item: any, idx: number) => { return <FeedTabOnTop key={item} item={item} idx={idx} /> })}
         </div>
       ) : (
         // <span className="text-xl font-bold ml-2">Home</span>
@@ -424,7 +430,18 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
 // todo please use types this is dangerous very dangerous.
 // todo fix this whenever proper preferences is handled
-function FeedTabOnTop({ item, idx }: { item: any, idx: number }) {
+export function FeedTabOnTop({ 
+  item, 
+  idx, 
+  rightDesktopSidebar = false 
+} : { 
+  item: any, 
+  idx: number, 
+  rightDesktopSidebar?: boolean 
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAtHome = location.pathname == "/" || location.pathname == "";
   const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
   const selectedFeed = persistentSelectedFeed
   const setSelectedFeed = setPersistentSelectedFeed
@@ -435,19 +452,29 @@ function FeedTabOnTop({ item, idx }: { item: any, idx: number }) {
   return (
     <button
       key={item.value || idx}
-      className={`px-3 py-1 rounded-full whitespace-nowrap font-medium transition-colors ${isActive
-        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+      className={`${rightDesktopSidebar ? "flex flex-row items-center gap-2 pr-4 pl-2.5 py-1.5": "px-3 py-1 font-medium"} rounded-full whitespace-nowrap transition-colors ${isActive
+        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600 font-medium"
         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
         // ? "bg-gray-500 text-white"
         // : item.pinned
         //   ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
         //   : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
         }`}
-      onClick={() => setSelectedFeed(item.value)}
+      onClick={() => {
+        if (rightDesktopSidebar && !isAtHome) {
+          navigate({
+            to: "/"
+          })
+        }
+        setSelectedFeed(item.value)
+      }}
       title={item.value}
     >
+      {rightDesktopSidebar && (
+        <FeedIcon feedUri={item.value} className="w-5 h-5 rounded-sm object-cover" />
+      )}
       {label}
-      {item.pinned && (
+      {/* {!rightDesktopSidebar && item.pinned && (
         <span
           className={`ml-1 text-xs ${isActive
             ? "text-gray-900 dark:text-gray-100"
@@ -456,7 +483,7 @@ function FeedTabOnTop({ item, idx }: { item: any, idx: number }) {
         >
           ★
         </span>
-      )}
+      )} */}
     </button>
   );
 }

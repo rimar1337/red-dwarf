@@ -5,6 +5,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
+  Link,
   // Link,
   // Outlet,
   Scripts,
@@ -18,20 +19,23 @@ import { toast as sonnerToast } from "sonner";
 import { Toaster } from "sonner";
 import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
-import { HOST_TITLE } from "~/../policy";
+import { HOST_ADMIN, HOST_DESCRIPTION, HOST_HERO, HOST_LOGIN_BLURB, HOST_MAIN_TITLE, HOST_SIGNUP_PDS, HOST_SUB_TITLE, HOST_TITLE, HOST_UNAUTHED_DEFAULT_FEEDS } from "~/../policy";
 import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { Import } from "~/components/Import";
-import Login from "~/components/Login";
+//import Login from "~/components/Login";
 import Logo from "~/components/LogoSvg";
-import { ModerationBatcher } from "~/components/ModerationBatcher";
-import { ModerationInitializer } from "~/components/ModerationInitializer";
+//import { ModerationBatcher } from "~/components/ModerationBatcher";
+//import { ModerationInitializer } from "~/components/ModerationInitializer";
 import { NotFound } from "~/components/NotFound";
+import { AutoLabelProvider } from "~/providers/AutoLabelProvider";
 import { LikeMutationQueueProvider } from "~/providers/LikeMutationQueueProvider";
 import { PollMutationQueueProvider } from "~/providers/PollMutationQueueProvider";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
-import { composerAtom, hueAtom, useAtomCssVar } from "~/utils/atoms";
+import { FeedTabOnTop } from "~/routes/index";
+import { composerAtom, hueAtom, imgCDNAtom, quickAuthAtom, useAtomCssVar } from "~/utils/atoms";
 import { seo } from "~/utils/seo";
+import { useQueryIdentity, useQueryPreferences, useQueryProfile } from "~/utils/useQuery";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -75,10 +79,10 @@ export const Route = createRootRouteWithContext<{
   errorComponent: import.meta.env.DEV
     ? undefined
     : (props) => (
-        <RootDocument>
-          <DefaultCatchBoundary {...props} />
-        </RootDocument>
-      ),
+      <RootDocument>
+        <DefaultCatchBoundary {...props} />
+      </RootDocument>
+    ),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
 });
@@ -86,18 +90,20 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <UnifiedAuthProvider>
-      <LikeMutationQueueProvider>
-        <PollMutationQueueProvider>
-          <ModerationInitializer />
-          <ModerationBatcher />
-          <RootDocument>
-            <KeepAliveProvider>
-              <AppToaster />
-              <KeepAliveOutlet />
-            </KeepAliveProvider>
-          </RootDocument>
-        </PollMutationQueueProvider>
-      </LikeMutationQueueProvider>
+      <AutoLabelProvider>
+        <LikeMutationQueueProvider>
+          <PollMutationQueueProvider>
+            {/* <ModerationInitializer />
+            <ModerationBatcher /> */}
+            <RootDocument>
+              <KeepAliveProvider>
+                <AppToaster />
+                <KeepAliveOutlet />
+              </KeepAliveProvider>
+            </RootDocument>
+          </PollMutationQueueProvider>
+        </LikeMutationQueueProvider>
+      </AutoLabelProvider>
     </UnifiedAuthProvider>
   );
 }
@@ -126,11 +132,11 @@ export function renderSnack({
       button={
         button?.label
           ? {
-              label: button?.label,
-              onClick: () => {
-                button?.onClick?.();
-              },
-            }
+            label: button?.label,
+            onClick: () => {
+              button?.onClick?.();
+            },
+          }
           : undefined
       }
     />
@@ -222,6 +228,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isSearch = location.pathname.startsWith("/search");
   const isFeeds = location.pathname.startsWith("/feeds");
   const isModeration = location.pathname.startsWith("/moderation");
+  const isAbout = location.pathname.startsWith("/about");
 
   const locationEnum:
     | "feeds"
@@ -230,19 +237,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     | "notifications"
     | "profile"
     | "moderation"
+    | "about"
     | "home" = isFeeds
-    ? "feeds"
-    : isSearch
-      ? "search"
-      : isSettings
-        ? "settings"
-        : isNotifications
-          ? "notifications"
-          : isProfile
-            ? "profile"
-            : isModeration
-              ? "moderation"
-              : "home";
+      ? "feeds"
+      : isSearch
+        ? "search"
+        : isSettings
+          ? "settings"
+          : isNotifications
+            ? "notifications"
+            : isProfile
+              ? "profile"
+              : isModeration
+                ? "moderation"
+                : isAbout ?
+                  "about"
+                  : "home";
 
   const [, setComposerPost] = useAtom(composerAtom);
 
@@ -251,7 +261,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <Composer />
 
       <div className="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950">
-        <nav className="hidden lg:flex h-screen w-[250px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
+        <nav className="hidden lg:flex h-screen w-[250px] xl:ml-[50px] flex-col gap-0 p-4 dark:border-gray-800 sticky top-0 self-start">
           <div className="flex items-center gap-3 mb-4 pl-3">
             <Logo
               className="h-8 w-8"
@@ -261,10 +271,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               }}
             />
             <span className="font-extrabold text-2xl text-gray-900 dark:text-gray-100">
-              {HOST_TITLE}{" "}
-              {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
-                lite
-              </span> */}
+              {HOST_MAIN_TITLE}
+              {HOST_SUB_TITLE && (<span className="text-gray-500 dark:text-gray-400 text-sm">
+                {HOST_SUB_TITLE}
+              </span>) }
             </span>
           </div>
           <MaterialNavItem
@@ -295,6 +305,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             text="Explore"
           />
           <MaterialNavItem
+            visible={!!agent?.did}
             InactiveIcon={
               <IconMaterialSymbolsNotificationsOutline className="w-6 h-6" />
             }
@@ -311,6 +322,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             text="Notifications"
           />
           <MaterialNavItem
+            visible={!!agent?.did}
             InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
             ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
             active={locationEnum === "feeds"}
@@ -323,6 +335,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             text="Feeds"
           />
           <MaterialNavItem
+            visible={!!agent?.did}
             InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
             ActiveIcon={<IconMdiShield className="w-6 h-6" />}
             active={locationEnum === "moderation"}
@@ -335,6 +348,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             text="Moderation"
           />
           <MaterialNavItem
+            visible={!!agent?.did}
             InactiveIcon={
               <IconMaterialSymbolsAccountCircleOutline className="w-6 h-6" />
             }
@@ -367,15 +381,40 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }
             text="Settings"
           />
-          <div className="flex flex-row items-center justify-center mt-3">
-            <MaterialPillButton
-              InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
-              ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
-              //active={true}
-              onClickCallbback={() => setComposerPost({ kind: "root" })}
-              text="Post"
+          {!agent?.did && (
+            <MaterialNavItem
+              InactiveIcon={
+                <IconMaterialSymbolsInfoOutline className="w-6 h-6" />
+              }
+              ActiveIcon={<IconMaterialSymbolsInfo className="w-6 h-6" />}
+              active={locationEnum === "about"}
+              onClickCallbback={() =>
+                navigate({
+                  to: "/about",
+                  //params: { did: agent.assertDid },
+                })
+              }
+              text="About"
             />
-          </div>
+          )}
+          {agent?.did && (
+            <div className="flex flex-row items-center justify-center mt-3">
+              <MaterialPillButton
+                InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
+                ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
+                //active={true}
+                onClickCallbback={() => setComposerPost({ kind: "root" })}
+                text="Post"
+              />
+            </div>
+          )}
+          {!agent?.did && (
+            <>
+              <div className="mt-4 mb-2 w-full h-[1px] bg-gray-200 dark:bg-gray-800" />
+              {/* <Login /> */}
+              <LoginRedirect />
+            </>
+          )}
           {/* <Link
             to="/"
             className={
@@ -479,6 +518,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <span>Post</span>
           </button> */}
           <div className="flex-1"></div>
+          {!!agent?.did && (
+            <div className="flex flex-row items-center lg:mb-1">
+              <div className="flex p-2 h-12 flex-1 rounded-full hover:dark:bg-gray-800 hover:bg-gray-200">
+                <ProfileSmall did={agent.did} />
+              </div>
+              <Link
+                to="/settings"
+                className="flex p-3 h-12 w-12 rounded-full hover:dark:bg-gray-800 hover:bg-gray-200 items-center justify-center"
+              >
+                <IconMaterialSymbolsMoreVert />
+              </Link>
+            </div>
+          )}
+          {/* 
           <a
             href="https://tangled.sh/@whey.party/red-dwarf"
             target="_blank"
@@ -506,6 +559,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               microcosm.blue
             </a>
           </div>
+          */}
         </nav>
 
         <nav className="hidden sm:flex items-center lg:hidden h-screen  flex-col gap-2 p-4 dark:border-gray-800 sticky top-0 self-start">
@@ -549,6 +603,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
           <MaterialNavItem
             small
+            visible={!!agent?.did}
             InactiveIcon={
               <IconMaterialSymbolsNotificationsOutline className="w-6 h-6" />
             }
@@ -566,6 +621,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
           <MaterialNavItem
             small
+            visible={!!agent?.did}
             InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
             ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
             active={locationEnum === "feeds"}
@@ -579,6 +635,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
           <MaterialNavItem
             small
+            visible={!!agent?.did}
             InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
             ActiveIcon={<IconMdiShield className="w-6 h-6" />}
             active={locationEnum === "moderation"}
@@ -592,6 +649,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
           <MaterialNavItem
             small
+            visible={!!agent?.did}
             InactiveIcon={
               <IconMaterialSymbolsAccountCircleOutline className="w-6 h-6" />
             }
@@ -625,16 +683,36 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }
             text="Settings"
           />
-          <div className="flex flex-row items-center justify-center mt-3">
-            <MaterialPillButton
+
+          {!agent?.did && (
+            <MaterialNavItem
               small
-              InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
-              ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
-              //active={true}
-              onClickCallbback={() => setComposerPost({ kind: "root" })}
-              text="Post"
+              InactiveIcon={
+                <IconMaterialSymbolsInfoOutline className="w-6 h-6" />
+              }
+              ActiveIcon={<IconMaterialSymbolsInfo className="w-6 h-6" />}
+              active={locationEnum === "about"}
+              onClickCallbback={() =>
+                navigate({
+                  to: "/about",
+                  //params: { did: agent.assertDid },
+                })
+              }
+              text="About"
             />
-          </div>
+          )}
+          {!!agent?.did && (
+            <div className="flex flex-row items-center justify-center mt-3">
+              <MaterialPillButton
+                small
+                InactiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
+                ActiveIcon={<IconMdiPencilOutline className="w-6 h-6" />}
+                //active={true}
+                onClickCallbback={() => setComposerPost({ kind: "root" })}
+                text="Post"
+              />
+            </div>
+          )}
         </nav>
 
         {agent?.did && (
@@ -657,23 +735,37 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           {children}
         </main>
 
-        <aside className="hidden lg:flex h-screen w-[250px] sticky top-0 self-start flex-col">
-          <div className="px-4 pt-4">
+        <aside className="hidden lg:flex h-screen xl:w-[300px] w-[250px] sticky top-0 self-start flex-col">
+          <div className="px-4 pt-4 gap-4 flex flex-col">
             <Import />
           </div>
-          <Login />
+          <div className="px-4 pt-4 gap-4 flex flex-col max-h-[calc(100dvh - 80px)] overflow-y-auto">
+            {(
+              (!agent?.did && HOST_UNAUTHED_DEFAULT_FEEDS.length > 0)
+              || (!!agent?.did)
+            ) && (
+                <FeedListDesktopSidebar />
+              )}
+            {!agent?.did && (
+              <>
+                <span className=" text-gray-500 dark:text-gray-400 text-sm leading-tight"><span className=" font-bold">{window.location.host}</span> is a hosted Red Dwarf instance that you can use to participate in the Bluesky social network.</span>
+                <img className="rounded-sm" src={HOST_HERO} />
+                <span className=" text-gray-500 dark:text-gray-400 text-sm">{HOST_DESCRIPTION}</span>
+                <div className="flex flex-col gap-1 ">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm font-bold">ADMINISTERED BY:</span>
+                  <ProfileSmall did={HOST_ADMIN} />
+                </div>
+              </>
+            )}
+          </div>
           <div className="flex-1"></div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-justify mx-4 mb-4">
-            {HOST_TITLE} is a Bluesky client that does not rely on any Bluesky API
-            App Servers. Instead, it uses Microcosm to fetch records directly
-            from each users' PDS (via Slingshot) and connect them using
-            backlinks (via Constellation)
-          </p>
+          {/* todo */}
+          <span>TODO: add red dwarf the software policy along with instance policy here</span>
         </aside>
       </div>
 
       {agent?.did ? (
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-gray-50 dark:bg-gray-900 border-0 shadow border-gray-200 dark:border-gray-700 z-40">
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-gray-50 dark:bg-gray-900 border-0 border-t-1 dark:border-t-0 shadow border-gray-200 dark:border-gray-700 z-40">
           <div className="flex justify-around items-center p-2">
             <MaterialNavItem
               small
@@ -845,7 +937,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       ) : (
-        <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-0 shadow border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 z-10">
+        <div className="lg:hidden flex items-center fixed bottom-0 left-0 right-0 justify-between px-4 py-3 border-0 border-t-1 dark:border-t-0 shadow border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 z-10">
           <div className="flex items-center gap-2">
             <Logo
               className="h-6 w-6"
@@ -855,14 +947,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               }}
             />
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
-              {HOST_TITLE}{" "}
-              {/* <span className="text-gray-500 dark:text-gray-400 text-sm">
-                  lite
-                </span> */}
+              {HOST_MAIN_TITLE}
+              {HOST_SUB_TITLE && (<span className="text-gray-500 dark:text-gray-400 text-sm">
+                {HOST_SUB_TITLE}
+              </span>) }
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Login compact={true} popup={true} />
+            {/* <Login compact={true} popup={true} /> */}
+            <Link
+              to="/settings"
+              className="rounded-full bg-gray-600 text-gray-100 dark:bg-gray-400 dark:text-gray-900 px-4 py-2 text-sm font-medium text-center"
+            >
+              Log in
+            </Link>
           </div>
         </div>
       )}
@@ -874,6 +972,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 export function MaterialNavItem({
+  visible = true,
   InactiveIcon,
   ActiveIcon,
   text,
@@ -881,6 +980,7 @@ export function MaterialNavItem({
   onClickCallbback,
   small,
 }: {
+  visible?: boolean;
   InactiveIcon: React.ReactElement;
   ActiveIcon: React.ReactElement;
   text: string;
@@ -888,14 +988,14 @@ export function MaterialNavItem({
   onClickCallbback: () => void;
   small?: boolean | string;
 }) {
+  if (!visible) return null
   if (small)
     return (
       <button
-        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${
-          active
-            ? "text-gray-900 dark:text-gray-100"
-            : "text-gray-600 dark:text-gray-400"
-        }`}
+        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${active
+          ? "text-gray-900 dark:text-gray-100"
+          : "text-gray-600 dark:text-gray-400"
+          }`}
         onClick={() => {
           onClickCallbback();
         }}
@@ -915,11 +1015,10 @@ export function MaterialNavItem({
 
   return (
     <button
-      className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${
-        active
-          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700"
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-900"
-      }`}
+      className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${active
+        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-900"
+        }`}
       onClick={() => {
         onClickCallbback();
       }}
@@ -954,11 +1053,10 @@ function MaterialPillButton({
   const active = false;
   return (
     <button
-      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${
-        active
-          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
-      }`}
+      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${active
+        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+        }`}
       onClick={() => {
         onClickCallbback();
       }}
@@ -975,4 +1073,157 @@ function MaterialPillButton({
       )}
     </button>
   );
+}
+
+
+export const ProfileSmall = ({
+  did,
+  large = false,
+}: {
+  did: string,
+  large?: boolean;
+}) => {
+  const navigate = useNavigate();
+  const { data: identity } = useQueryIdentity(did);
+  const { data: profiledata } = useQueryProfile(
+    `at://${did}/app.bsky.actor.profile/self`
+  );
+  const profile = profiledata?.value;
+
+  const [imgcdn] = useAtom(imgCDNAtom)
+
+  function getAvatarUrl(p: typeof profile) {
+    const link = p?.avatar?.ref?.["$link"];
+    if (!link || !did) return null;
+    return `https://${imgcdn}/img/avatar/plain/${did}/${link}@jpeg`;
+  }
+
+  const onProfileClick = (e: React.MouseEvent<Element, MouseEvent>) => {
+    e.stopPropagation();
+    navigate({
+      to: "/profile/$did",
+      params: { did: did },
+    });
+  }
+
+  if (!profiledata) {
+    return (
+      // Skeleton loader
+      <div
+        onClick={onProfileClick}
+        className={`hover:cursor-pointer flex items-center gap-2.5 animate-pulse ${large ? "mb-1" : ""}`}
+      >
+        <div
+          className={`rounded-full bg-gray-300 dark:bg-gray-700 ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
+        />
+        <div className="flex flex-col gap-2">
+          <div
+            className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? "h-4 w-28" : "h-3 w-20"}`}
+          />
+          <div
+            className={`bg-gray-300 dark:bg-gray-700 rounded ${large ? "h-4 w-20" : "h-3 w-16"}`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={onProfileClick}
+      className={`hover:cursor-pointer flex flex-row items-center gap-2.5 ${large ? "mb-1" : ""}`}
+    >
+      <img
+        src={getAvatarUrl(profile) ?? undefined}
+        alt="avatar"
+        className={`object-cover rounded-full ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
+      />
+      <div className="flex flex-col items-start text-left">
+        <div
+          className={`font-medium ${large ? "text-gray-800 dark:text-gray-100 text-md" : "text-gray-800 dark:text-gray-100 text-sm"}`}
+        >
+          {profile?.displayName}
+        </div>
+        <div
+          className={` ${large ? "text-gray-500 dark:text-gray-400 text-sm" : "text-gray-500 dark:text-gray-400 text-xs"}`}
+        >
+          @{identity?.handle}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+function FeedListDesktopSidebar() {
+  const { agent, status } = useAuth();
+  const [quickAuth] = useAtom(quickAuthAtom);
+  const isAuthRestoring = quickAuth ? status === "loading" : false;
+
+  const identityresultmaybe = useQueryIdentity(
+    !isAuthRestoring ? agent?.did : undefined,
+  );
+  const identity = identityresultmaybe?.data;
+
+  const prefsresultmaybe = useQueryPreferences({
+    agent: !isAuthRestoring ? (agent ?? undefined) : undefined,
+    pdsUrl: !isAuthRestoring ? identity?.pds : undefined,
+  });
+  const prefs = prefsresultmaybe?.data;
+
+  const savedFeeds = React.useMemo(() => {
+    const savedFeedsPref = prefs?.preferences?.find(
+      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
+    );
+    return savedFeedsPref?.items || [];
+  }, [prefs]);
+
+  const pinnedFeeds = React.useMemo(() => {
+    return savedFeeds.filter((feed: any) => feed.pinned);
+  }, [savedFeeds]);
+
+  const shimmedunautheddefault = HOST_UNAUTHED_DEFAULT_FEEDS.map((aturi: string, idx: number) => {
+    return {
+      value: aturi,
+      pinned: true,
+    }
+  })
+
+  const feedsmap = agent?.did ? pinnedFeeds : shimmedunautheddefault;
+
+  return (
+    <div className="flex flex-col gap-1 items-start ">
+      {feedsmap.map((item: any, idx: number) => { return <FeedTabOnTop key={item} item={item} idx={idx} rightDesktopSidebar={true} /> })}
+    </div>
+  )
+}
+
+function LoginRedirect() {
+  const location = useLocation();
+  const dontShowLoginButton = location.pathname === "/settings"
+  return (
+    <div className="">
+      <span className="text-gray-500 dark:text-gray-400 text-sm leading-tight">
+        {HOST_LOGIN_BLURB}
+      </span>
+
+      <div className="flex flex-col gap-2 my-4">
+        {!dontShowLoginButton && (<Link
+          to="/settings"
+          className="w-full rounded-full bg-gray-600 text-gray-100 dark:bg-gray-400 dark:text-gray-900 px-4 py-2 text-sm font-medium text-center"
+        >
+          Log in
+        </Link>)}
+
+        {HOST_SIGNUP_PDS && (
+          // todo make signup actually work
+          <button
+            className="w-full rounded-sm border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Sign up
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }

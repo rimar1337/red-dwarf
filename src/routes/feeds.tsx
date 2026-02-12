@@ -166,3 +166,45 @@ function FeedItem({ feedUri }: { feedUri: string }) {
     </Link>
   );
 }
+
+export function FeedIcon({ feedUri, className = "w-10 h-10 rounded-sm object-cover" }: {feedUri: string, className?: string }) {
+  const { data: feedData } = useQueryArbitrary(feedUri);
+  const feed = feedData?.value as ATPAPI.AppBskyFeedGenerator.Record;
+  const [imgcdn] = useAtom(imgCDNAtom);
+  let aturi: ATPAPI.AtUri | null = null;
+  try {
+    aturi = new ATPAPI.AtUri(feedUri);
+  } catch (err) {
+    // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
+    aturi = new ATPAPI.AtUri("at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds");
+  }
+
+  function getAvatarUrl() {
+    const link = feed?.avatar?.ref?.["$link"];
+    if (!link) return null;
+    return `https://${imgcdn}/img/avatar/plain/${aturi?.host}/${link}@jpeg`;
+  }
+
+  const avatarUrl = getAvatarUrl();
+  if (!avatarUrl) {
+    return (
+      <div
+        className={className}
+      >
+        <IconMaterialSymbolsRssFeed className="text-gray-200 p-0.5 rounded-sm bg-gray-600" />
+      </div>
+    )
+  }
+  return (
+    <img
+      src={avatarUrl}
+      alt={feed?.displayName || "Feed avatar"}
+      className={className}
+      onError={(e) => {
+        const target = e.target as HTMLImageElement;
+        target.onerror = null;
+        target.src = "/defaultpfp.png";
+      }}
+    />
+  )
+}

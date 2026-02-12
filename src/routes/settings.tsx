@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { HOST_TITLE } from "~/../policy";
 import { Header } from "~/components/Header";
 import Login from "~/components/Login";
+import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
   constellationURLAtom,
   defaultconstellationURL,
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/settings")({
 
 export function Settings() {
   const navigate = useNavigate();
+  const { agent } = useAuth();
   return (
     <>
       <Header
@@ -44,12 +46,31 @@ export function Settings() {
           }
         }}
       />
-      <div className="lg:hidden">
-        <Login />
+      {/* <div className="lg:hidden"> */}
+      <div className="flex flex-col justify-around mt-4">
+        <SettingHeading title="Account Management" top />
+        <div className="mx-4">
+          <Login />
+        </div>
       </div>
+      {/* Small viewport nav overflow */}
       <div className="sm:hidden flex flex-col justify-around mt-4">
         <SettingHeading title="Other Pages" top />
         <MaterialNavItem
+          visible={!agent?.did}
+          InactiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+          ActiveIcon={<IconMaterialSymbolsSearch className="w-6 h-6" />}
+          active={false}
+          onClickCallbback={() =>
+            navigate({
+              to: "/search",
+              //params: { did: agent.assertDid },
+            })
+          }
+          text="Search"
+        />
+        <MaterialNavItem
+          visible={!!agent?.did}
           InactiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
           ActiveIcon={<IconMaterialSymbolsTag className="w-6 h-6" />}
           active={false}
@@ -62,6 +83,7 @@ export function Settings() {
           text="Feeds"
         />
         <MaterialNavItem
+          visible={!!agent?.did}
           InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
           ActiveIcon={<IconMdiShield className="w-6 h-6" />}
           active={false}
@@ -72,6 +94,37 @@ export function Settings() {
             })
           }
           text="Moderation"
+        />
+        <MaterialNavItem
+          visible={true}
+          InactiveIcon={<IconMaterialSymbolsInfoOutline className="w-6 h-6" />}
+          ActiveIcon={<IconMaterialSymbolsInfoOutline className="w-6 h-6" />}
+          active={false}
+          onClickCallbback={() =>
+            navigate({
+              to: "/about",
+              //params: { did: agent.assertDid },
+            })
+          }
+          text="About"
+        />
+      </div>
+      {/* <div className="lg:hidden sm:flex hidden flex-col justify-around mt-4"> */}
+      {/* Large viewport nav overflow */}
+      <div className=" sm:flex hidden flex-col justify-around mt-4">
+        <SettingHeading title="Other Pages" top />
+        <MaterialNavItem
+          visible={true}
+          InactiveIcon={<IconMaterialSymbolsInfoOutline className="w-6 h-6" />}
+          ActiveIcon={<IconMaterialSymbolsInfoOutline className="w-6 h-6" />}
+          active={false}
+          onClickCallbback={() =>
+            navigate({
+              to: "/about",
+              //params: { did: agent.assertDid },
+            })
+          }
+          text="About"
         />
       </div>
       <div className="h-4" />

@@ -24,7 +24,7 @@ export default function Login({
         className={
           compact
             ? "flex items-center justify-center p-1"
-            : "p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 mt-4 mx-4 flex justify-center items-center h-[280px]"
+            : "p-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 flex justify-center items-center h-[280px]"
         }
       >
         <span
@@ -43,7 +43,7 @@ export default function Login({
     // Large view
     if (!compact) {
       return (
-        <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800 mt-4 mx-4">
+        <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800">
           <div className="flex flex-col items-center justify-center text-center">
             <p className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               You are logged in!
@@ -77,7 +77,7 @@ export default function Login({
   if (!compact) {
     // Large view renders the form directly in the card
     return (
-      <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800 mt-4 mx-4">
+      <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800">
         <UnifiedLoginForm />
       </div>
     );
@@ -177,6 +177,7 @@ const OAuthForm = () => {
 
   useEffect(() => {
     const lastHandle = localStorage.getItem("lastHandle");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lastHandle) setHandle(lastHandle);
   }, []);
 
@@ -229,6 +230,7 @@ const PasswordForm = () => {
 
   useEffect(() => {
     const lastHandle = localStorage.getItem("lastHandle");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lastHandle) setUser(lastHandle);
   }, []);
 
@@ -246,7 +248,7 @@ const PasswordForm = () => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <p className="text-xs text-red-500 dark:text-red-400">
-        Warning: Less secure. Use an App Password.
+        Less secure. Do not use your main password, please use an App Password.
       </p>
       {/* <input
         type="text"
