@@ -6,6 +6,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import React, { type ReactNode, useEffect, useState } from "react";
 
+import { FORCE_HIDE_LABELS, FORCE_HIDE_LABELS_WHITELISTED_SOURCE } from "~/../policy";
 import defaultpfp from "~/../public/defaultpfp.png";
 import { Header } from "~/components/Header";
 import {
@@ -14,10 +15,13 @@ import {
 } from "~/components/ReusableTabRoute";
 import {
   SmallAuthorLabelBadge,
+  SmallAuthorLabelBadgeInner,
   UniversalPostRendererATURILoader,
 } from "~/components/UniversalPostRenderer";
 import { renderTextWithFacets } from "~/components/UtilityFunctions";
-import { useModeration } from "~/hooks/useModeration";
+import { getGetHydratedLabelDefs, useAutoLabels } from "~/hooks/useAutoLabels";
+import type { HydratedLabelValueDefinition } from "~/providers/AutoLabelProvider";
+//import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { enableBitesAtom, imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
 import {
@@ -34,14 +38,21 @@ import {
   useQueryIdentity,
   useQueryProfile,
 } from "~/utils/useQuery";
+// README this weird manual import is required because icon auto imports in this file (and some other files) are broken
+// for some reason which i dont know. 
+import IconMdiMoreHoriz from "~icons/mdi/more-horiz.jsx";
 import IconMdiShieldOutline from "~icons/mdi/shield-outline.jsx";
 
 import { renderSnack } from "../__root";
-import { Chip } from "../notifications";
+import { Chip, NotificationItem } from "../notifications";
 
 export const Route = createFileRoute("/profile/$did/")({
   component: ProfileComponent,
 });
+
+export interface LabelWithHydratedLocaleName extends ATPAPI.ComAtprotoLabelDefs.Label {
+  name: string
+}
 
 function ProfileComponent() {
   // booo bad this is not always the did it might be a handle, use identity.did instead
@@ -55,15 +66,97 @@ function ProfileComponent() {
     error: identityError,
   } = useQueryIdentity(did);
 
+  const agentDid = agent?.did;
+  const authorDid = identity?.did;
 
-  const { isLoading: authorModLoading, labels: authorLabels } = useModeration(
-    did,
+  const userBlocksAuthor = useGetOneToOneState(
+    agentDid && authorDid
+      ? {
+        target: authorDid,
+        user: agentDid,
+        collection: "app.bsky.graph.block",
+        path: ".subject",
+      }
+      : undefined,
   );
+  const authorBlocksUser = useGetOneToOneState(
+    agentDid && authorDid
+      ? {
+        target: agentDid,
+        user: authorDid,
+        collection: "app.bsky.graph.block",
+        path: ".subject",
+      }
+      : undefined,
+  );
+  
+  const redactWhileLoadingBlock = userBlocksAuthor.isLoading || authorBlocksUser.isLoading
+  const redactFinalBlock = userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0
+
+  const subjects = identity ? [
+    identity.did,
+    `at://${identity.did}/app.bsky.actor.profile/self`,
+  ] : []
+  
+  const {
+    results: labelResults,
+    hydratedLabelDefs,
+  } = useAutoLabels({
+    subjects,
+    type: "post", // or whatever you’re keying on for now
+  })
+
+  const ghld = getGetHydratedLabelDefs(hydratedLabelDefs)
+  const accountResult = labelResults.get(identity?.did || did)
+  const profileResult = labelResults.get(
+    `at://${identity?.did || did}/app.bsky.actor.profile/self`,
+  )
+
+  const accountLabelVerdict = accountResult?.labelVerdict ?? "unknown"
+  const authorLabels = accountResult?.labels ?? []
+
+  const profileLabelVerdict = profileResult?.labelVerdict ?? "unknown"
+  const profileLabels = profileResult?.labels ?? []
+
+  const authorModUnknown = accountLabelVerdict === "unknown";
+  const profileModUnknown = profileLabelVerdict === "unknown";
+
+  const authorModLoading = accountLabelVerdict === "loading";
+  const profileModLoading = profileLabelVerdict === "loading";
+
+  const authorModError = accountLabelVerdict === "error";
+  const profileModError = profileLabelVerdict === "error";
+
+  const strictModerationUnknown = authorModUnknown || profileModUnknown
+  const strictModerationLoading = authorModLoading || profileModLoading || redactWhileLoadingBlock
+  const strictModerationError = authorModError || profileModError
+
+  const strictModerationDontShow = strictModerationUnknown || strictModerationLoading || strictModerationError || redactFinalBlock
+
+  const verdictDebugString = `accountLabelVerdict: ${accountLabelVerdict}, profileLabelVerdict: ${profileLabelVerdict}`
+
   const hideAuthorLabels = authorLabels.filter(
-    label => label.preference === 'hide'
+    (label) => ghld(label.src,label.val)?.pref === "hide",
   );
   const warnAuthorLabels = authorLabels.filter(
-    label => label.preference === 'warn'
+    (label) => ghld(label.src,label.val)?.severity === "warn" && ghld(label.src,label.val)?.pref === "warn",
+  );
+  const informAuthorLabels: LabelWithHydratedLocaleName[] = authorLabels.flatMap(
+    (label) => {
+      if (ghld(label.src,label.val)?.severity === "inform" && ghld(label.src,label.val)?.pref === "warn") {
+        return [{
+          ...label,
+          name: getLocaleLabel(ghld(label.src,label.val))?.name || label.val
+        }]
+      }
+      return []
+    },
+  );
+  const hideProfileLabels = profileLabels.filter(
+    (label) => ghld(label.src,label.val)?.pref === "hide",
+  );
+  const warnProfileLabels = profileLabels.filter(
+    (label) => ghld(label.src,label.val)?.pref === "warn",
   );
 
   // i was gonna check the did doc but useQueryIdentity doesnt return that info (slingshot minidoc)
@@ -123,10 +216,101 @@ function ProfileComponent() {
 
   const followercount = resultwhateversure?.data?.total;
 
+  const isForceHidden = [...[...authorLabels].filter((label) => {
+    return (
+      FORCE_HIDE_LABELS.has(label.val) &&
+      FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
+    );
+  }), ...hideAuthorLabels];
+
+  // // todo remove this replace it with blurs
+  // if (strictModerationLoading) {
+  //   return (
+  //     <div className="">
+  //       <Header
+  //         title={`Loading Profile`}
+  //         backButtonCallback={() => {
+  //           if (window.history.length > 1) {
+  //             window.history.back();
+  //           } else {
+  //             window.location.assign("/");
+  //           }
+  //         }}
+  //         bottomBorderDisabled={true}
+  //       />
+  //       <div className=" leading-normal flex flex-col gap-4 p-4">
+  //         <span>DEBUG LOADING LABELS</span>
+  //         <span>{identity?.did || did}</span>
+  //         <span>{verdictDebugString}</span>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  console.log("HLLO HLLO HisForceHidden" + did + isForceHidden + authorLabels)
+  if (isForceHidden.length > 0 || redactFinalBlock) {
+    // todo pretify this please
+    return (
+      <div className="">
+        <Header
+          title={`Hidden Profile`}
+          backButtonCallback={() => {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.assign("/");
+            }
+          }}
+          bottomBorderDisabled={true}
+        />
+        <div className="p-4">
+          <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-xl  border-gray-200 dark:border-gray-800 flex flex-col gap-4">
+            {/* todo: separate host-mandated labelers from user-picked labelers. 
+            currently assumes all labelers that hides profiles are host-mandated */}
+            <p>This profile is hidden due to these reason(s):</p>
+            {isForceHidden.map((item) => {
+              return (
+                // todo this sucks
+                <NotificationItem
+                  key={item.src}
+                  notification={item.src}
+                  labeler={getLocaleLabel(ghld(item.src, item.val))?.name || item.val}
+                  disablefollow={true}
+                />
+              )
+            })}
+            {/* todo add unblock button duhhhhhh */}
+            {/* {userBlocksAuthor.uris.length > 0 && (<div className="p-4">User Blocked by You</div>)} */}
+            {userBlocksAuthor.uris.length > 0 && (
+              <NotificationItem
+                notification={authorDid||did}
+                blocking={"unblock"}
+              />
+            )}
+            {/* {authorBlocksUser.uris.length > 0 && (<div className="p-4">User Blocking You</div>)} */}
+            {authorBlocksUser.uris.length > 0 && (
+              <NotificationItem
+                notification={authorDid||did}
+                blocking={"blocked"}
+              />
+            )}
+            <div className="flex flex-row gap-2">
+              <Link to="/moderation" className="flex-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex items-center justify-center">
+              <span>Moderation Settings</span>
+            </Link>
+            <Link to="/about" className="flex-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex items-center justify-center">
+              <span>Host instance's policies</span>
+            </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="">
       <Header
-        title={`Profile`}
+        title={`${strictModerationLoading ? "Loading " :" "}Profile`}
         backButtonCallback={() => {
           if (window.history.length > 1) {
             window.history.back();
@@ -161,7 +345,8 @@ function ProfileComponent() {
         <div
           className="w-full h-40 bg-gray-300 dark:bg-gray-700"
           style={{
-            backgroundImage: `url(${getBannerUrl(profile)})`,
+            backgroundImage: strictModerationLoading ? undefined : `url(${getBannerUrl(profile)})`,
+            backgroundColor: strictModerationLoading ? "var(--color-placeholder)" : undefined,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -169,7 +354,14 @@ function ProfileComponent() {
 
         {/* Avatar (PFP) */}
         <div className="absolute left-[16px] top-[100px] ">
-          {!getAvatarUrl(profile) && isLabeler ? (
+          {strictModerationLoading ? (
+            <div
+              className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700 overflow-clip`}
+            >
+              <div className={`w-28 h-28 bg-gray-400 dark:bg-gray-600 animate-pulse`}
+            />
+            </div>
+          ) : !getAvatarUrl(profile) && isLabeler ? (
             <div
               className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} items-center justify-center flex object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700`}
             >
@@ -194,7 +386,7 @@ function ProfileComponent() {
           */}
           <FollowButton targetdidorhandle={did} />
           <button
-            className="rounded-full dark:bg-gray-600 bg-gray-300 px-3 py-2 text-[14px]"
+            className="rounded-full h-10 w-10 text-[15px] flex justify-center items-center bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             onClick={(e) => {
               renderSnack({
                 title: "Not Implemented Yet",
@@ -203,12 +395,12 @@ function ProfileComponent() {
               });
             }}
           >
-            ... {/* todo: icon */}
+            <IconMdiMoreHoriz />
           </button>
         </div>
 
         {/* Info Card */}
-        <div className="mt-16 pb-2 px-4 text-gray-900 dark:text-gray-100">
+        <div className="mt-14 pb-2 px-4 text-gray-900 dark:text-gray-100">
           <div className="font-bold text-2xl">{displayName}</div>
           <div className="text-gray-500 dark:text-gray-400 text-base mb-3 flex flex-row gap-1">
             <Mutual targetdidorhandle={did} />
@@ -228,7 +420,7 @@ function ProfileComponent() {
               Follows
             </Link>
           </div>
-          {description && (
+          {!strictModerationLoading && description && (
             <div className="text-base leading-relaxed text-gray-800 dark:text-gray-300 mb-5 whitespace-pre-wrap break-words text-[15px]">
               {/* {description} */}
               <RichTextRenderer key={did} description={description} />
@@ -257,8 +449,9 @@ function ProfileComponent() {
             :
             (
               <div className="flex flex-wrap flex-row gap-1">
-                {warnAuthorLabels.map((label, index) => (
-                  <SmallAuthorLabelBadge label={label} key={label.cts + label.sourceDid + label.val} large />
+                {/* authorLabels{JSON.stringify(authorLabels,null,2)} */}
+                {informAuthorLabels.map((label, index) => (
+                  <SmallAuthorLabelBadge label={label} key={label.cts + label.src + label.val} large />
                 ))}
               </div>
             )
@@ -968,7 +1161,7 @@ export function FollowButton({
                   queryClient: queryClient,
                 });
               }}
-              className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+              className=" shrink-0 font-medium rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
             >
               Follow
             </button>
@@ -983,7 +1176,7 @@ export function FollowButton({
                   queryClient: queryClient,
                 });
               }}
-              className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+              className=" shrink-0 font-medium rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
             >
               Unfollow
             </button>
@@ -991,7 +1184,7 @@ export function FollowButton({
         </>
       ) : (
         <button
-          className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+          className=" shrink-0 font-medium rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
           onClick={(e) => {
             renderSnack({
               title: "Not Implemented Yet",
@@ -1028,7 +1221,7 @@ export function BiteButton({
             targetDid: identity?.did,
           });
         }}
-        className="rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
+        className=" shrink-0 font-medium rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
       >
         Bite
       </button>
@@ -1083,7 +1276,7 @@ export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
   const { agent } = useAuth();
   const { data: identity } = useQueryIdentity(targetdidorhandle);
 
-  const theyFollowYouRes = useGetOneToOneState(
+  const { uris: theyFollowYouRes } = useGetOneToOneState(
     agent?.did
       ? {
         target: agent?.did,
@@ -1176,4 +1369,13 @@ export function RichTextRenderer({ description }: { description: string }) {
   }, [description, agent, navigate]);
 
   return <>{richDescription}</>;
+}
+
+export function getLocaleLabel(hlvd?: HydratedLabelValueDefinition) {
+  if (!hlvd) return undefined
+  const userLang = "en"; 
+  const locale = hlvd.locales.find((l) => l.lang === userLang) 
+    || hlvd.locales.find((l) => l.lang === "en")
+    || hlvd.locales[0];
+    return locale
 }

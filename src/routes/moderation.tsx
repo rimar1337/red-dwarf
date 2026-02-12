@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { Switch } from "radix-ui";
 
+import { FORCED_LABELER_DIDS } from "~/../policy";
 import { Header } from "~/components/Header";
 import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
@@ -21,6 +22,53 @@ import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
 import { renderSnack } from "./__root";
 import { NotificationItem } from "./notifications";
 import { SettingHeading } from "./settings";
+
+const FOUR_GLOBAL_LABELS = [
+  "porn",
+  "sexual",
+  "graphic-media",
+  "nudity",
+] as const;
+
+const FOUR_GLOBAL_LABELS_TEXT: Record<FourGlobalLabel, {title: string, desc: string}> = {
+  porn: {
+    title: "Adult Content",
+    desc: "Explicit sexual images."
+  },
+  sexual: {
+    title: "Sexually Suggestive",
+    desc: "Does not include nudity."
+  },
+  "graphic-media": {
+    title: "Graphic Media",
+    desc: "Explicit or potentially disturbing media."
+  },
+  nudity: {
+    title: "Non-sexual Nudity",
+    desc: "E.g. artistic nudes."
+  }
+};
+
+type FourGlobalLabel = typeof FOUR_GLOBAL_LABELS[number];
+
+// todo please make this part of labeler resolution process / policies.ts
+const DEFAULT_FOUR_GLOBAL_PREFS: Record<FourGlobalLabel, ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition["defaultSetting"]> = {
+  porn: "ignore",
+  sexual: "ignore",
+  "graphic-media": "ignore",
+  nudity: "ignore",
+};
+
+function normalizeFourGlobalPrefs(
+  prefs: Record<string, string>,
+): Record<FourGlobalLabel, string> {
+  return Object.fromEntries(
+    FOUR_GLOBAL_LABELS.map((label) => [
+      label,
+      prefs[label] ?? DEFAULT_FOUR_GLOBAL_PREFS[label],
+    ]),
+  ) as Record<FourGlobalLabel, string>;
+}
 
 export const Route = createFileRoute("/moderation")({
   component: RouteComponent,
@@ -47,10 +95,16 @@ function RouteComponent() {
 
   const parsedPref = parsePreferences(rawprefs);
 
+  const hostmandate = FORCED_LABELER_DIDS
+
+  const fourGlobalPrefs = normalizeFourGlobalPrefs(parsedPref?.contentLabelPrefs ?? {})
+
+  console.log(parsedPref?.labelers?.map(l => `&l=${l}`).join("") ?? "")
+
   return (
     <div>
       <Header
-        title={`Moderation (WIP)`}
+        title={`Moderation`}
         backButtonCallback={() => {
           if (window.history.length > 1) {
             window.history.back();
@@ -77,7 +131,18 @@ function RouteComponent() {
         - Verification settings
         <br />
       </p> */}
-      <SettingHeading title="Content Filters" />
+      <SettingHeading title="Moderation Tools" />
+      <div>
+        TODO: hello please add the entire bsky mod tools set including but not limited to:
+        Interaction settings,
+        Muted Words & Tags,
+        Moderation lists,
+        Muted accounts,
+        Blocked accounts,
+        Verification settings
+
+      </div>
+      <SettingHeading title="Global Content Filters" />
       <div>
         <div className="flex items-center gap-4 px-4 py-2 border-b">
           <label
@@ -115,7 +180,7 @@ function RouteComponent() {
         <TestModeration subject="did:plc:ia76kvnndjutgedggx2ibrem" />
         <TestModeration subject="did:plc:w2wbinubagmo4hlxx2ik5rrp" /> */}
         <div className="">
-          {Object.entries(parsedPref?.contentLabelPrefs ?? {}).map(
+          {Object.entries(fourGlobalPrefs).map(
             ([label, visibility]) => (
               <div
                 key={label}
@@ -126,9 +191,9 @@ function RouteComponent() {
                   className="flex flex-row flex-1"
                 >
                   <div className="flex flex-col">
-                    <span className="text-md">{label}</span>
+                    <span className="text-md">{FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].title}</span>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {"uknown labeler"}
+                      {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].desc}
                     </span>
                   </div>
                 </label>
@@ -143,9 +208,23 @@ function RouteComponent() {
           )}
         </div>
       </div>
-      <SettingHeading title="Advanced" />
+      {/* probably replace "Advanced" with "User Subscribed Moderation Labelers" or something */}
+      {hostmandate && (<SettingHeading title="Host-Mandated Labelers" />)}
+      {hostmandate?.map((labeler) => {
+        return (
+          // todo this sucks
+          <NotificationItem
+            key={labeler}
+            notification={labeler}
+            labeler={true}
+            disablefollow={true}
+          />
+        );
+      })}
+      <SettingHeading title="Subscribed Labelers" />
       {parsedPref?.labelers.map((labeler) => {
         return (
+          // todo this sucks
           <NotificationItem
             key={labeler}
             notification={labeler}
@@ -157,6 +236,12 @@ function RouteComponent() {
   );
 }
 
+function ignoreToShow(input:string):string{
+  if (input === "ignore") {
+    return "show"
+  }
+  return input
+}
 export function TripleToggle({
   value,
   onChange,
@@ -186,7 +271,7 @@ export function TripleToggle({
               }`}
           >
             {" "}
-            {opt.charAt(0).toUpperCase() + opt.slice(1)}
+            {ignoreToShow(opt).charAt(0).toUpperCase() + ignoreToShow(opt).slice(1)}
           </button>
         );
       })}

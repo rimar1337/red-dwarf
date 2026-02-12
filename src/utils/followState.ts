@@ -1,6 +1,6 @@
 import { type Agent, AtUri } from "@atproto/api";
 import { TID } from "@atproto/common-web";
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient, UseQueryResult } from "@tanstack/react-query";
 
 import { type linksRecordsResponse, useQueryConstellation } from "./useQuery";
 
@@ -134,8 +134,12 @@ export function useGetOneToOneState(params?: {
   user: string;
   collection: string;
   path: string;
-}): string[] | undefined {
-  const { data: arbitrarydata } = useQueryConstellation(
+}): {
+  uris: string[],
+  isLoading: boolean;
+  isError: boolean;
+} {
+  const whatever = useQueryConstellation(
     params && params.user
       ? {
           method: "/links",
@@ -151,15 +155,28 @@ export function useGetOneToOneState(params?: {
         }
       : { method: "undefined", target: "whatever" },
     // overloading sucks so much
-  ) as { data: linksRecordsResponse | undefined };
-  if (!params || !params.user) return undefined;
+  ) as UseQueryResult<linksRecordsResponse | undefined, Error>;
+  if (!params || !params.user) return {
+    uris: [],
+    isError: true,
+    isLoading: false,
+  };
+  const arbitrarydata = whatever.data;
   const data = arbitrarydata?.linking_records.slice(0, 50) ?? [];
 
   if (data.length > 0) {
-    return data.map((linksRecord) => {
-      return `at://${linksRecord.did}/${linksRecord.collection}/${linksRecord.rkey}`;
-    });
+    return {
+      uris: data.map((linksRecord) => {
+        return `at://${linksRecord.did}/${linksRecord.collection}/${linksRecord.rkey}`;
+      }),
+      isError: false,
+      isLoading: false,
+    };
   }
 
-  return undefined;
+  return {
+    uris: [],
+    isError: whatever.isLoading,
+    isLoading: whatever.isError,
+  };
 }

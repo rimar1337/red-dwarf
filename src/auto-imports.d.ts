@@ -11,8 +11,14 @@ declare global {
   const IconMaterialSymbolsArrowBack: typeof import('~icons/material-symbols/arrow-back.jsx').default
   const IconMaterialSymbolsHome: typeof import('~icons/material-symbols/home.jsx').default
   const IconMaterialSymbolsHomeOutline: typeof import('~icons/material-symbols/home-outline.jsx').default
+  const IconMaterialSymbolsInfo: typeof import('~icons/material-symbols/info.jsx').default
+  const IconMaterialSymbolsInfoO: typeof import('~icons/material-symbols/info-o.jsx').default
+  const IconMaterialSymbolsInfoOutline: typeof import('~icons/material-symbols/info-outline.jsx').default
+  const IconMaterialSymbolsMoreVert: typeof import('~icons/material-symbols/more-vert.jsx').default
   const IconMaterialSymbolsNotifications: typeof import('~icons/material-symbols/notifications.jsx').default
   const IconMaterialSymbolsNotificationsOutline: typeof import('~icons/material-symbols/notifications-outline.jsx').default
+  const IconMaterialSymbolsRssFeed: typeof import('~icons/material-symbols/rss-feed.jsx').default
+  const IconMaterialSymbolsScanDeleteOutline: typeof import('~icons/material-symbols/scan-delete-outline.jsx').default
   const IconMaterialSymbolsSearch: typeof import('~icons/material-symbols/search.jsx').default
   const IconMaterialSymbolsSettings: typeof import('~icons/material-symbols/settings.jsx').default
   const IconMaterialSymbolsSettingsOutline: typeof import('~icons/material-symbols/settings-outline.jsx').default
@@ -29,6 +35,7 @@ declare global {
   const IconMdiClockOutline: typeof import('~icons/mdi/clock-outline.jsx').default
   const IconMdiClose: typeof import('~icons/mdi/close.jsx').default
   const IconMdiCommentOutline: typeof import('~icons/mdi/comment-outline.jsx').default
+  const IconMdiElipsis: typeof import('~icons/mdi/elipsis.jsx').default
   const IconMdiGlobe: typeof import('~icons/mdi/globe.jsx').default
   const IconMdiLock: typeof import('~icons/mdi/lock.jsx').default
   const IconMdiMessageReplyTextOutline: typeof import('~icons/mdi/message-reply-text-outline.jsx').default

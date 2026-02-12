@@ -5,6 +5,8 @@ Red Dwarf is a Bluesky client that does not use any AppView servers, instead it 
 
 huge thanks to [Microcosm](https://microcosm.blue/) for making this possible
 
+issue tracker kanban board: [https://github.com/users/rimar1337/projects/1/views/1]https://github.com/users/rimar1337/projects/1/views/1
+
 ## running dev and build
 in the `vite.config.ts` file you should change these values
 ```ts
@@ -30,6 +32,9 @@ Red Dwarf has been upgraded from its original bespoke caching system to Tanstack
 all core data fetching logic is now centralized in `src/utils/useQuery.ts` and exposed as a collection of custom react hooks. theres two basic types of custom hooks, the use-once, and the inifinite query ones (used for paginated requests like feed skeletons and listrecord)
 
 ## UniversalPostRenderer
+> [!NOTE]  
+> UPR is undergoing a refactor, so this info might be out of date
+
 its a mega component rooted in my Masonry "[TestFront](https://testfront-87q.pages.dev/)" project. its goal is simple: have one component render everything. it has several shims to normalize different post data formats into a single format the component can handle. unlike TestFront, it has no animations, though some weird component splits might linger from the old version.
 
 to adapt TestFront's bsky-api-based `UniversalPostRenderer` to Red Dwarf's model of fetching records directly from each user's PDS and then querying constellation for backlinks, i wrap it in `UniversalPostRendererATURILoader`, which handles raw record and backlink fetching. to bridge the gap between bsky api shapes like `PostView` and the raw record, i use `UniversalPostRendererRawRecordShim`. this way, the core `UniversalPostRenderer` remains the same between TestFront and Red Dwarf (with the only difference being in the red dwarf version the framer motion animations are removed).

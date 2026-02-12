@@ -30,6 +30,11 @@ const localStoragePersister = createSyncStoragePersister({
 persistQueryClient({
   queryClient,
   persister: localStoragePersister,
+  dehydrateOptions: {
+    shouldDehydrateQuery: (query) => {
+      return !query.queryKey.includes('__volatile')
+    },
+  },
 });
 
 // Create a new router instance

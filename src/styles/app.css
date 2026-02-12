@@ -375,3 +375,18 @@ body[data-scroll-locked]{
     }
   }
 }
+
+/* todo: check this. might break everything */
+html, :host {
+  line-height: normal;
+}
+
+:root {
+  /* bg-gray-300 dark:bg-gray-600 */
+  --color-placeholder: var(--color-gray-300);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-placeholder: var(--color-gray-600);
+  }
+}

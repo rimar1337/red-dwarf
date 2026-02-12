@@ -19,7 +19,7 @@ import { FeedItemRenderAturiLoader } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 
 import { PollEmbed } from "./PollComponents";
-import { UniversalPostRenderer } from "./UniversalPostRenderer";
+import { UniversalPostRenderer, UniversalPostRendererATURILoader } from "./UniversalPostRenderer";
 
 type Embed =
   | AppBskyEmbedRecord.View
@@ -27,7 +27,7 @@ type Embed =
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
-  | { $type: string; [k: string]: unknown };
+  | { $type: string;[k: string]: unknown };
 
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
@@ -55,6 +55,7 @@ export function PostEmbeds({
   nopics,
   lightboxCallback,
   constellationLinks,
+  redactedLoading
 }: {
   embed?: Embed;
   moderation?: ModerationDecision;
@@ -67,6 +68,7 @@ export function PostEmbeds({
   nopics?: boolean;
   lightboxCallback?: (d: LightboxProps) => void;
   constellationLinks?: any;
+  redactedLoading?: boolean;
 }) {
   function setLightboxIndex(number: number) {
     navigate({
@@ -114,6 +116,7 @@ export function PostEmbeds({
           nopics={nopics}
           lightboxCallback={lightboxCallback}
           constellationLinks={constellationLinks}
+          redactedLoading={redactedLoading}
         />
         <div style={{ height: 12 }} />
         <div
@@ -151,28 +154,28 @@ export function PostEmbeds({
     const reallybadaturi = reallybaduri ? new AtUri(reallybaduri) : undefined;
 
     if (AppBskyFeedDefs.isGeneratorView(embed.record)) {
-      return <div style={stopgap}>feedgen placeholder</div>;
+      return <div style={stopgap} className={(redactedLoading ? " blur animate-pulse" : undefined)}>feedgen placeholder</div>;
     } else if (
       !!reallybaduri &&
       !!reallybadaturi &&
       reallybadaturi.collection === "app.bsky.feed.generator"
     ) {
       return (
-        <div className="rounded-xl border">
+        <div className={`rounded-xl border` + (redactedLoading ? " blur animate-pulse" : undefined)}>
           <FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder />
         </div>
       );
     }
 
     if (AppBskyGraphDefs.isListView(embed.record)) {
-      return <div style={stopgap}>list placeholder</div>;
+      return <div style={stopgap} className={(redactedLoading ? " blur animate-pulse" : undefined)}>list placeholder</div>;
     } else if (
       !!reallybaduri &&
       !!reallybadaturi &&
       reallybadaturi.collection === "app.bsky.graph.list"
     ) {
       return (
-        <div className="rounded-xl border">
+        <div className={"rounded-xl border" + (redactedLoading ? " blur animate-pulse" : undefined)}>
           <FeedItemRenderAturiLoader
             aturi={reallybaduri}
             disableBottomBorder
@@ -184,14 +187,14 @@ export function PostEmbeds({
     }
 
     if (AppBskyGraphDefs.isStarterPackViewBasic(embed.record)) {
-      return <div style={stopgap}>starter pack card placeholder</div>;
+      return <div style={stopgap} className={(redactedLoading ? " blur animate-pulse" : undefined)}>starter pack card placeholder</div>;
     } else if (
       !!reallybaduri &&
       !!reallybadaturi &&
       reallybadaturi.collection === "app.bsky.graph.starterpack"
     ) {
       return (
-        <div className="rounded-xl border">
+        <div className={"rounded-xl border" + (redactedLoading ? " blur animate-pulse" : undefined)}>
           <FeedItemRenderAturiLoader
             aturi={reallybaduri}
             disableBottomBorder
@@ -229,7 +232,7 @@ export function PostEmbeds({
             borderRadius: 12,
             overflow: "hidden",
           }}
-          className="shadow border border-gray-200 dark:border-gray-800 was7"
+          className={"shadow border border-gray-200 dark:border-gray-800 was7" + (redactedLoading ? " blur animate-pulse" : undefined)}
         >
           <UniversalPostRenderer
             post={post}
@@ -249,6 +252,11 @@ export function PostEmbeds({
           />
         </div>
       );
+
+    } if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
+      return (
+        <UniversalPostRendererATURILoader atUri={embed.record.uri} isQuote />
+      )
     } else {
       console.log("what the hell is a ", embed);
       return <>sorry</>;
@@ -280,29 +288,40 @@ export function PostEmbeds({
                 width: "100%",
                 aspectRatio: image.aspectRatio
                   ? (() => {
-                      const { width, height } = image.aspectRatio;
-                      const ratio = width / height;
-                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                    })()
+                    const { width, height } = image.aspectRatio;
+                    const ratio = width / height;
+                    return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                  })()
                   : "1 / 1",
                 borderRadius: 12,
                 overflow: "hidden",
               }}
               className="border border-gray-200 dark:border-gray-800 was7 bg-gray-200 dark:bg-gray-900"
             >
-              <img
-                src={image.fullsize}
-                alt={image.alt}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(0);
-                }}
-              />
+              {redactedLoading ? (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                  className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+                />
+              ) : (
+                <img
+                  src={image.fullsize}
+                  alt={image.alt}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex(0);
+                  }}
+                />
+              )}
             </div>
           </div>
         );
@@ -326,20 +345,32 @@ export function PostEmbeds({
                 key={i}
                 style={{ flex: 1, aspectRatio: "1 / 1", position: "relative" }}
               >
-                <img
-                  src={img.fullsize}
-                  alt={img.alt}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex(i);
-                  }}
-                />
+                {redactedLoading ? (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0",
+                    }}
+                    className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+                  />
+                ) : (
+                  <img
+                    src={img.fullsize}
+                    alt={img.alt}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxIndex(i);
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -362,20 +393,32 @@ export function PostEmbeds({
             <div
               style={{ flex: 1, aspectRatio: "1 / 1", position: "relative" }}
             >
-              <img
-                src={images[0].fullsize}
-                alt={images[0].alt}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: "12px 0 0 12px",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(0);
-                }}
-              />
+              {redactedLoading ? (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "12px 0 0 12px",
+                  }}
+                  className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+                />
+              ) : (
+                <img
+                  src={images[0].fullsize}
+                  alt={images[0].alt}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "12px 0 0 12px",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex(0);
+                  }}
+                />
+              )}
             </div>
             <div
               style={{
@@ -394,20 +437,32 @@ export function PostEmbeds({
                     position: "relative",
                   }}
                 >
-                  <img
-                    src={images[i].fullsize}
-                    alt={images[i].alt}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      borderRadius: i === 1 ? "0 12px 0 0" : "0 0 12px 0",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLightboxIndex(i + 1);
-                    }}
-                  />
+                  {redactedLoading ? (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: i === 1 ? "0 12px 0 0" : "0 0 12px 0",
+                      }}
+                      className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+                    />
+                  ) : (
+                    <img
+                      src={images[i].fullsize}
+                      alt={images[i].alt}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: i === 1 ? "0 12px 0 0" : "0 0 12px 0",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex(i + 1);
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -440,27 +495,46 @@ export function PostEmbeds({
                   position: "relative",
                 }}
               >
-                <img
-                  src={img.fullsize}
-                  alt={img.alt}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius:
-                      i === 0
-                        ? "12px 0 0 0"
-                        : i === 1
-                          ? "0 12px 0 0"
-                          : i === 2
-                            ? "0 0 0 12px"
-                            : "0 0 12px 0",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex(i);
-                  }}
-                />
+                {redactedLoading ? (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius:
+                        i === 0
+                          ? "12px 0 0 0"
+                          : i === 1
+                            ? "0 12px 0 0"
+                            : i === 2
+                              ? "0 0 0 12px"
+                              : "0 0 12px 0",
+                    }}
+                    className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+                  />
+                ) : (
+                  <img
+                    src={img.fullsize}
+                    alt={img.alt}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius:
+                        i === 0
+                          ? "12px 0 0 0"
+                          : i === 1
+                            ? "0 12px 0 0"
+                            : i === 2
+                              ? "0 0 0 12px"
+                              : "0 0 12px 0",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxIndex(i);
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -476,12 +550,17 @@ export function PostEmbeds({
     const hasPollLink = pollLinks && Object.keys(pollLinks).length > 0;
 
     if (hasPollLink && postid) {
-      return <PollEmbed did={postid.did} rkey={postid.rkey} />;
+      // warning: i gave up and warpped it in a div lmao
+      return (
+        <div className={(redactedLoading ? " blur animate-pulse " : undefined)}>
+          <PollEmbed did={postid.did} rkey={postid.rkey} />
+        </div>
+      );
     }
 
     const link = embed.external;
     return (
-      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} />
+      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} redactedLoading={redactedLoading} />
     );
   }
 
@@ -493,6 +572,7 @@ export function PostEmbeds({
         url={playlist}
         thumbnail={embed.thumbnail}
         aspect={embed.aspectRatio}
+        redactedLoading={redactedLoading}
       />
     );
   }
@@ -504,10 +584,12 @@ export function ExternalLinkEmbed({
   link,
   onOpen,
   style,
+  redactedLoading
 }: {
   link: AppBskyEmbedExternal.ViewExternal;
   onOpen?: () => void;
   style?: React.CSSProperties;
+  redactedLoading?: boolean;
 }) {
   const { uri, title, description, thumb } = link;
   const thumbAspectRatio = 1.91;
@@ -554,7 +636,7 @@ export function ExternalLinkEmbed({
 
   return (
     <a
-      href={uri}
+      href={redactedLoading ? undefined : uri}
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => {
@@ -581,18 +663,32 @@ export function ExternalLinkEmbed({
             }}
             className="border-b border-gray-200 dark:border-gray-800 was7"
           >
-            <img
-              src={thumb}
-              alt={description}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
-            />
+            {redactedLoading ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+                className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+              />
+            ) : (
+              <img
+                src={thumb}
+                alt={description}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            )}
           </div>
         )}
         <div
@@ -605,13 +701,13 @@ export function ExternalLinkEmbed({
         >
           <div
             style={titleStyle as React.CSSProperties}
-            className="text-gray-900 dark:text-gray-100"
+            className={"text-gray-900 dark:text-gray-100 " + (redactedLoading ? " blur animate-pulse " : undefined)}
           >
             {title}
           </div>
           <div
             style={descriptionStyle as React.CSSProperties}
-            className="text-gray-500 dark:text-gray-400"
+            className={"text-gray-500 dark:text-gray-400 " + (redactedLoading ? " blur animate-pulse " : undefined)}
           >
             {description}
           </div>
@@ -629,12 +725,14 @@ export function ExternalLinkEmbed({
               gap: 4,
             }}
           >
-            <IconMdiGlobe />
+            <div className={redactedLoading ? "blur animate-pulse" : undefined}>
+              <IconMdiGlobe />
+            </div>
             <span
               style={{
                 fontSize: 12,
               }}
-              className="text-gray-500 dark:text-gray-400"
+              className={"text-gray-500 dark:text-gray-400 " + (redactedLoading ? " blur animate-pulse " : undefined)}
             >
               {getDomain(uri)}
             </span>
@@ -649,10 +747,12 @@ export const SmartHLSPlayer = ({
   url,
   thumbnail,
   aspect,
+  redactedLoading,
 }: {
   url: string;
   thumbnail?: string;
   aspect?: AppBskyEmbedDefs.AspectRatio;
+  redactedLoading?: boolean;
 }) => {
   const [playing, setPlaying] = useState(false);
   const containerRef = useRef(null);
@@ -693,24 +793,38 @@ export const SmartHLSPlayer = ({
     >
       {!playing && (
         <>
-          <img
-            src={thumbnail}
-            alt="Video thumbnail"
-            style={{
-              width: "100%",
-              display: "block",
-              aspectRatio: aspect ? aspect?.width / aspect?.height : 16 / 9,
-              borderRadius: 12,
-            }}
-            className="border border-gray-200 dark:border-gray-800 was7"
-            onClick={async (e) => {
-              e.stopPropagation();
-              setPlaying(true);
-            }}
-          />
+          {redactedLoading ? (
+            <div
+              style={{
+                width: "100%",
+                display: "block",
+                aspectRatio: aspect ? aspect?.width / aspect?.height : 16 / 9,
+                borderRadius: 12,
+              }}
+              className="border border-gray-200 dark:border-gray-800 was7 bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+            />
+          ) : (
+            <img
+              src={thumbnail}
+              alt="Video thumbnail"
+              style={{
+                width: "100%",
+                display: "block",
+                aspectRatio: aspect ? aspect?.width / aspect?.height : 16 / 9,
+                borderRadius: 12,
+              }}
+              className="border border-gray-200 dark:border-gray-800 was7"
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (redactedLoading) return;
+                setPlaying(true);
+              }}
+            />
+          )}
           <div
             onClick={async (e) => {
               e.stopPropagation();
+              if (redactedLoading) return;
               setPlaying(true);
             }}
             style={{
@@ -722,9 +836,9 @@ export const SmartHLSPlayer = ({
               pointerEvents: "none",
               userSelect: "none",
             }}
-            className="text-shadow-md"
+          //className="text-shadow-md"
           >
-            <IconMdiPlayCircle />
+            <IconMdiPlayCircle className="h-14 w-14 drop-shadow-xl drop-shadow-gray-950/10 text-gray-50" />
           </div>
         </>
       )}
@@ -735,9 +849,8 @@ export const SmartHLSPlayer = ({
             width: "100%",
             borderRadius: 12,
             overflow: "hidden",
-            paddingTop: `${
-              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-            }%`,
+            paddingTop: `${100 / (aspect ? aspect.width / aspect.height : 16 / 9)
+              }%`,
           }}
           className="border border-gray-200 dark:border-gray-800 was7"
         >

@@ -299,7 +299,7 @@ function usePollSelfVotes(pollUri: string) {
   const { agent } = useAuth();
   const agentDid = agent?.did;
 
-  const userVotesA = useGetOneToOneState(
+  const { uris: userVotesA } = useGetOneToOneState(
     agentDid
       ? {
           target: pollUri,
@@ -309,7 +309,7 @@ function usePollSelfVotes(pollUri: string) {
         }
       : undefined,
   );
-  const userVotesB = useGetOneToOneState(
+  const { uris: userVotesB } = useGetOneToOneState(
     agentDid
       ? {
           target: pollUri,
@@ -319,7 +319,7 @@ function usePollSelfVotes(pollUri: string) {
         }
       : undefined,
   );
-  const userVotesC = useGetOneToOneState(
+  const { uris: userVotesC } = useGetOneToOneState(
     agentDid
       ? {
           target: pollUri,
@@ -329,7 +329,7 @@ function usePollSelfVotes(pollUri: string) {
         }
       : undefined,
   );
-  const userVotesD = useGetOneToOneState(
+  const { uris: userVotesD } = useGetOneToOneState(
     agentDid
       ? {
           target: pollUri,

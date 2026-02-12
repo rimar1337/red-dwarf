@@ -84,8 +84,20 @@ function hydrateEmbedRecord(
   quotedIdentity: QueryResultData<typeof useQueryIdentity>,
   cdn: string
 ): $Typed<AppBskyEmbedRecord.View> | undefined {
+  // if (!quotedPost || !quotedProfile || !quotedIdentity) {
+  //   return undefined;
+  // }
   if (!quotedPost || !quotedProfile || !quotedIdentity) {
-    return undefined;
+    const failureViewRecord: $Typed<AppBskyEmbedRecord.ViewNotFound> = asTyped({
+      $type: "app.bsky.embed.record#viewNotFound" as const,
+      uri: embed.record.uri,
+      notFound: true as const,
+    })
+
+    return asTyped({
+      $type: "app.bsky.embed.record#view" as const,
+      record: failureViewRecord,
+    });
   }
 
   const author: $Typed<AppBskyActorDefs.ProfileViewBasic> = asTyped({
@@ -194,15 +206,14 @@ export function useHydratedEmbed(
   const hydratedEmbed: HydratedEmbedView | undefined = (() => {
     if (!embed || !postAuthorDid) return undefined;
 
-    if (
-      isRecordType &&
-      (!usequerypostresults?.data ||
-        !quotedProfile ||
-        !queryidentityresult?.data)
-    ) {
-      return undefined;
-    }
-
+    // if (
+    //   isRecordType &&
+    //   (!usequerypostresults?.data ||
+    //     !quotedProfile ||
+    //     !queryidentityresult?.data)
+    // ) {
+    //   return undefined;
+    // }
     try {
       if (AppBskyEmbedImages.isMain(embed)) {
         return hydrateEmbedImages(embed, postAuthorDid, imgcdn);

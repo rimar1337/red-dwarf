@@ -2,10 +2,10 @@ import type { QueryLabelsResponse } from "~/types/moderation";
 
 export const fetchLabelsBatch = async (
   serviceUrl: string,
-  uris: string[],
+  opaqueIdentifierStringsToBeModerated: string[],
 ): Promise<QueryLabelsResponse> => {
   const url = new URL(`${serviceUrl}/xrpc/com.atproto.label.queryLabels`);
-  uris.forEach((uri) => url.searchParams.append("uriPatterns", uri));
+  opaqueIdentifierStringsToBeModerated.forEach((opaqueIdentifierStringToBeModerated) => url.searchParams.append("uriPatterns", opaqueIdentifierStringToBeModerated));
   
   // 1. Setup Timeout (5 seconds)
   const controller = new AbortController();

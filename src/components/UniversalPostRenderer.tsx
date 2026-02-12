@@ -15,16 +15,17 @@ import { HoverCard } from "radix-ui";
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-import { UNAUTHED_PREVENT_OPENING_WARNS } from "~/../policy";
+import { FORCE_HIDE_LABELS, FORCE_HIDE_LABELS_WHITELISTED_SOURCE, UNAUTHED_PREVENT_OPENING_WARNS } from "~/../policy";
 import defaultpfp from "~/../public/defaultpfp.png";
+import { getGetHydratedLabelDefs, useAutoLabels } from "~/hooks/useAutoLabels";
 import { useLabelInfo } from "~/hooks/useLabelInfo";
-import { useModeration } from "~/hooks/useModeration";
+//import { useModeration } from "~/hooks/useModeration";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 //import { ModerationInner } from "~/routes/moderation";
-import { FollowButton, Mutual } from "~/routes/profile.$did";
+import { FollowButton, getLocaleLabel, type LabelWithHydratedLocaleName, Mutual } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
-import type { ContentLabel } from "~/types/moderation";
+//import type { ContentLabel } from "~/types/moderation";
 import {
   composerAtom,
   constellationURLAtom,
@@ -32,6 +33,7 @@ import {
   enableWafrnTextAtom,
   imgCDNAtom,
 } from "~/utils/atoms";
+import { useGetOneToOneState } from "~/utils/followState";
 import { useFastLike } from "~/utils/likeMutationQueue";
 import { useHydratedEmbed } from "~/utils/useHydrated";
 import {
@@ -206,8 +208,52 @@ export function UniversalPostRendererATURILoader({
     }
   })();
 
-  if (!postQuery?.value) {
-    return <></>;
+  // placeholder for when a post is missing
+  if (!isPostLoading && !postQuery?.value || isPostError) {
+    if (feedviewpost) {
+      return null // if feed view post then missing post isnt important and just remove it from view
+    }
+    return (
+      <>
+        {/* todo add reply lines here. */}
+        {/* todo dont let the UPR render the shitty placeholder uri we received */}
+        {/* <div className={`flex flex-row p-4 ${isQuote ? "border-gray-200 dark:border-gray-800 border-1 rounded-lg" : "border-gray-200 dark:border-gray-800 border-b"}`}> */}
+
+        <div className={`flex flex-col gap-0 border-gray-200 dark:border-gray-800 ${bottomReplyLine ? "" : "border-b"}`}>
+          <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+            <div
+              style={{
+                width: 2,
+                height: 16,
+                opacity: 0.5,
+              }}
+              className={`${topReplyLine ? "bg-gray-500 dark:bg-gray-400" : "bg-transparent"}`}
+            />
+          </div>
+          <div className="flex flex-row px-4">
+            <div className="flex flex-col gap-1 flex-1 rounded-lg py-3 px-4 bg-gray-200 dark:bg-gray-800">
+              <div className="flex flex-row flex-1 gap-2 rounded-lg bg-gray-200 dark:bg-gray-800 items-center">
+                <IconMaterialSymbolsScanDeleteOutline />
+                <span>Missing {isQuote ? "Quoted" : ""} Post</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+            <div
+              style={{
+                width: 2,
+                height: 16,
+                opacity: 0.5,
+              }}
+              // maxReplies === undefined to specifically prevent missing apost from threading down with more missings posts
+              // shouldnt affect thread up (parent) or feed view. im pretty sure missinga post would cut off the thread
+              className={`${bottomReplyLine && maxReplies === undefined ? "bg-gray-500 dark:bg-gray-400" : "bg-transparent"}`}
+            />
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -512,6 +558,7 @@ export function UniversalPostRendererRawRecordShim({
         bottomReplyLine={bottomReplyLine}
         topReplyLine={topReplyLine}
         bottomBorder={bottomBorder}
+        feedviewpost={feedviewpost}
         feedviewpostreplyhandle={feedviewpostreplyhandle}
         repostedby={feedviewpostrepostedbyhandle}
         style={style}
@@ -540,6 +587,7 @@ export function UniversalPostRenderer({
   topReplyLine,
   salt,
   bottomBorder = true,
+  feedviewpost,
   feedviewpostreplyhandle,
   depth = 0,
   repostedby,
@@ -563,6 +611,7 @@ export function UniversalPostRenderer({
   topReplyLine?: boolean;
   salt: string;
   bottomBorder?: boolean;
+  feedviewpost?: boolean;
   feedviewpostreplyhandle?: string;
   depth?: number;
   repostedby?: string;
@@ -575,23 +624,95 @@ export function UniversalPostRenderer({
   maxReplies?: number;
   constellationLinks?: any;
 }) {
-  const { isLoading: authorModLoading, labels: authorLabels } = useModeration(
+
+  // todo move moderation to one of the UniversalPostRenderer wrapper components, and not the pure renderer component. please. thanks
+  // todo please move all moderation including labeling and blocks into a wrapper component please i beg you
+
+  const subjects = [
     post.author.did,
-  );
-  const { isLoading: contentModLoading, labels: contentLabels } = useModeration(
+    `at://${post.author.did}/app.bsky.actor.profile/self`,
     post.uri,
-  );
+  ]
+
+  const {
+    results: labelResults,
+    hydratedLabelDefs,
+  } = useAutoLabels({
+    subjects,
+    type: "post", // or whatever you’re keying on for now
+  })
+
+  const ghld = getGetHydratedLabelDefs(hydratedLabelDefs)
+  const accountResult = labelResults.get(post.author.did)
+  const profileResult = labelResults.get(
+    `at://${post.author.did}/app.bsky.actor.profile/self`,
+  )
+  const postResult = labelResults.get(post.uri)
+
+  const accountLabelVerdict = accountResult?.labelVerdict ?? "unknown"
+  const authorLabels = accountResult?.labels ?? []
+
+  const profileLabelVerdict = profileResult?.labelVerdict ?? "unknown"
+  const profileLabels = profileResult?.labels ?? []
+
+  const postLabelVerdict = postResult?.labelVerdict ?? "unknown"
+  const contentLabels = postResult?.labels ?? []
+
+  const combinedLabels = [...authorLabels, ...profileLabels, ...contentLabels]
+
+  const authorModUnknown = accountLabelVerdict === "unknown";
+  const profileModUnknown = profileLabelVerdict === "unknown";
+  const contentModUnknown = postLabelVerdict === "unknown";
+
+  const authorModLoading = accountLabelVerdict === "loading";
+  const profileModLoading = profileLabelVerdict === "loading";
+  const contentModLoading = postLabelVerdict === "loading";
+
+  const authorModError = accountLabelVerdict === "error";
+  const profileModError = profileLabelVerdict === "error";
+  const contentModError = postLabelVerdict === "error";
+
+  const verdictDebugString = `accountLabelVerdict: ${accountLabelVerdict}, profileLabelVerdict: ${profileLabelVerdict}, postLabelVerdict: ${postLabelVerdict}`
+  //const verdictDebugStringCauses = 
+
+  const strictModerationUnknown = authorModUnknown || profileModUnknown || contentModUnknown
+  const strictModerationLoading = authorModLoading || profileModLoading || contentModLoading
+  const strictModerationError = authorModError || profileModError || contentModError
+
+  const strictModerationDontShow = strictModerationUnknown || strictModerationLoading || strictModerationError
+
   const hideAuthorLabels = authorLabels.filter(
-    (label) => label.preference === "hide",
+    (label) => ghld(label.src, label.val)?.pref === "hide",
   );
   const warnAuthorLabels = authorLabels.filter(
-    (label) => label.preference === "warn",
+    (label) => ghld(label.src, label.val)?.pref === "warn",
+  );
+  // const errorAuthorLabels = authorLabels.filter(
+  //   //(label) => ghld(label.src,label.val)?.severity === "hide",
+  // );
+  const hideProfileLabels = profileLabels.filter(
+    (label) => ghld(label.src, label.val)?.pref === "hide",
+  );
+  const warnProfileLabels = profileLabels.filter(
+    (label) => ghld(label.src, label.val)?.pref === "warn",
   );
   const hideContentLabels = contentLabels.filter(
-    (label) => label.preference === "hide",
+    (label) => ghld(label.src, label.val)?.pref === "hide",
   );
   const warnContentLabels = contentLabels.filter(
-    (label) => label.preference === "warn",
+    (label) => ghld(label.src, label.val)?.pref === "warn",
+  );
+
+  const informCombinedLabels: LabelWithHydratedLocaleName[] = combinedLabels.flatMap(
+    (label) => {
+      if (ghld(label.src, label.val)?.severity === "inform" && ghld(label.src, label.val)?.pref === "warn") {
+        return [{
+          ...label,
+          name: getLocaleLabel(ghld(label.src, label.val))?.name || label.val
+        }]
+      }
+      return []
+    },
   );
 
   const parsed = new AtUri(post.uri);
@@ -605,6 +726,30 @@ export function UniversalPostRenderer({
     post.viewer?.repost,
   );
   const { liked, toggle, backfill } = useFastLike(post.uri, post.cid);
+
+  const agentDid = agent?.did;
+  const authorDid = post.author.did;
+
+  const userBlocksAuthor = useGetOneToOneState(
+    agentDid && authorDid
+      ? {
+        target: authorDid,
+        user: agentDid,
+        collection: "app.bsky.graph.block",
+        path: ".subject",
+      }
+      : undefined,
+  );
+  const authorBlocksUser = useGetOneToOneState(
+    agentDid && authorDid
+      ? {
+        target: agentDid,
+        user: authorDid,
+        collection: "app.bsky.graph.block",
+        path: ".subject",
+      }
+      : undefined,
+  );
 
   const repostOrUnrepostPost = async () => {
     if (!agent) {
@@ -682,21 +827,160 @@ export function UniversalPostRenderer({
   const showContentWarning = warnContentLabels.length > 0;
 
   const [isOpen, setIsOpen] = useState(!showContentWarning);
+
   const [hasUserTouchedToggleYet, setHasUserTouchedToggleYet] = useState(false);
 
-  useEffect(()=>{
-    if(!hasUserTouchedToggleYet && showContentWarning) {
+  // Force Hiddens from host policy
+  const isForceHiddenAuthor = authorLabels.some((label) => {
+    return (
+      FORCE_HIDE_LABELS.has(label.val) &&
+      FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
+    );
+  });
+  const isForceHiddenProfile = profileLabels.some((label) => {
+    return (
+      FORCE_HIDE_LABELS.has(label.val) &&
+      FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
+    );
+  });
+  const isForceHiddenPost = contentLabels.some((label) => {
+    return (
+      FORCE_HIDE_LABELS.has(label.val) &&
+      FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
+    );
+  });
+  const isForceHidden = isForceHiddenAuthor || isForceHiddenProfile || isForceHiddenPost
+
+
+  useEffect(() => {
+    if (!hasUserTouchedToggleYet && showContentWarning) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false);
     }
-  },[hasUserTouchedToggleYet, showContentWarning])
+  }, [hasUserTouchedToggleYet, showContentWarning])
 
 
-  if (hideAuthorLabels.length > 0 || hideContentLabels.length > 0) {
-    return null;
+  console.log("HLLO HLLO HisForceHidden post UPR" + post.uri + post.author.did + isForceHidden, "1what", contentLabels, "2what", authorLabels)
+
+  // if (hideAuthorLabels.length > 0 || hideContentLabels.length > 0 || isForceHidden || strictModerationDontShow) {
+  //   return (
+  //     <div ref={ref} style={style} data-index={dataIndexPropPass} className=" leading-normal flex flex-col gap-4 p-4">
+  //       <span>DEBUG LOADING LABELS</span>
+  //       <span>{post.uri}</span>
+  //       <span>{verdictDebugString}</span>
+  //     </div>
+  //   );
+  // }
+  // if ( isForceHidden ) {
+  //   return (
+  //     <div ref={ref} style={style} data-index={dataIndexPropPass} className=" leading-normal flex flex-col gap-4 p-4">
+  //       Post Hidden
+  //     </div>
+  //   )
+  // }
+
+  // todo respect the blur label def
+  // todo scrap the verdict system and rename it into what it is (loading state)
+  const redactWhileLoadingAuthor = authorModLoading || authorModError || authorModUnknown
+  const redactWhileLoadingProfile = profileModLoading || profileModError || profileModUnknown
+  const redactWhileLoadingPost = contentModLoading || contentModError || contentModUnknown
+  const redactWhileLoadingBlock = userBlocksAuthor.isLoading || authorBlocksUser.isLoading
+  const redactWhileLoadingSome = redactWhileLoadingAuthor || redactWhileLoadingProfile || redactWhileLoadingPost || redactWhileLoadingBlock
+  /**
+   * maybe rules:
+   * if author is loading, hide everything
+   * if post is loading, hide text and embeds
+   * if profile is loading, hide pfp
+   */
+
+  // the  || !post.record?.createdAt is so that users cant imply theyre replying to a non existant post by a user
+  // if the post doesnt exist, dont render the name or pfp
+
+
+  const redactWhileLoading_name = redactWhileLoadingAuthor || !post.record?.createdAt || redactWhileLoadingBlock
+  const redactWhileLoading_content = redactWhileLoadingAuthor || redactWhileLoadingPost || !post.record?.createdAt || redactWhileLoadingBlock
+  const redactWhileLoading_pfp = redactWhileLoadingAuthor || redactWhileLoadingProfile || !post.record?.createdAt || redactWhileLoadingBlock
+
+
+  const redactFinalBlock = userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0
+
+  const redactFinalAuthor = hideAuthorLabels.length > 0 || isForceHiddenAuthor || redactFinalBlock
+  const redactFinalProfile = hideProfileLabels.length > 0 || isForceHiddenProfile || redactFinalBlock
+  const redactFinalPost = hideContentLabels.length > 0 || isForceHiddenPost || redactFinalBlock
+
+  const redactFinalSome = redactFinalAuthor || redactFinalProfile || redactFinalPost || redactFinalBlock
+
+  // todo consider if adding an explicit "post removed" visible component is better for this
+  //if (redactFinalSome) return null
+  // todo preserve reply lines
+  // todo share the component with the Missing post from above
+  if (redactFinalSome) {
+    if (feedviewpost) {
+      return null // if feed view post then moderated post isnt important and just remove it from view
+    }
+    return (
+      <div 
+      className={`flex flex-col gap-0 border-gray-200 dark:border-gray-800 ${bottomReplyLine ? "" : "border-b"}`}
+      onClick={
+        isMainItem
+          ? onPostClick
+          : setMainItem
+            ? onPostClick
+              ? (e) => {
+                setMainItem({ post: post });
+                onPostClick(e);
+              }
+              : () => {
+                setMainItem({ post: post });
+              }
+            : undefined
+      }>
+
+        <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+          <div
+            style={{
+              width: 2,
+              height: 16,
+              opacity: 0.5,
+            }}
+            className={`${topReplyLine ? "bg-gray-500 dark:bg-gray-400" : "bg-transparent"}`}
+          />
+        </div>
+
+        <div className="flex flex-row px-4">
+          <div className="flex flex-col gap-1 flex-1 rounded-lg py-3 px-4 bg-gray-200 dark:bg-gray-800">
+            <div className="flex flex-row flex-1 gap-2 items-center">
+              <IconMdiShieldOutline width={18} height={18} />
+              <span className=" font-semibold text-[15px]">Moderated Post</span>
+            </div>
+            <ul className="flex flex-col gap-0.5 list-disc list-outside">
+              {userBlocksAuthor.uris.length > 0 && (<li className=" text-sm ml-[18px]">User Blocked by You</li>)}
+              {authorBlocksUser.uris.length > 0 && (<li className=" text-sm ml-[18px]">User Blocking You</li>)}
+              {hideAuthorLabels.length > 0 && (<>{hideAuthorLabels.map((label) => { return <li key={label.cid || label.exp} className=" text-sm ml-[18px]">Author Label: {getLocaleLabel(ghld(label.src, label.val))?.name || label.val}</li> })}</>)}
+              {hideProfileLabels.length > 0 && (<>{hideProfileLabels.map((label) => { return <li key={label.cid || label.exp} className=" text-sm ml-[18px]">Profile Label: {getLocaleLabel(ghld(label.src, label.val))?.name || label.val}</li> })}</>)}
+              {hideContentLabels.length > 0 && (<>{hideContentLabels.map((label) => { return <li key={label.cid || label.exp} className=" text-sm ml-[18px]">Post Label: {getLocaleLabel(ghld(label.src, label.val))?.name || label.val}</li> })}</>)}
+            </ul>
+          </div>
+        </div>
+
+        <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+          <div
+            style={{
+              width: 2,
+              height: 16,
+              opacity: 0.5,
+            }}
+            className={`${bottomReplyLine ? "bg-gray-500 dark:bg-gray-400" : "bg-transparent"}`}
+          />
+        </div>
+      </div>
+    )
   }
 
+  // ${redactWhileLoadingSome && "blur"}
   return (
-    <div ref={ref} style={style} data-index={dataIndexPropPass}>
+    <div ref={ref} style={style} data-index={dataIndexPropPass} className={` leading-normal `}>
+      {/* <span>{JSON.stringify(post, null, 2)}</span> */}
       <div
         key={salt + "-" + (post.uri || emergencySalt)}
         onClick={
@@ -740,6 +1024,7 @@ export function UniversalPostRenderer({
               alignItems: "center",
             }}
             className="text-gray-500 dark:text-gray-400"
+          // todo moderate reposts (label, and record graph)
           >
             <IconMdiRepost /> Reposted by @{isRepost}
           </div>
@@ -777,15 +1062,27 @@ export function UniversalPostRenderer({
               }}
               onClick={onProfileClick}
             >
-              <img
-                src={post.author.avatar || defaultpfp}
-                alt="avatar"
-                className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
-                style={{
-                  width: isQuote ? 16 : 42,
-                  height: isQuote ? 16 : 42,
-                }}
-              />
+              {redactWhileLoading_pfp ? (
+                <div
+                  className="rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600 animate-pulse"
+                  style={{
+                    width: isQuote ? 16 : 42,
+                    height: isQuote ? 16 : 42,
+                  }}
+                />
+              ) : (
+                <img
+                  src={post.author.avatar || defaultpfp}
+                  alt="avatar"
+                  className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
+                  style={{
+                    width: isQuote ? 16 : 42,
+                    height: isQuote ? 16 : 42,
+                  }}
+                />
+              )
+              }
+
             </div>
           </HoverCard.Trigger>
           <HoverCard.Portal>
@@ -797,23 +1094,28 @@ export function UniversalPostRenderer({
             >
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row">
-                  <img
-                    src={post.author.avatar || defaultpfp}
-                    alt="avatar"
-                    className="rounded-full w-[58px] h-[58px] object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600"
-                  />
+                  {redactWhileLoading_pfp ? (
+                    <div className="rounded-full w-[58px] h-[58px] object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600 animate-pulse" />
+                  ) : (
+                    <img
+                      src={post.author.avatar || defaultpfp}
+                      alt="avatar"
+                      className="rounded-full w-[58px] h-[58px] object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600"
+                    />
+                  )
+                  }
                   <div className=" flex-1 flex flex-row align-middle justify-end">
                     <FollowButton targetdidorhandle={post.author.did} />
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <div className="text-gray-900 dark:text-gray-100 font-medium text-md">
-                      {post.author.displayName || post.author.handle}
+                    <div className={`text-gray-900 dark:text-gray-100 font-medium text-md ${redactWhileLoading_name && "animate-pulse blur"}`}>
+                      {redactWhileLoading_name ? "Person Display Name" : (post.author.displayName || post.author.handle)}
                     </div>
-                    <div className="text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1">
+                    <div className={`text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1 ${redactWhileLoading_name && "animate-pulse blur"}`}>
                       <Mutual targetdidorhandle={post.author.did} />@
-                      {post.author.handle}
+                      {redactWhileLoading_name ? "person.placeholder" : post.author.handle}
                     </div>
                   </div>
                   {uprrrsauthor?.description && (
@@ -892,9 +1194,9 @@ export function UniversalPostRenderer({
                     gap: 4,
                     alignItems: "center",
                   }}
-                  className="text-gray-900 dark:text-gray-100"
+                  className={`text-gray-900 dark:text-gray-100  ${redactWhileLoading_name && "animate-pulse blur"}`}
                 >
-                  {post.author.displayName || post.author.handle}
+                  {redactWhileLoading_name ? "Person Display Name" : post.author.displayName || post.author.handle}
                   {post.author.verification?.verifiedStatus == "valid" && (
                     <IconMdiVerified />
                   )}
@@ -910,9 +1212,9 @@ export function UniversalPostRenderer({
                     flexGrow: 0,
                     minWidth: 0,
                   }}
-                  className="text-gray-500 dark:text-gray-400"
+                  className={`text-gray-500 dark:text-gray-400 ${redactWhileLoading_name && "animate-pulse blur"}`}
                 >
-                  @{post.author.handle}
+                  @{redactWhileLoading_name ? "person.placeholder" : post.author.handle}
                 </span>
               </div>
               <div
@@ -939,8 +1241,8 @@ export function UniversalPostRenderer({
             {/* <ModerationInner subject={post.author.did} /> */}
             {authorModLoading ? (
               <div className="flex flex-wrap flex-row gap-1 my-1">
-                <div className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1">
-                  {/* <img
+                {/* <div className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1">
+                  / <img
                       src={resolvedpfp || defaultpfp}
                       alt="avatar"
                       className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
@@ -948,16 +1250,16 @@ export function UniversalPostRenderer({
                         width: 12,
                         height: 12,
                       }}
-                    /> */}
+                    /> /
                   <span className="font-medium">loading badges...</span>
-                </div>
+                </div> */}
               </div>
             ) : (
-              <div className="flex flex-wrap flex-row gap-1 my-1">
-                {warnAuthorLabels.map((label, index) => (
+              <div className={`flex flex-wrap flex-row gap-1 my-1 ${redactWhileLoading_name ? "animate-pulse blur" : ""}`}>
+                {informCombinedLabels.map((label, index) => (
                   <SmallAuthorLabelBadge
                     label={label}
-                    key={label.cts + label.sourceDid + label.val}
+                    key={label.cts + label.src + label.val}
                   />
                 ))}
               </div>
@@ -979,12 +1281,13 @@ export function UniversalPostRenderer({
                   opacity:
                     !(expanded || isQuote) && !!feedviewpostreplyhandle ? 1 : 0,
                 }}
-                className="text-gray-500 dark:text-gray-400"
+                className={`text-gray-500 dark:text-gray-400 ${redactWhileLoading_content && "animate-pulse blur"}`}
               >
                 <IconMdiReply /> Reply to @{feedviewpostreplyhandle}
               </div>
             )}
             {/* <ModerationInner subject={post.uri} /> */}
+            {/* todo migrate cw stuff to the new useAutoLabels system */}
             {showContentWarning && (
               <ContentWarning
                 unauthedgate={hideWarnsWhenUnauthed}
@@ -1015,7 +1318,7 @@ export function UniversalPostRenderer({
                     overflow: "hidden",
                   }),
                 }}
-                className="text-gray-900 dark:text-gray-100"
+                className={`text-gray-900 dark:text-gray-100 ${redactWhileLoading_content && "animate-pulse blur"}`}
               >
                 {fedi ? (
                   <>
@@ -1038,6 +1341,7 @@ export function UniversalPostRenderer({
               </div>
               {post.embed && depth < 1 && !concise ? (
                 <PostEmbeds
+                  redactedLoading={redactWhileLoading_content}
                   embed={post.embed}
                   viewContext={PostEmbedViewContext.Feed}
                   salt={salt}
@@ -1050,7 +1354,7 @@ export function UniversalPostRenderer({
               ) : null}
               {post.embed && depth > 0 && (
                 <>
-                  <div className="border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px]">
+                  <div className={`border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px] ${redactWhileLoading_content && "animate-pulse blur"}`}>
                     (there is an embed here thats too deep to render)
                   </div>
                 </>
@@ -1074,7 +1378,7 @@ export function UniversalPostRenderer({
                       borderBottomWidth: 1,
                       marginBottom: 8,
                     }}
-                    className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 was7"
+                    className={`text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 was7 ${redactWhileLoading_content && "animate-pulse blur"}`}
                   >
                     {fullDateTimeFormat(post.indexedAt)}
                   </div>
@@ -1098,6 +1402,7 @@ export function UniversalPostRenderer({
                     style={{
                       ...btnstyle,
                     }}
+                    className={redactWhileLoading_content && "animate-pulse blur" || undefined}
                   >
                     <IconMdiCommentOutline />
                     {post.replyCount}
@@ -1110,6 +1415,7 @@ export function UniversalPostRenderer({
                           ...(hasRetweeted ? { color: "#5CEFAA" } : {}),
                         }}
                         aria-label="Repost or quote post"
+                        className={redactWhileLoading_content && "animate-pulse blur" || undefined}
                       >
                         {hasRetweeted ? (
                           <IconMdiRepeat color="#5CEFAA" />
@@ -1159,6 +1465,7 @@ export function UniversalPostRenderer({
                       ...btnstyle,
                       ...(liked ? { color: "#EC4899" } : {}),
                     }}
+                    className={redactWhileLoading_content && "animate-pulse blur" || undefined}
                   >
                     {liked ? (
                       <IconMdiCardsHeart />
@@ -1234,7 +1541,7 @@ export function ContentWarning({
   onPress,
 }: {
   unauthedgate?: boolean;
-  labels: ContentLabel[];
+  labels: ATPAPI.ComAtprotoLabelDefs.Label[];
   isOpen: boolean;
   onPress: React.MouseEventHandler<HTMLDivElement>;
 }) {
@@ -1242,7 +1549,7 @@ export function ContentWarning({
 
   // Pre-calculate text for cleaner JSX
   const labelText = labels
-    .map((label) => getLabelInfo(label.sourceDid, label.val).name)
+    .map((label) => getLabelInfo(label.src, label.val).name)
     .join(", ");
 
   return (
@@ -1288,29 +1595,49 @@ export function SmallAuthorLabelBadge({
   label,
   large,
 }: {
-  label: ContentLabel;
+  label: LabelWithHydratedLocaleName;
   large?: boolean;
 }) {
   /*
    -{" "}
-      {label.preference} (from {label.sourceDid})
+      {ghld(label.src,label.val)?.severity} (from {label.sourceDid})
       */
-  const { getLabelInfo } = useLabelInfo();
-  const info = getLabelInfo(label.sourceDid, label.val);
+  //const info = getLabelInfo(label.src, label.val);
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
   const { data: opProfile } = useQueryProfile(
-    `at://${label.sourceDid}/app.bsky.actor.profile/self`,
+    `at://${label.src}/app.bsky.actor.profile/self`,
   );
 
-  const resolvedpfp = getAvatarUrl(opProfile, label.sourceDid, imgcdn);
+  const resolvedpfp = getAvatarUrl(opProfile, label.src, imgcdn);
 
   return (
+    <SmallAuthorLabelBadgeInner
+      resolvedpfp={resolvedpfp || undefined}
+      text={label.name || label.val}
+      large={large}
+    />
+  );
+}
+
+// todo add click event to explain the label or soemthing
+export function SmallAuthorLabelBadgeInner({
+  resolvedpfp,
+  text,
+  large,
+  disablepfp = false,
+}: {
+  resolvedpfp?: string;
+  text: string;
+  large?: boolean;
+  disablepfp?: boolean;
+}) {
+  return (
     <div
-      className={`text-xs bg-gray-100 dark:bg-gray-800 ${large ? "px-2 py-1" : "px-1 py-0.5"} rounded-full flex flex-row items-center gap-1`}
+      className={`text-xs ${large ? "bg-gray-200" : "bg-gray-100"} dark:bg-gray-800 ${large ? "px-2 py-1" : "px-1 py-0.5"} rounded-full flex flex-row items-center gap-1`}
     >
-      <img
+      {!disablepfp && (<img
         src={resolvedpfp || defaultpfp}
         alt="avatar"
         className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
@@ -1318,8 +1645,8 @@ export function SmallAuthorLabelBadge({
           width: 12,
           height: 12,
         }}
-      />
-      <span className="font-medium">{info.name || label.val}</span>
+      />)}
+      <span className="font-medium">{text}</span>
     </div>
   );
 }

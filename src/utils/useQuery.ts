@@ -1,14 +1,24 @@
 import * as ATPAPI from "@atproto/api";
 import {
   infiniteQueryOptions,
+  QueryClient,
   type QueryFunctionContext,
   queryOptions,
   useInfiniteQuery,
+  useQueries,
   useQuery,
   type UseQueryResult,
 } from "@tanstack/react-query";
+import { create, windowScheduler } from "@yornaath/batshit";
 import { useAtom } from "jotai";
+import { useMemo } from "react";
 
+import { HOST_LABELMERGE } from "~/../policy";
+import type {
+  Error as LabelMergeQueryLabelsOutputSchemaError,
+  OutputSchema as LabelMergeQueryLabelsOutputSchema,
+  QueryParams as LabelMergeQueryLabelsQueryParams,
+} from "~/api/labelmerge/types/app/reddwarf/labelmerge/queryLabels";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 
 import { constellationURLAtom, lycanURLAtom, slingshotURLAtom } from "./atoms";
@@ -387,11 +397,12 @@ export function useQueryConstellation(query?: {
   | undefined {
   //if (!query) return;
   const [constellationurl] = useAtom(constellationURLAtom);
-  return useQuery(
+  const res = useQuery(
     constructConstellationQuery(
       query && { constellation: constellationurl, ...query },
     ),
   );
+  return res
 }
 
 export type linksRecord = {
@@ -532,7 +543,8 @@ export function constructPreferencesQuery(
       const url = `${pdsUrl}/xrpc/app.bsky.actor.getPreferences`;
       const res = await agent.fetchHandler(url, { method: "GET" });
       if (!res.ok) throw new Error("Failed to fetch preferences");
-      return res.json();
+      // todo, i just gave it real types (atproto api types) so theres gonna be a bunch of errors so pls fix thx
+      return (await res.json()) as ATPAPI.AppBskyActorGetPreferences.OutputSchema;
     },
   });
 }
@@ -974,4 +986,401 @@ export function constructLycanSearchQuery(options: {
     initialPageParam: undefined as never,
     getNextPageParam: (lastPage) => lastPage?.cursor as null | undefined,
   });
+}
+
+// HOST_LABELMERGE
+
+export async function innerLabelMergeQueryFn(options: LabelMergeQueryLabelsQueryParams): Promise<LabelMergeQueryLabelsOutputSchema | undefined> {
+  const { s, l, strict } = options;
+  const params = new URLSearchParams();
+  s.forEach((v) => params.append("s", v));
+  l.forEach((v) => params.append("l", v));
+  if (strict) {
+    params.append("strict", "true");
+  }
+  const qs = params.toString();
+
+  const url =
+    `${HOST_LABELMERGE}/xrpc/app.reddwarf.labelmerge.queryLabels?` + qs;
+  console.log("LabelMerge URL", url);
+  const res = await fetch(url);
+  if (!res.ok)
+    throw new Error(`Labelmerge fetch failed: ${res.statusText}`);
+  return (await res.json()) as LabelMergeQueryLabelsOutputSchema;
+}
+
+export function constructLabelMergeQuery(
+  options: LabelMergeQueryLabelsQueryParams,
+) {
+  const { s, l, strict } = options;
+
+  return queryOptions({
+    queryKey: [
+      "LabelMergeQueryLabelsQuery",
+      [...s].sort().join(","),
+      [...l].sort().join(","),
+      strict,
+    ],
+
+    enabled:
+      Array.isArray(s) && s.length > 0 && Array.isArray(l) && l.length > 0,
+
+    queryFn: ()=>innerLabelMergeQueryFn(options),
+  });
+}
+export function useQueryLabelMerge(options: LabelMergeQueryLabelsQueryParams) {
+  return useQuery(constructLabelMergeQuery(options));
+}
+
+export type PartialLabelQuery = {
+  s: string;
+  l: string[];
+};
+export type SingularLabelQuery = {
+  s: string;
+  l: string;
+};
+
+export type SingularLabelResult = {
+  labels?: ATPAPI.ComAtprotoLabelDefs.Label;
+  error?: LabelMergeQueryLabelsOutputSchemaError;
+}; //ATPAPI.ComAtprotoLabelDefs.Label | LabelMergeQueryLabelsOutputSchemaError | null
+export type PartialLabelResult = {
+  subject: string;
+  labels?: ATPAPI.ComAtprotoLabelDefs.Label[];
+  error?: LabelMergeQueryLabelsOutputSchemaError[];
+};
+
+function flattenLabelQueries(
+  partials: PartialLabelQuery[],
+): SingularLabelQuery[] {
+  return partials.flatMap((p) => p.l.map((label) => ({ s: p.s, l: label })));
+}
+
+// batShitQueryClient
+export const unpersistedQueryClient = new QueryClient(/*{
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      //cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 5 * 60 * 1000,
+    },
+  },
+}*/);
+
+
+interface MicroSingleResult {
+  l: string,
+  t: number,
+}
+
+const labelmerge = create(
+  /*<Record<String,SingularLabelResult>[], SingularLabelQuery>*/ {
+    // The fetcher resolves the list of queries(here just a list of user ids as number) to one single api call.
+    fetcher: async (slqa: SingularLabelQuery[]) => {
+      // Use a shared QueryClient if possible; creating a new one per fetch is usually not needed
+
+      // Deduplicate, but don’t sort
+      const sarr = Array.from(new Set(slqa.map((slq) => slq.s)));
+      const larr = Array.from(new Set(slqa.map((slq) => slq.l)));
+
+      //const result = await batShitQueryClient.fetchQuery(
+      //  constructLabelMergeQuery({ s: sarr, l: larr }),
+      //);
+      const result = await innerLabelMergeQueryFn({s:sarr, l: larr})
+      //const qfn = constructLabelMergeQuery({ s: sarr, l: larr }).queryFn
+      //const result = await (qfn ? qfn() : ()=>{})
+      if (!result) return [];
+
+      // Build maps for quick lookup
+      const errmap = new Map<string, LabelMergeQueryLabelsOutputSchemaError>();
+      const resmap = new Map<string, ATPAPI.ComAtprotoLabelDefs.Label>();
+
+      result.error?.forEach((err) => errmap.set(err.s, err));
+      result.labels?.forEach((label) => resmap.set(`${label.src}::${label.uri}`, label));
+
+      // Map back to the original queries
+      const output: Record<string, SingularLabelResult>[] = slqa.map((slq) => {
+        const key = `${slq.l}::${slq.s}`; // or just slq.l if you prefer
+
+        const err = errmap.get(slq.l);
+        const label = resmap.get(key);
+
+        if (err) return { [key]: { error: err } };
+        if (label) return { [key]: { labels: label } };
+
+        // if result is neither, it means the subject is free of labels
+        return { 
+          [key]: { labels: undefined} 
+        };
+        // idiot
+        // return { 
+        //   [key]: { error: {
+        //     s: slq.l,
+        //     e: `!internal-bslm-unknown: ${slq.s}`
+        //   }} 
+        // };
+      });
+
+      return output;
+    },
+    // when we call users.fetch, this will resolve the correct user using the field `id`
+    resolver: (rslra, slq) => {
+      if (rslra.length < 1) {
+        return undefined;
+      }
+      // const result: SingularLabelResult | undefined = slra.find((slr, i) => {
+      //   // find if error first
+      //   const error = slr.error;
+      //   const label = slr.labels;
+      //   if (error) {
+      //     if (slq.l === error.s) {
+      //       return slq;
+      //     }
+      //   } else if (label) {
+      //     // if not error
+      //     if (slq.l === label.src && slq.s === label.uri) {
+      //       return slq;
+      //     }
+      //     // else unhandled not found
+      //   } else {
+      //     return undefined;
+      //   }
+      //   return undefined;
+      // });
+      const outputMap: Record<string, SingularLabelResult> = Object.assign({}, ...rslra)
+      const key = `${slq.l}::${slq.s}`; // or just slq.l if you prefer
+      const result: SingularLabelResult | undefined = outputMap[key]
+      return result;
+    },
+    scheduler: windowScheduler(10 * 100), // 1 second
+  },
+);
+
+// const labelmergepartial = create/*<PartialLabelResult[], PartialLabelQuery>*/({
+//   // The fetcher resolves the list of queries(here just a list of user ids as number) to one single api call.
+//   fetcher: async (plqa: PartialLabelQuery[]) => {
+//     const singulars = flattenLabelQueries(plqa); // SingularLabelQuery[]
+//     const singularResults = await Promise.all(singulars.map(q => labelmerge.fetch(q)));
+
+//     // Now we need to **group singularResults back by the original PartialLabelQuery.s**
+//     // so that each PartialLabelQuery gets a PartialLabelResult (LabelMergeQueryLabelsOutputSchema)
+//     const grouped: Record<string, SingularLabelResult[]> = {};
+//     singulars.forEach((q, i) => {
+//       if (!grouped[q.s]) grouped[q.s] = [];
+//       if (singularResults[i]) {
+//         grouped[q.s].push(singularResults[i]);
+//       } else {
+//         grouped[q.s].push({});
+//       }
+//     });
+
+//     // Convert grouped record to your PartialLabelResult format
+//     const result: PartialLabelResult[] = Object.entries(grouped).map(([s, labels]) => {
+//       const cleanLabels = labels
+//         .map(l => l?.labels)
+//         .filter((l): l is ATPAPI.ComAtprotoLabelDefs.Label => !!l?.val)
+//       const cleanErrors = labels
+//         .map(l => l?.error)
+//         .filter((e): e is LabelMergeQueryLabelsOutputSchemaError => !!e?.s)
+//       return {
+//         subject: s,
+//         labels: cleanLabels,
+//         error: cleanErrors ? cleanErrors : undefined
+//       }
+//      });
+//     return result
+//   },
+//   resolver: (plra, plq) => {
+//     if (plra.length < 1) {
+//       return undefined
+//     }
+//     const subject = plq.s;
+//     const result: PartialLabelResult | undefined = plra.find((plr,i)=>{
+//       return plr.subject === subject;
+//     })
+//     return result
+//   },
+//   // this will batch all calls to users.fetch that are made within 10 milliseconds.
+//   scheduler: windowScheduler(10*100) // 1 second
+// })
+
+// export const useQueryLabel = (s: string, la: string[]) => {
+//   return useQuery({
+//     queryKey: ["useQueryLabel (single) sla", s, la],
+//     queryFn: async () => {
+//       return labelmergepartial.fetch({ s, l: la })
+//     },
+//   })
+// }
+
+/**
+ * todo:
+ * - [x] switch from useQuery to normal custom hook and switch from Promise.All to useQueries
+ * - [ ] Move neg normalization to the batshit unmerging, and make the cache labels only (pre sorted)
+ * - [ ] Also do signature verification on the constructSingularQuery
+ */
+
+// also the cache hits from constructSingularLabelQuery is not being sent fast because
+// it waits for all of them first
+// but also if we send it fast would it cause even worse synchronous traffic jams downstream ?
+// export const useQueryLabels = (subjects: string[], labelers: string[]) => {
+//   const queryClient = useQueryClient();
+//   return useQuery({
+//     queryKey: ["useQueryLabelFull", subjects, labelers],
+//     queryFn: async (): Promise<LabelMergeQueryLabelsOutputSchema> => {
+//       // Build all singular queries
+//       const singulars: SingularLabelQuery[] = subjects.flatMap((s) =>
+//         labelers.map((l) => ({ s, l })),
+//       );
+
+//       // Fetch all results in parallel
+//       const results = await Promise.all(
+//         // singulars.map((q) =>
+//         //   queryClient.fetchQuery(constructSingularLabelQuery(q)),
+//         // ),
+//         singulars.map((q) =>
+//           queryClient.fetchQuery(constructSingularLabelQuery(q)).catch((e: Error)=>{
+//             return {
+//               error: {
+//                 s: q.l,
+//                 e: e.message.toString(),
+//               }
+//             } as SingularLabelResult
+//           }),
+//         ),
+//         // singulars.map(q => queryClient.fetchQuery(constructSingularLabelQuery(q)).catch((err:SingularLabelResult)=>{
+//         //   return err
+//         // }))
+//         //singulars.map(q => labelmerge.fetch(q).catch(err => ({ error: err } as SingularLabelResult)))
+//       );
+
+//       const labels = Array.from(
+//         new Map(
+//           results
+//             .map(r => r?.labels)
+//             .filter((l): l is ATPAPI.ComAtprotoLabelDefs.Label => !!l?.src)
+//             .map(l => [`${l.src}::${l.uri}`, l])
+//         ).values()
+//       );
+//       const errors = Array.from(
+//         new Map(
+//           results
+//             .map(r => r?.error)
+//             .filter(
+//               (e): e is LabelMergeQueryLabelsOutputSchemaError =>
+//                 !!e && typeof e.s === "string"
+//             )
+//             .map(e => [`${e.s}::${e.e ?? ""}`, e])
+//         ).values()
+//       );
+
+//       const result: LabelMergeQueryLabelsOutputSchema = {
+//         labels: labels,
+//         error: errors.length < 1 ? undefined : errors,
+//       };
+
+//       return result;
+//     },
+//   });
+// };
+
+function buildSingularQueries(subjects: string[], labelers: string[]) {
+  return subjects.flatMap((s) =>
+    labelers.map((l) => ({
+      s,
+      l,
+    })),
+  );
+}
+
+export function useQueryLabels(subjects: string[], labelers: string[]) {
+  const singulars = useMemo(
+    () => buildSingularQueries(subjects, labelers),
+    [subjects, labelers],
+  );
+
+  const queries = useQueries({
+    queries: singulars.map((q) =>
+      constructSingularLabelQuery(q),
+    ),
+  });
+
+  // derive merged state synchronously
+  const labels = useMemo(() => {
+    return Array.from(
+      new Map(
+        queries
+          .map((q) => q.data?.labels)
+          .filter(
+            (l): l is ATPAPI.ComAtprotoLabelDefs.Label =>
+              !!l?.src,
+          )
+          .map((l) => [`${l.src}::${l.uri}`, l]),
+      ).values(),
+    );
+  }, [queries]);
+
+  const errors = useMemo(() => {
+    return Array.from(
+      new Map(
+        queries
+          .map((q) => q.data?.error)
+          .flat()
+          .filter(
+            (e): e is LabelMergeQueryLabelsOutputSchemaError =>
+              !!e && typeof e.s === "string",
+          )
+          .map((e) => [`${e.s}::${e.e ?? ""}`, e]),
+      ).values(),
+    );
+  }, [queries]);
+
+  const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+  const isFetching = queries.some((q) => q.isFetching);
+
+  return {
+    data: {
+      labels,
+      error: errors.length ? errors : undefined,
+    },
+    isLoading,
+    isError,
+    isFetching,
+  };
+}
+
+export function constructSingularLabelQuery(options: SingularLabelQuery) {
+  const { s, l } = options;
+
+  return queryOptions({
+    queryKey: ["__volatile","slq", s, l],
+
+    enabled: !!s && !!l,
+
+    queryFn: async (): Promise<SingularLabelResult | undefined> => {
+      // const result = (await labelmerge.fetch(options).catch(err => {throw { error: err } as SingularLabelResult})) as SingularLabelResult
+      // if (result.error) {
+      //   throw result.error
+      // }
+      // return result;
+      const result = (await labelmerge
+        .fetch(options)
+        .catch(
+          (err) => ({ error: err }) as SingularLabelResult,
+        )) as SingularLabelResult;
+      
+      if (result === undefined) {
+        throw new Error("what the hell happened")
+      }
+      return result;
+    },
+
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000,
+  });
+}
+export function useQuerySingularLabelQuery(options: SingularLabelQuery) {
+  return useQuery(constructSingularLabelQuery(options));
 }

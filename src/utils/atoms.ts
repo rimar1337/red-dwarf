@@ -2,6 +2,7 @@ import { atom, createStore, useAtomValue } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useEffect } from "react";
 
+import { HOST_DEFAULT_HUE } from "~/../policy";
 import { type ProfilePostsFilter } from "~/routes/profile.$did";
 
 export const store = createStore();
@@ -98,7 +99,12 @@ export const lycanURLAtom = atomWithStorage<string>(
   defaultLycanURL
 );
 
-export const defaulthue = 28;
+export const disabledLabelersAtom = atomWithStorage<string[]>(
+  "disabledLabelers",
+  []
+);
+
+export const defaulthue = HOST_DEFAULT_HUE;
 export const hueAtom = atomWithStorage<number>("hue", defaulthue);
 
 export const isAtTopAtom = atom<boolean>(true);
