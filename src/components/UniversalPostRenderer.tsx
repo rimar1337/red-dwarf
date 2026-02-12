@@ -131,7 +131,13 @@ export function UniversalPostRendererATURILoader({
     );
     setReposts(
       links
-        ? links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records || 0
+        // add the two quote forms as well
+        ? links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records
+        // .embed.record.uri
+        + links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]?.records
+        // .embed.record.record.uri
+        + links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]?.records
+        || 0
         : null,
     );
     setReplies(
