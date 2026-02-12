@@ -8,13 +8,16 @@ import { Header } from "~/components/Header";
 import Login from "~/components/Login";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
+  appviewUrlAtom,
   constellationURLAtom,
+  defaultAppviewURL,
   defaultconstellationURL,
   defaulthue,
   defaultImgCDN,
   defaultLycanURL,
   defaultslingshotURL,
   defaultVideoCDN,
+  enableAppViewAtom,
   enableBitesAtom,
   enableBridgyTextAtom,
   enableWafrnTextAtom,
@@ -34,6 +37,7 @@ export const Route = createFileRoute("/settings")({
 export function Settings() {
   const navigate = useNavigate();
   const { agent } = useAuth();
+  const [isAppViewEnabled] = useAtom(enableAppViewAtom);
   return (
     <>
       <Header
@@ -197,10 +201,27 @@ export function Settings() {
         description={"Show the original text of posts from Wafrn instances"}
         //init={false}
       />
+      <div className="h-4" />
+      <SwitchSetting
+        atom={enableAppViewAtom}
+        title={"AppView-First"}
+        description={"Prioritize using an AppView to hydrate posts & profiles before using microcosm"}
+        //init={false}
+      />
+      <div className={`${isAppViewEnabled ? "" : "opacity-50  pointer-events-none"}`}>
+        <div className="h-4" />
+        <TextInputSetting
+          atom={appviewUrlAtom}
+          title={"AppView URL"}
+          description={"Enable text search across posts you've interacted with"}
+          init={defaultAppviewURL}
+        />
+      </div>
       <p className="text-gray-500 dark:text-gray-400 py-4 px-4 text-sm border rounded-xl mx-4 mt-8 mb-4">
         Notice: Please restart/refresh the app if changes arent applying
         correctly
       </p>
+      <div className="h-60" />
     </>
   );
 }

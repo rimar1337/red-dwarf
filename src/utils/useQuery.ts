@@ -250,6 +250,7 @@ export function constructConstellationQuery(query?: {
   cursor?: string;
   dids?: string[];
   customkey?: string;
+  enabled?: boolean;
 }) {
   // : QueryOptions<
   //   | linksRecordsResponse
@@ -260,6 +261,7 @@ export function constructConstellationQuery(query?: {
   //   Error
   // >
   return queryOptions({
+    enabled: query?.enabled,
     queryKey: [
       "constellation",
       query?.method,
@@ -335,6 +337,7 @@ export function useQueryConstellation(query: {
   cursor?: string;
   dids?: string[];
   customkey?: string;
+  enabled?: boolean;
 }): UseQueryResult<linksRecordsResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/distinct-dids";
@@ -343,6 +346,7 @@ export function useQueryConstellation(query: {
   path: string;
   cursor?: string;
   customkey?: string;
+  enabled?: boolean;
 }): UseQueryResult<linksDidsResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/count";
@@ -351,6 +355,7 @@ export function useQueryConstellation(query: {
   path: string;
   cursor?: string;
   customkey?: string;
+  enabled?: boolean;
 }): UseQueryResult<linksCountResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/count/distinct-dids";
@@ -359,17 +364,20 @@ export function useQueryConstellation(query: {
   path: string;
   cursor?: string;
   customkey?: string;
+  enabled?: boolean;
 }): UseQueryResult<linksCountResponse, Error>;
 export function useQueryConstellation(query: {
   method: "/links/all";
   target: string;
   customkey?: string;
+  enabled?: boolean;
 }): UseQueryResult<linksAllResponse, Error>;
 export function useQueryConstellation(): undefined;
 export function useQueryConstellation(query: {
   method: "undefined";
   target: string;
   customkey?: string;
+  enabled?: boolean;
 }): undefined;
 export function useQueryConstellation(query?: {
   method:
@@ -385,6 +393,7 @@ export function useQueryConstellation(query?: {
   cursor?: string;
   dids?: string[];
   customkey?: string;
+  enabled?: boolean;
 }):
   | UseQueryResult<
       | linksRecordsResponse
@@ -1383,4 +1392,177 @@ export function constructSingularLabelQuery(options: SingularLabelQuery) {
 }
 export function useQuerySingularLabelQuery(options: SingularLabelQuery) {
   return useQuery(constructSingularLabelQuery(options));
+}
+
+
+type SingularAVPostQuery = {
+  aturi: string,
+  avurl: string,
+}
+type SingularAVPostResult = ATPAPI.AppBskyFeedDefs.PostView
+
+type AVPostQueryPostsQueryParams = {
+  aturis: string[],
+  avurl: string,
+}
+
+const MAX_URIS_PER_REQUEST = 25;
+function chunk<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
+
+export async function innerAVPostsQueryFn(
+  options: AVPostQueryPostsQueryParams
+): Promise<ATPAPI.AppBskyFeedGetPosts.OutputSchema | undefined> {
+  const { aturis, avurl } = options;
+
+  if (!aturis?.length) return undefined;
+
+  const batches = chunk(aturis, MAX_URIS_PER_REQUEST);
+
+  const responses = await Promise.all(
+    batches.map(async (batch) => {
+      const params = new URLSearchParams();
+      batch.forEach((uri) => params.append("uris", uri));
+
+      const url = `${avurl}/xrpc/app.bsky.feed.getPosts?${params.toString()}`;
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Labelmerge fetch failed: ${res.status} ${res.statusText}`);
+      }
+
+      return (await res.json()) as ATPAPI.AppBskyFeedGetPosts.OutputSchema;
+    })
+  );
+
+  // Merge all posts into one response
+  const merged: ATPAPI.AppBskyFeedGetPosts.OutputSchema = {
+    posts: responses.flatMap((r) => r.posts ?? []),
+  };
+
+  return merged;
+}
+
+const postquerymerge = create(
+  /*<Record<String,SingularLabelResult>[], SingularLabelQuery>*/ {
+    // The fetcher resolves the list of queries(here just a list of user ids as number) to one single api call.
+    fetcher: async (savpqa: SingularAVPostQuery[]) => {
+      // Use a shared QueryClient if possible; creating a new one per fetch is usually not needed
+
+      // Deduplicate, but don’t sort
+      const sarr = Array.from(new Set(savpqa.map((savpq) => savpq.aturi)));
+
+      //const result = await batShitQueryClient.fetchQuery(
+      //  constructLabelMergeQuery({ s: sarr, l: larr }),
+      //);
+      const result = await innerAVPostsQueryFn({aturis: sarr, avurl: savpqa.at(-1)?.avurl || savpqa[0].avurl})
+      //const qfn = constructLabelMergeQuery({ s: sarr, l: larr }).queryFn
+      //const result = await (qfn ? qfn() : ()=>{})
+      if (!result) return [];
+
+      // Build maps for quick lookup
+      //const errmap = new Map<string, LabelMergeQueryLabelsOutputSchemaError>();
+      // const resmap = new Map<string, SingularAVPostResult>();
+
+      // result.posts?.forEach((post) => resmap.set(post.uri, post));
+
+      // // Map back to the original queries
+      // const output: Record<string, SingularAVPostResult>[] = savpqa.map((savpq) => {
+      //   const key = savpq.aturi; // or just slq.l if you prefer
+
+      //   //const err = errmap.get(slq.l);
+      //   const post = resmap.get(key);
+
+      //   //if (err) return { [key]: { error: err } };
+      //   if (post) return { [key]: { labels: label } };
+
+      //   // if result is neither, it means the subject is free of labels
+      //   return { 
+      //     [key]: { labels: undefined} 
+      //   };
+      //   // idiot
+      //   // return { 
+      //   //   [key]: { error: {
+      //   //     s: slq.l,
+      //   //     e: `!internal-bslm-unknown: ${slq.s}`
+      //   //   }} 
+      //   // };
+      // });
+      const output = result.posts;
+
+      return output;
+    },
+    // when we call users.fetch, this will resolve the correct user using the field `id`
+    resolver: (rslra, savpq) => {
+      if (rslra.length < 1) {
+        return undefined;
+      }
+      // const result: SingularLabelResult | undefined = slra.find((slr, i) => {
+      //   // find if error first
+      //   const error = slr.error;
+      //   const label = slr.labels;
+      //   if (error) {
+      //     if (slq.l === error.s) {
+      //       return slq;
+      //     }
+      //   } else if (label) {
+      //     // if not error
+      //     if (slq.l === label.src && slq.s === label.uri) {
+      //       return slq;
+      //     }
+      //     // else unhandled not found
+      //   } else {
+      //     return undefined;
+      //   }
+      //   return undefined;
+      // });
+      //const outputMap: Record<string, SingularLabelResult> = Object.assign({}, ...rslra)
+      //const key = `${slq.l}::${slq.s}`; // or just slq.l if you prefer
+      const item = rslra.find(obj => obj.uri === savpq.aturi);
+      const result: SingularAVPostResult | undefined = item//outputMap[key]
+      return result;
+    },
+    scheduler: windowScheduler(10 * 100), // 1 second
+  },
+);
+
+export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
+  const { aturi, avurl } = options;
+
+  return queryOptions({
+    queryKey: ["__volatile","savpq", aturi],
+
+    enabled: !!aturi && !!avurl,
+
+    queryFn: async (): Promise<SingularAVPostResult | undefined> => {
+      // const result = (await labelmerge.fetch(options).catch(err => {throw { error: err } as SingularLabelResult})) as SingularLabelResult
+      // if (result.error) {
+      //   throw result.error
+      // }
+      // return result;
+      const result = (await postquerymerge
+        .fetch(options))as SingularAVPostResult;
+        // .catch(
+        //   (err) => ({ error: err }) as SingularAVPostResult,
+        // )) as SingularAVPostResult;
+      
+      if (result === undefined) {
+        throw new Error("what the hell happened")
+      }
+      return result;
+    },
+
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000,
+  });
+}
+
+export function useQuerySingularAVPostQuery(options: SingularAVPostQuery) {
+  return useQuery(constructSingularAVPostQuery(options));
 }

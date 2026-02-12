@@ -35,9 +35,11 @@ This hosted instance mandates Bluesky Moderation to limit moderation scope and k
 
 ## About Red Dwarf
 
-Red Dwarf is a Bluesky client that does not rely on Bluesky API App Servers.
-Instead, it uses Microcosm to fetch records directly from each user’s PDS (via Slingshot)
-and connect them using backlinks (via Constellation).
+Red Dwarf is a Bluesky client that does not depend on Bluesky’s AppView servers.
+
+It preserves authoritative independence by fetching records directly from each user’s PDS (via Slingshot)
+and reconstructing relationships through backlinks (via Constellation), 
+while optionally using AppView as an optimization layer when available.
 
 ## Hosting Your Own Instance
 

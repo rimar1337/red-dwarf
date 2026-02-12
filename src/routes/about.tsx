@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { FORCED_LABELER_DIDS, HOST_ABOUT_MARKDOWN, HOST_ADMIN, HOST_DESCRIPTION, HOST_HERO, HOST_LABELMERGE, HOST_SIGNUP_PDS } from '~/../policy';
 import { Header } from '~/components/Header';
-import { defaultconstellationURL, defaultImgCDN, defaultLycanURL, defaultslingshotURL, defaultVideoCDN } from '~/utils/atoms';
+import { defaultAppviewURL, defaultconstellationURL, defaultImgCDN, defaultLycanURL, defaultslingshotURL, defaultVideoCDN } from '~/utils/atoms';
 
 import { ProfileSmall } from './__root';
 import { NotificationItem } from './notifications';
@@ -219,6 +219,9 @@ function PolicyRenderer(){
 
         <span className="font-medium">Lycan (Personal Search):</span>
         <span className={defaultLycanURL ? "" : "italic"}>{defaultLycanURL || "not set"}</span>
+
+        <span className="font-medium">AppView (Bluesky Index):</span>
+        <span className={defaultAppviewURL? "" : "italic"}>{defaultAppviewURL || "not set"}</span>
       </div>
       {/* {hostmandate && (<Heading2 title="Host-Mandated Labelers" />)} */}
       <Heading3 title="General Moderation" />

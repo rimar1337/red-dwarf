@@ -355,6 +355,7 @@ export function usePollData(
   pollCid: string | undefined,
   isMultiple: boolean,
   serverCounts: { a: number; b: number; c: number; d: number },
+  enabled?: boolean
 ) {
   const { agent } = useAuth();
   const myDid = agent?.did;
@@ -371,6 +372,7 @@ export function usePollData(
     collection: "app.reddwarf.poll.vote.a",
     path: ".subject.uri",
     customkey: "constellation-polls",
+    enabled: enabled,
   });
   const { data: votersB } = useQueryConstellation({
     method: "/links",
@@ -378,6 +380,7 @@ export function usePollData(
     collection: "app.reddwarf.poll.vote.b",
     path: ".subject.uri",
     customkey: "constellation-polls",
+    enabled: enabled,
   });
   const { data: votersC } = useQueryConstellation({
     method: "/links",
@@ -385,6 +388,7 @@ export function usePollData(
     collection: "app.reddwarf.poll.vote.c",
     path: ".subject.uri",
     customkey: "constellation-polls",
+    enabled: enabled,
   });
   const { data: votersD } = useQueryConstellation({
     method: "/links",
@@ -392,6 +396,7 @@ export function usePollData(
     collection: "app.reddwarf.poll.vote.d",
     path: ".subject.uri",
     customkey: "constellation-polls",
+    enabled: enabled,
   });
 
   const handleVote = useCallback(
@@ -480,6 +485,10 @@ export function usePollData(
         stateD.hasVoted,
       totalVotes: stateA.count + stateB.count + stateC.count + stateD.count,
       handleVote,
+      votersA,
+      votersB,
+      votersC,
+      votersD
     };
   }, [
     localVotes,

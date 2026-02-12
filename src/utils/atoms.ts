@@ -160,6 +160,16 @@ export const enableWafrnTextAtom = atomWithStorage<boolean>(
   false
 );
 
+export const enableAppViewAtom = atomWithStorage<boolean>(
+  "enableAppViewAtom",
+  true
+);
+export const defaultAppviewURL = "https://api.bsky.app";
+export const appviewUrlAtom = atomWithStorage<string>(
+  "AppviewUrl",
+  defaultAppviewURL
+);
+
 
 // polls state
 

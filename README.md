@@ -1,11 +1,15 @@
 # Red Dwarf
-Red Dwarf is a Bluesky client that does not use any AppView servers, instead it gathers the data from [Constellation](https://constellation.microcosm.blue/) and each users' PDS.
+Red Dwarf is a Bluesky client that does not depend on Bluesky’s AppView servers.
+
+It preserves authoritative independence by fetching records directly from each user’s PDS (via [Slingshot](https://slingshot.microcosm.blue/))
+and reconstructing relationships through backlinks (via [Constellation](https://constellation.microcosm.blue/)), 
+while optionally using AppView as an optimization layer when available.
 
 ![screenshot of red dwarf](/public/screenshot.jpg)
 
 huge thanks to [Microcosm](https://microcosm.blue/) for making this possible
 
-issue tracker kanban board: [https://github.com/users/rimar1337/projects/1/views/1]https://github.com/users/rimar1337/projects/1/views/1
+issue tracker kanban board: [currently on GitHub Projects](https://github.com/users/rimar1337/projects/1/views/1)
 
 ## running dev and build
 in the `vite.config.ts` file you should change these values

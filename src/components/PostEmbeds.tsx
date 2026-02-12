@@ -1,3 +1,4 @@
+import * as ATPAPI from "@atproto/api"
 import {
   AppBskyEmbedDefs,
   AppBskyEmbedExternal,
@@ -55,7 +56,8 @@ export function PostEmbeds({
   nopics,
   lightboxCallback,
   constellationLinks,
-  redactedLoading
+  redactedLoading,
+  referral
 }: {
   embed?: Embed;
   moderation?: ModerationDecision;
@@ -69,6 +71,7 @@ export function PostEmbeds({
   lightboxCallback?: (d: LightboxProps) => void;
   constellationLinks?: any;
   redactedLoading?: boolean;
+  referral?: string[];
 }) {
   function setLightboxIndex(number: number) {
     navigate({
@@ -548,19 +551,20 @@ export function PostEmbeds({
   if (AppBskyEmbedExternal.isView(embed)) {
     const pollLinks = constellationLinks?.links?.["app.reddwarf.embed.poll"];
     const hasPollLink = pollLinks && Object.keys(pollLinks).length > 0;
+    const isfromappview = referral?.includes("appview")
 
-    if (hasPollLink && postid) {
+    if ((hasPollLink || isfromappview) && postid) {
       // warning: i gave up and warpped it in a div lmao
       return (
         <div className={(redactedLoading ? " blur animate-pulse " : undefined)}>
-          <PollEmbed did={postid.did} rkey={postid.rkey} />
+          <PollEmbed did={postid.did} rkey={postid.rkey} embedtryfall={isfromappview ? {embed, onOpen} : undefined} redactedLoading={redactedLoading}/>
         </div>
       );
     }
 
     const link = embed.external;
     return (
-      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} redactedLoading={redactedLoading} />
+      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} redactedLoading={redactedLoading}/>
     );
   }
 
@@ -579,18 +583,26 @@ export function PostEmbeds({
 
   return <div />;
 }
+export type embedtryfall = {
+  embed: ATPAPI.AppBskyEmbedExternal.View,
+  onOpen?: () => void;
+}
 
 export function ExternalLinkEmbed({
   link,
   onOpen,
   style,
-  redactedLoading
+  redactedLoading,
+  referral
 }: {
   link: AppBskyEmbedExternal.ViewExternal;
   onOpen?: () => void;
   style?: React.CSSProperties;
   redactedLoading?: boolean;
+  referral?: string[];
 }) {
+  //const fromappview = referral?.includes("appview")
+  //const []
   const { uri, title, description, thumb } = link;
   const thumbAspectRatio = 1.91;
 

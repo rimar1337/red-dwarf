@@ -27,8 +27,10 @@ import { FollowButton, getLocaleLabel, type LabelWithHydratedLocaleName, Mutual 
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 //import type { ContentLabel } from "~/types/moderation";
 import {
+  appviewUrlAtom,
   composerAtom,
   constellationURLAtom,
+  enableAppViewAtom,
   enableBridgyTextAtom,
   enableWafrnTextAtom,
   imgCDNAtom,
@@ -41,6 +43,7 @@ import {
   useQueryIdentity,
   useQueryPost,
   useQueryProfile,
+  useQuerySingularAVPostQuery,
   yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
 } from "~/utils/useQuery";
 
@@ -77,6 +80,209 @@ export interface UniversalPostRendererATURILoaderProps {
 }
 
 export function UniversalPostRendererATURILoader({
+  atUri,
+  onConstellation,
+  detailed = false,
+  bottomReplyLine,
+  topReplyLine,
+  bottomBorder = true,
+  feedviewpost = false,
+  repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
+  concise,
+  lightboxCallback,
+  maxReplies,
+  isQuote,
+  filterNoReplies,
+  filterMustHaveMedia,
+  filterMustBeReply,
+}: UniversalPostRendererATURILoaderProps) {
+  const [usesAV] = useAtom(enableAppViewAtom);
+  if (usesAV) {
+    return (
+      <UniversalPostRendererATURILoader_AppView
+        atUri={atUri}
+        onConstellation={onConstellation}
+        detailed={detailed}
+        bottomReplyLine={bottomReplyLine}
+        topReplyLine={topReplyLine}
+        bottomBorder={bottomBorder}
+        feedviewpost={feedviewpost}
+        repostedby={repostedby}
+        style={style}
+        ref={ref}
+        dataIndexPropPass={dataIndexPropPass}
+        nopics={nopics}
+        concise={concise}
+        lightboxCallback={lightboxCallback}
+        maxReplies={maxReplies}
+        isQuote={isQuote}
+        filterNoReplies={filterNoReplies}
+        filterMustHaveMedia={filterMustHaveMedia}
+        filterMustBeReply={filterMustBeReply}
+      />
+    )
+  }
+  return (
+    <UniversalPostRendererATURILoader_Microcosm
+      atUri={atUri}
+      onConstellation={onConstellation}
+      detailed={detailed}
+      bottomReplyLine={bottomReplyLine}
+      topReplyLine={topReplyLine}
+      bottomBorder={bottomBorder}
+      feedviewpost={feedviewpost}
+      repostedby={repostedby}
+      style={style}
+      ref={ref}
+      dataIndexPropPass={dataIndexPropPass}
+      nopics={nopics}
+      concise={concise}
+      lightboxCallback={lightboxCallback}
+      maxReplies={maxReplies}
+      isQuote={isQuote}
+      filterNoReplies={filterNoReplies}
+      filterMustHaveMedia={filterMustHaveMedia}
+      filterMustBeReply={filterMustBeReply}
+    />
+  )
+}
+/* 
+  todo:
+  - either
+    - put constellation based reply threading or
+    - use a getPostThreadV2 once for quick reply threadings (the post thread page always 
+      fetches replies via constellation for complteness)
+  - do the profile pages too
+ */
+export function UniversalPostRendererATURILoader_AppView({
+  atUri,
+  onConstellation,
+  detailed = false,
+  bottomReplyLine,
+  topReplyLine,
+  bottomBorder = true,
+  feedviewpost = false,
+  repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
+  concise,
+  lightboxCallback,
+  maxReplies,
+  isQuote,
+  filterNoReplies,
+  filterMustHaveMedia,
+  filterMustBeReply,
+}: UniversalPostRendererATURILoaderProps) {
+  const [avurl] = useAtom(appviewUrlAtom);
+  const navigate = useNavigate();
+  const parsedaturi = new AtUri(atUri);
+
+  const { data, isLoading, isEnabled, isError, error } = useQuerySingularAVPostQuery({ aturi: atUri, avurl: avurl });
+
+
+  const thereply = (data?.record as AppBskyFeedPost.Record)?.reply?.parent
+    ?.uri;
+  const feedviewpostreplydid =
+    thereply && !filterNoReplies ? new AtUri(thereply).host : undefined;
+  const replyhookvalue = useQueryIdentity(
+    feedviewpost ? feedviewpostreplydid : undefined,
+  );
+  const feedviewpostreplyhandle = replyhookvalue?.data?.handle;
+
+  const aturirepostbydid = repostedby ? new AtUri(repostedby).host : undefined;
+  const repostedbyhookvalue = useQueryIdentity(
+    repostedby ? aturirepostbydid : undefined,
+  );
+  const feedviewpostrepostedbyhandle = repostedbyhookvalue?.data?.handle;
+  if (!isLoading && data === undefined) {
+    return (
+      <UniversalPostRendererATURILoader_Microcosm
+        atUri={atUri}
+        onConstellation={onConstellation}
+        detailed={detailed}
+        bottomReplyLine={bottomReplyLine}
+        topReplyLine={topReplyLine}
+        bottomBorder={bottomBorder}
+        feedviewpost={feedviewpost}
+        repostedby={repostedby}
+        style={style}
+        ref={ref}
+        dataIndexPropPass={dataIndexPropPass}
+        nopics={nopics}
+        concise={concise}
+        lightboxCallback={lightboxCallback}
+        maxReplies={maxReplies}
+        isQuote={isQuote}
+        filterNoReplies={filterNoReplies}
+        filterMustHaveMedia={filterMustHaveMedia}
+        filterMustBeReply={filterMustBeReply}
+      />
+    )
+  }
+  return (
+    <UniversalPostRenderer
+      referral={["appview"]}
+      expanded={detailed}
+      onPostClick={() =>
+        parsedaturi &&
+        navigate({
+          to: "/profile/$did/post/$rkey",
+          params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
+        })
+      }
+      onProfileClick={(e) => {
+        e.stopPropagation();
+        if (parsedaturi) {
+          navigate({
+            to: "/profile/$did",
+            params: { did: parsedaturi.host },
+          });
+        }
+      }}
+      post={data || {
+        uri: atUri,
+        cid: atUri,
+        author: {
+          did: parsedaturi.host,
+          handle: parsedaturi.host,
+        },
+        record: {},
+        indexedAt: "",
+      }} // todo: this is bad. just make it so that UPR allows missing data
+      uprrrsauthor={{
+        ...(data?.author ||
+        {
+          did: parsedaturi.host,
+          handle: parsedaturi.host,
+        }),
+        "$type": "app.bsky.actor.defs#profileViewDetailed",
+      }}
+      salt={atUri}
+      bottomReplyLine={bottomReplyLine}
+      topReplyLine={topReplyLine}
+      bottomBorder={bottomBorder}
+      feedviewpost={feedviewpost}
+      feedviewpostreplyhandle={feedviewpostreplyhandle}
+      repostedby={feedviewpostrepostedbyhandle}
+      style={style}
+      ref={ref}
+      dataIndexPropPass={dataIndexPropPass}
+      nopics={nopics}
+      concise={concise}
+      lightboxCallback={lightboxCallback}
+      maxReplies={maxReplies}
+      isQuote={isQuote}
+      constellationLinks={{}}
+    />
+  )
+}
+export function UniversalPostRendererATURILoader_Microcosm({
   atUri,
   onConstellation,
   detailed = false,
@@ -607,6 +813,7 @@ export function UniversalPostRenderer({
   lightboxCallback,
   maxReplies,
   constellationLinks,
+  referral,
 }: {
   post: AppBskyFeedDefs.PostView;
   uprrrsauthor?: AppBskyActorDefs.ProfileViewDetailed;
@@ -631,6 +838,7 @@ export function UniversalPostRenderer({
   lightboxCallback?: (d: LightboxProps) => void;
   maxReplies?: number;
   constellationLinks?: any;
+  referral?: string[];
 }) {
 
   // todo move moderation to one of the UniversalPostRenderer wrapper components, and not the pure renderer component. please. thanks
@@ -929,22 +1137,22 @@ export function UniversalPostRenderer({
       return null // if feed view post then moderated post isnt important and just remove it from view
     }
     return (
-      <div 
-      className={`flex flex-col gap-0 border-gray-200 dark:border-gray-800 ${bottomReplyLine ? "" : "border-b"}`}
-      onClick={
-        isMainItem
-          ? onPostClick
-          : setMainItem
+      <div
+        className={`flex flex-col gap-0 border-gray-200 dark:border-gray-800 ${bottomReplyLine ? "" : "border-b"}`}
+        onClick={
+          isMainItem
             ? onPostClick
-              ? (e) => {
-                setMainItem({ post: post });
-                onPostClick(e);
-              }
-              : () => {
-                setMainItem({ post: post });
-              }
-            : undefined
-      }>
+            : setMainItem
+              ? onPostClick
+                ? (e) => {
+                  setMainItem({ post: post });
+                  onPostClick(e);
+                }
+                : () => {
+                  setMainItem({ post: post });
+                }
+              : undefined
+        }>
 
         <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
           <div
@@ -1367,6 +1575,7 @@ export function UniversalPostRenderer({
                   nopics={nopics}
                   lightboxCallback={lightboxCallback}
                   constellationLinks={constellationLinks}
+                  referral={[...referral || [], "im upr!"]}
                 />
               ) : null}
               {post.embed && depth > 0 && (
