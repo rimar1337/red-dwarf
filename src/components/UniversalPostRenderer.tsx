@@ -1018,7 +1018,7 @@ export function UniversalPostRenderer({
           position: "relative",
           borderBottomWidth: bottomBorder ? (isQuote ? 0 : 1) : 0,
         }}
-        className="border-gray-300 dark:border-gray-800"
+        className="border-gray-200 dark:border-gray-800"
       >
         {isRepost && (
           <div
@@ -1150,6 +1150,7 @@ export function UniversalPostRenderer({
               width: expanded || isQuote ? 0 : "auto",
               marginRight: expanded || isQuote ? 0 : 12,
             }}
+            className=" shrink-0"
           >
             <div style={{ width: 42, height: 42 + 6, minHeight: 42 + 6 }} />
             {bottomReplyLine && (

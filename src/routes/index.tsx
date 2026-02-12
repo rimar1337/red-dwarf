@@ -358,9 +358,10 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   const selectedFeedComputed = selectedFeed === "following" ? "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds" : selectedFeed;
   const feedServiceDidComputed = selectedFeed === "following" ? "did:web:rinds.whey.party" : feedServiceDid;
 
+  //${/*divide-y divide-gray-200 dark:divide-gray-800*/""}
   return (
     <div
-      className={`relative flex flex-col divide-y divide-gray-200 dark:divide-gray-800 ${hidden && "hidden"}`}
+      className={`relative flex flex-col ${hidden && "hidden"}`}
     >
       {!isAuthRestoring && savedFeeds.length > 0 ? (
         <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
