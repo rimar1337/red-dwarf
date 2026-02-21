@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import React from 'react';
 
 import { FORCED_LABELER_DIDS, HOST_ABOUT_MARKDOWN, HOST_ADMIN, HOST_DESCRIPTION, HOST_HERO, HOST_LABELMERGE, HOST_SIGNUP_PDS } from '~/../policy';
 import { Header } from '~/components/Header';
@@ -173,7 +174,7 @@ function PolicyRenderer(){
   // endorsed feeds (should be shown in the explore tab too in lieu of feed discovery)
   // - [ ] HOST_UNAUTHED_DEFAULT_FEEDS
   // endorsed PDS
-  // - [ ] HOST_SIGNUP_PDS
+  // - [x] HOST_SIGNUP_PDS
   // todo move the other default services into policy.ts
   // todo re- sort policy.ts according to this component
   // also the default services used like microcosm stuff and lycan and maybe the reliance of an appview for search or some other hting
@@ -181,7 +182,7 @@ function PolicyRenderer(){
   // default general host moderation policies
   // todo: layerd moderataion later pls thanks
   // show the labelmerge insstance responsible
-  // - [ ] HOST_LABELMERGE
+  // - [x] HOST_LABELMERGE
   // show both the whitelisted source and labeler dids in the same spot.
   // like on hover / click it opens a dialog / popover to show what authority the labeler has
   // - [x] FORCED_LABELER_DIDS
@@ -197,32 +198,49 @@ function PolicyRenderer(){
   return (
     <>
       {/* settings heading or about heading? */}
+      <Heading3 title="Instance Configuration" />
+      <KeyValueGrid
+        items={[
+          {
+            label: "PDS Signups (Account Storage):",
+            value: HOST_SIGNUP_PDS || "",
+          },
+          {
+            label: "Labelmerge (Label Cache):",
+            value: HOST_LABELMERGE,
+          },
+        ]}
+      />
       <Heading3 title="Instance Defaults" />
-      <div className="grid grid-cols-2 gap-x-2 gap-y-2 text-sm text-gray-700 dark:text-gray-300 mr-auto ml-2">
-        <span className="font-medium">PDS (User Account Storage):</span>
-        <span className={HOST_SIGNUP_PDS ? "" : "italic"}>{HOST_SIGNUP_PDS || "not set"}</span>
-
-        <span className="font-medium">Labelmerge (Label Cache):</span>
-        <span>{HOST_LABELMERGE || "not set"}</span>
-
-        <span className="font-medium">Constellation (Backlink Index):</span>
-        <span>{defaultconstellationURL || "not set"}</span>
-
-        <span className="font-medium">Slingshot (Record Cache):</span>
-        <span>{defaultslingshotURL || "not set"}</span>
-
-        <span className="font-medium">Image Provider (CDN):</span>
-        <span>{defaultImgCDN || "not set"}</span>
-
-        <span className="font-medium">Video Provider (CDN):</span>
-        <span>{defaultVideoCDN || "not set"}</span>
-
-        <span className="font-medium">Lycan (Personal Search):</span>
-        <span className={defaultLycanURL ? "" : "italic"}>{defaultLycanURL || "not set"}</span>
-
-        <span className="font-medium">AppView (Bluesky Index):</span>
-        <span className={defaultAppviewURL? "" : "italic"}>{defaultAppviewURL || "not set"}</span>
-      </div>
+      <KeyValueGrid
+        items={[
+          {
+            label: "Constellation (Backlink Index):",
+            value: defaultconstellationURL,
+            //italicIfEmpty: true,
+          },
+          {
+            label: "Slingshot (Record Cache):",
+            value: defaultslingshotURL,
+          },
+          {
+            label: "Image Provider (CDN):",
+            value: defaultImgCDN,
+          },
+          {
+            label: "Video Provider (CDN):",
+            value: defaultVideoCDN,
+          },
+          {
+            label: "Lycan (Personal Search):",
+            value: defaultLycanURL,
+          },
+          {
+            label: "AppView (Bluesky Index):",
+            value: defaultAppviewURL,
+          },
+        ]}
+      />
       {/* {hostmandate && (<Heading2 title="Host-Mandated Labelers" />)} */}
       <Heading3 title="General Moderation" />
       {hostmandate && (<Heading4 title="Host-Mandated Labelers" />)}
@@ -240,5 +258,48 @@ function PolicyRenderer(){
       <div className='h-[300px] w-auto' />
 
     </>
+  )
+}
+
+type KeyValueItem = {
+  label: string
+  value?: string | null
+  //italicIfEmpty?: boolean
+}
+
+interface KeyValueGridProps {
+  items: KeyValueItem[]
+  className?: string
+}
+
+export function KeyValueGrid({ items, className = "" }: KeyValueGridProps) {
+  return (
+    <div
+      className={`grid grid-cols-2 gap-x-2 gap-y-2 text-sm mr-auto ml-2 ${className}`}
+    >
+      {items.map((item, i) => {
+        const isEmpty = !item.value
+
+        return (
+          <React.Fragment key={i}>
+            {/* Label */}
+            <span className="font-medium text-gray-500 dark:text-gray-400">
+              {item.label}
+            </span>
+
+            {/* Value */}
+            <span
+              className={
+                isEmpty
+                  ? "text-gray-400 dark:text-gray-500 italic"
+                  : "text-gray-600 dark:text-gray-300"
+              }
+            >
+              {item.value || "not set"}
+            </span>
+          </React.Fragment>
+        )
+      })}
+    </div>
   )
 }

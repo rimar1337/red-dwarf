@@ -295,47 +295,51 @@ export function usePollMutationQueue() {
   return context;
 }
 
-function usePollSelfVotes(pollUri: string) {
+function usePollSelfVotes(pollUri: string, enabled?: boolean) {
   const { agent } = useAuth();
   const agentDid = agent?.did;
 
   const { uris: userVotesA } = useGetOneToOneState(
-    agentDid
+    agentDid && enabled
       ? {
           target: pollUri,
           user: agentDid,
           collection: "app.reddwarf.poll.vote.a",
           path: ".subject.uri",
+          enabled: enabled
         }
       : undefined,
   );
   const { uris: userVotesB } = useGetOneToOneState(
-    agentDid
+    agentDid && enabled
       ? {
           target: pollUri,
           user: agentDid,
           collection: "app.reddwarf.poll.vote.b",
           path: ".subject.uri",
+          enabled: enabled
         }
       : undefined,
   );
   const { uris: userVotesC } = useGetOneToOneState(
-    agentDid
+    agentDid && enabled
       ? {
           target: pollUri,
           user: agentDid,
           collection: "app.reddwarf.poll.vote.c",
           path: ".subject.uri",
+          enabled: enabled
         }
       : undefined,
   );
   const { uris: userVotesD } = useGetOneToOneState(
-    agentDid
+    agentDid && enabled
       ? {
           target: pollUri,
           user: agentDid,
           collection: "app.reddwarf.poll.vote.d",
           path: ".subject.uri",
+          enabled: enabled
         }
       : undefined,
   );
@@ -361,7 +365,7 @@ export function usePollData(
   const myDid = agent?.did;
 
   const { castVoteRaw, getLocalVotes } = usePollMutationQueue();
-  const serverUserVotes = usePollSelfVotes(pollUri); // Our own votes from server
+  const serverUserVotes = usePollSelfVotes(pollUri, enabled); // Our own votes from server
   const localVotes = getLocalVotes(pollUri); // Pending local actions
 
   // 1. FETCHING - Move the logic here

@@ -205,7 +205,7 @@ export function Settings() {
       <SwitchSetting
         atom={enableAppViewAtom}
         title={"AppView-First"}
-        description={"Prioritize using an AppView to hydrate posts & profiles before using microcosm"}
+        description={"Prioritize using an AppView to fetch posts before using microcosm"}
         //init={false}
       />
       <div className={`${isAppViewEnabled ? "" : "opacity-50  pointer-events-none"}`}>

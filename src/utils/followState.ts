@@ -134,6 +134,7 @@ export function useGetOneToOneState(params?: {
   user: string;
   collection: string;
   path: string;
+  enabled?: boolean;
 }): {
   uris: string[],
   isLoading: boolean;
@@ -152,8 +153,9 @@ export function useGetOneToOneState(params?: {
           customkey: params.collection.includes("reddwarf.poll.vote")
             ? "constellation-polls"
             : undefined,
+          enabled: params.enabled || false,
         }
-      : { method: "undefined", target: "whatever" },
+      : { method: "undefined", target: "whatever", enabled: false },
     // overloading sucks so much
   ) as UseQueryResult<linksRecordsResponse | undefined, Error>;
   if (!params || !params.user) return {

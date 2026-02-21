@@ -7,6 +7,7 @@ import {
   useInfiniteQuery,
   useQueries,
   useQuery,
+  //useQueryClient,
   type UseQueryResult,
 } from "@tanstack/react-query";
 import { create, windowScheduler } from "@yornaath/batshit";
@@ -73,6 +74,62 @@ export function useQueryIdentity(didorhandle?: string): UseQueryResult<
 export function useQueryIdentity(didorhandle?: string) {
   const [slingshoturl] = useAtom(slingshotURLAtom);
   return useQuery(constructIdentityQuery(didorhandle, slingshoturl));
+}
+
+export function constructFastAVIdentityQuery(
+  didorhandle?: string,
+  slingshoturl?: string,
+  queryClient?: QueryClient,
+  enabled?: boolean
+) {
+  return queryOptions({
+    queryKey: ["identity", didorhandle],
+    queryFn: async () => {
+      try {
+        console.log("whathuh trying", ["savpq", didorhandle])
+        if (!queryClient) throw "whatever"
+        const datas = queryClient.getQueriesData<SingularAVPostResult | undefined>({
+          queryKey: ["savpq", didorhandle],
+        })
+        console.log("whathuh checking", datas)
+        const data = datas[0][1];
+        if (!data) {
+          throw "whatever"
+        }
+        //const parsedaturi = new ATPAPI.AtUri(data.uri)
+        console.log("whathuh success")
+        return {
+          did: data.author.did,
+          handle: data.author.handle
+        }
+      } catch {
+        console.log("whathuh failure")
+        if (!didorhandle) return undefined as undefined;
+        const res = await fetch(
+          `https://${slingshoturl}/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`,
+        );
+        if (!res.ok) throw new Error("Failed to fetch post");
+        try {
+          return (await res.json()) as {
+            did: string;
+            handle: string;
+            pds: string;
+            signing_key: string;
+          };
+        } catch (_e) {
+          return undefined;
+        }
+      }
+    },
+    enabled,
+    staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
+    gcTime: /*0//*/ 5 * 60 * 1000,
+  });
+}
+
+
+export function useQueryFastAVIdentity(didorhandle?: string, slingshoturl?: string, queryClient?: QueryClient, enabled: boolean = true) {
+  return useQuery(constructFastAVIdentityQuery(didorhandle, slingshoturl, queryClient, enabled));
 }
 
 export function constructPostQuery(uri?: string, slingshoturl?: string) {
@@ -1398,6 +1455,7 @@ export function useQuerySingularLabelQuery(options: SingularLabelQuery) {
 type SingularAVPostQuery = {
   aturi: string,
   avurl: string,
+  instantBypass?: boolean,
 }
 type SingularAVPostResult = ATPAPI.AppBskyFeedDefs.PostView
 
@@ -1533,10 +1591,11 @@ const postquerymerge = create(
 );
 
 export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
-  const { aturi, avurl } = options;
+  const { aturi, avurl, instantBypass } = options;
+  const parsedaturi = new ATPAPI.AtUri(aturi)
 
   return queryOptions({
-    queryKey: ["__volatile","savpq", aturi],
+    queryKey: ["savpq", parsedaturi.host, /*"__volatile", */aturi],
 
     enabled: !!aturi && !!avurl,
 
@@ -1546,6 +1605,19 @@ export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
       //   throw result.error
       // }
       // return result;
+      if (instantBypass) {
+        const params = new URLSearchParams();
+        params.append("uris", aturi)
+        const url = `${avurl}/xrpc/app.bsky.feed.getPosts?${params.toString()}`;
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`Labelmerge fetch failed: ${res.status} ${res.statusText}`);
+        }
+
+        const result = (await res.json()) as ATPAPI.AppBskyFeedGetPosts.OutputSchema;
+        return result.posts[0]
+      }
       const result = (await postquerymerge
         .fetch(options))as SingularAVPostResult;
         // .catch(

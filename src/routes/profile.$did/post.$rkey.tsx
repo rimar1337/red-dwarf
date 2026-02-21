@@ -1,19 +1,22 @@
 import { AtUri } from "@atproto/api";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
+import { loadable } from "jotai/utils";
 import React, { useLayoutEffect } from "react";
 
 import { Header } from "~/components/Header";
 import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
-import { constellationURLAtom, slingshotURLAtom } from "~/utils/atoms";
+import { appviewUrlAtom, constellationURLAtom, enableAppViewAtom, slingshotURLAtom } from "~/utils/atoms";
 //import { usePersistentStore } from '~/providers/PersistentStoreProvider';
 import {
   constructPostQuery,
+  constructSingularAVPostQuery,
   type linksAllResponse,
   type linksRecordsResponse,
   useQueryConstellation,
-  useQueryIdentity,
+  useQueryFastAVIdentity,
+  //useQueryIdentity,
   useQueryPost,
   yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
 } from "~/utils/useQuery";
@@ -189,11 +192,13 @@ export function ProfilePostComponent({
   //   };
   // }, [atUri]);
 
+  const [slingshoturl] = useAtom(slingshotURLAtom);
+
   const {
     data: identity,
     isLoading: isIdentityLoading,
     error: identityError,
-  } = useQueryIdentity(showMainPostRoute ? did : undefined);
+  } = useQueryFastAVIdentity(showMainPostRoute ? did : undefined, slingshoturl, queryClient, true);
 
   const resolvedDid = did.startsWith("did:") ? did : identity?.did;
 
@@ -207,8 +212,8 @@ export function ProfilePostComponent({
 
   const { data: mainPost } = useQueryPost(showMainPostRoute ? atUri : undefined);
 
-  console.log("atUri",atUri)
-  
+  console.log("atUri", atUri)
+
   const opdid = React.useMemo(
     () =>
       atUri
@@ -218,13 +223,13 @@ export function ProfilePostComponent({
   );
 
   // @ts-expect-error i hate overloads
-  const { data: links } = useQueryConstellation(atUri&&showMainPostRoute?{
+  const { data: links } = useQueryConstellation(atUri && showMainPostRoute ? {
     method: "/links/all",
     target: atUri,
   } : {
     method: "undefined",
     target: ""
-  })as { data: linksAllResponse | undefined };
+  }) as { data: linksAllResponse | undefined };
 
   //const [likes, setLikes] = React.useState<number | null>(null);
   //const [reposts, setReposts] = React.useState<number | null>(null);
@@ -245,7 +250,7 @@ export function ProfilePostComponent({
     setReplyCount(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-            ?.records || 0
+          ?.records || 0
         : null
     );
   }, [links]);
@@ -388,7 +393,7 @@ export function ProfilePostComponent({
 
         hasPerformedInitialLayout.current = true;
       }
-      
+
       // todo idk what to do with this
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLayoutReady(true);
@@ -396,8 +401,14 @@ export function ProfilePostComponent({
   }, [parents, layoutReady, showMainPostRoute]);
 
 
-  const [slingshoturl] = useAtom(slingshotURLAtom)
-      
+  const [isAppviewEnabled] = useAtom(enableAppViewAtom);
+  const loadablePrefs = useAtomValue(loadable(enableAppViewAtom))
+  React.useEffect(() => {
+    console.log("why is this fucked isAppviewEnabled?:", isAppviewEnabled);
+  },[isAppviewEnabled])
+  const [appviewUrl] = useAtom(appviewUrlAtom);
+  //const [slingshoturl] = useAtom(slingshotURLAtom)
+
   React.useEffect(() => {
     if (parentsLoading || !showMainPostRoute) {
       setLayoutReady(false);
@@ -412,6 +423,11 @@ export function ProfilePostComponent({
   const directparent = mainPost?.value.reply?.parent.uri;
 
   React.useEffect(() => {
+    console.log("parent fetching useeffect called!")
+    // if (loadablePrefs.state !== "hasData") {
+    //   setParentsLoading(true);
+    //   return;
+    // }
     if (!mainPost?.value?.reply?.parent?.uri) {
       setParents([]);
       return;
@@ -420,23 +436,21 @@ export function ProfilePostComponent({
     let ignore = false;
     const fetchParents = async () => {
       setParentsLoading(true);
-      const parentChain: ({uri: string;cid: string;value: any;} | undefined)[] = [];
+      const parentChain: ({ uri: string; cid: string; value: any; } | undefined)[] = [];
       let currentParentUri = mainPost?.value.reply?.parent.uri;
       const MAX_PARENTS = 25;
       let safetyCounter = 0;
 
       while (currentParentUri && safetyCounter < MAX_PARENTS) {
         try {
-          const parentPost = await queryClient.fetchQuery(
-            constructPostQuery(currentParentUri, slingshoturl)
-          );
+          const parentPost = await getProfilePostTryFail({isAppviewEnabled, appviewUrl, queryClient, currentParentUri, slingshoturl})
           if (!parentPost) break;
           parentChain.push(parentPost);
           currentParentUri = parentPost.value?.reply?.parent?.uri;
         } catch (error) {
           console.error("Failed to fetch a parent post:", error);
           // its okay to always add one invalid parent then stop
-          if (currentParentUri){
+          if (currentParentUri) {
             parentChain.push({
               uri: currentParentUri,
               cid: "sorry",
@@ -458,7 +472,7 @@ export function ProfilePostComponent({
     return () => {
       ignore = true;
     };
-  }, [mainPost, queryClient, slingshoturl]);
+  }, [appviewUrl, isAppviewEnabled, loadablePrefs.state, mainPost, queryClient, slingshoturl]);
 
   if ((!did || !rkey) && showMainPostRoute) return <div>Invalid post URI</div>;
   if (isIdentityLoading && showMainPostRoute) return <div>Resolving handle...</div>;
@@ -545,7 +559,7 @@ export function ProfilePostComponent({
                   />
                 );
               })}
-              {hasNextPage && (
+            {hasNextPage && (
               <button
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
@@ -559,4 +573,47 @@ export function ProfilePostComponent({
       </>)}
     </>
   );
+}
+
+
+async function getProfilePostTryFail({
+  isAppviewEnabled,
+  appviewUrl,
+  queryClient,
+  currentParentUri,
+  slingshoturl,
+}: {
+  isAppviewEnabled?: boolean,
+  appviewUrl?: string,
+  queryClient: QueryClient,
+  currentParentUri: string,
+  slingshoturl: string,
+}): Promise<{
+  uri: string,
+  cid: string,
+  value: any
+} | undefined> {
+  try {
+    if (isAppviewEnabled && appviewUrl) {
+      console.log("why is this called? isAppviewEnabled:",isAppviewEnabled," appviewUrl:",appviewUrl)
+      const result = await queryClient.fetchQuery(
+        constructSingularAVPostQuery({ aturi: currentParentUri, avurl: appviewUrl, instantBypass: true })
+      )
+      if (result?.uri && result?.cid && result?.record) {
+        return {
+          uri: result?.uri,
+          cid: result?.cid,
+          value: result?.record as any
+        }
+      } else {
+        throw "whatever";
+      }
+    } else {
+      throw "sure";
+    }
+  } catch {
+      console.log("whatever why is this called? isAppviewEnabled:",isAppviewEnabled," appviewUrl:",appviewUrl)
+    return await queryClient.fetchQuery(
+      constructPostQuery(currentParentUri, slingshoturl))
+  }
 }
