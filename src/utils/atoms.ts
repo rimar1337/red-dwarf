@@ -7,21 +7,18 @@ import { type ProfilePostsFilter } from "~/routes/profile.$did";
 
 export const store = createStore();
 
-export const quickAuthAtom = atomWithStorage<string | null>(
-  "quickAuth",
-  null
-);
+export const quickAuthAtom = atomWithStorage<string | null>("quickAuth", null);
 
 export const selectedFeedUriAtom = atomWithStorage<string | null>(
   "selectedFeedUri",
-  null
+  null,
 );
 
 //export const feedScrollPositionsAtom = atom<Record<string, number>>({});
 
 export const feedScrollPositionsAtom = atomWithStorage<Record<string, number>>(
   "feedscrollpositions",
-  {}
+  {},
 );
 
 type TabRouteScrollState = {
@@ -52,15 +49,12 @@ const defaultFilters: InteractionFilter = {
 };
 export const postInteractionsFiltersAtom = atomWithStorage<InteractionFilter>(
   "postInteractionsFilters",
-  defaultFilters
+  defaultFilters,
 );
 
-export const reusableTabRouteScrollAtom = atom<Record<string, TabRouteScrollState | undefined> | undefined>({});
-
-export const likedPostsAtom = atomWithStorage<Record<string, string>>(
-  "likedPosts",
-  {}
-);
+export const reusableTabRouteScrollAtom = atom<
+  Record<string, TabRouteScrollState | undefined> | undefined
+>({});
 
 export type LikeRecord = {
   uri: string; // at://did/collection/rkey
@@ -68,40 +62,41 @@ export type LikeRecord = {
   cid: string;
 };
 
-export const internalLikedPostsAtom = atomWithStorage<Record<string, LikeRecord | null>>(
-  "internal-liked-posts",
-  {}
-);
+export const internalLikedPostsAtom = atomWithStorage<
+  Record<string, LikeRecord | null>
+>("internal-liked-posts", {});
 
-export const profileChipsAtom = atom<Record<string, ProfilePostsFilter | null>>({})
+export const profileChipsAtom = atom<Record<string, ProfilePostsFilter | null>>(
+  {},
+);
 
 export const defaultconstellationURL = "constellation.microcosm.blue";
 export const constellationURLAtom = atomWithStorage<string>(
   "constellationURL",
-  defaultconstellationURL
+  defaultconstellationURL,
 );
 export const defaultslingshotURL = "slingshot.microcosm.blue";
 export const slingshotURLAtom = atomWithStorage<string>(
   "slingshotURL",
-  defaultslingshotURL
+  defaultslingshotURL,
 );
 export const defaultImgCDN = "cdn.bsky.app";
 export const imgCDNAtom = atomWithStorage<string>("imgcdnurl", defaultImgCDN);
 export const defaultVideoCDN = "video.bsky.app";
 export const videoCDNAtom = atomWithStorage<string>(
   "videocdnurl",
-  defaultVideoCDN
+  defaultVideoCDN,
 );
 
 export const defaultLycanURL = "";
 export const lycanURLAtom = atomWithStorage<string>(
   "lycanURL",
-  defaultLycanURL
+  defaultLycanURL,
 );
 
 export const disabledLabelersAtom = atomWithStorage<string[]>(
   "disabledLabelers",
-  []
+  [],
 );
 
 export const defaulthue = HOST_DEFAULT_HUE;
@@ -125,10 +120,6 @@ export function useAtomCssVar(atom: typeof hueAtom, cssVar: string) {
   useEffect(() => {
     document.documentElement.style.setProperty(cssVar, value.toString());
   }, [value, cssVar]);
-
-  useEffect(() => {
-    document.documentElement.style.setProperty(cssVar, value.toString());
-  }, []);
 }
 
 hueAtom.onMount = (setAtom) => {
@@ -141,43 +132,40 @@ hueAtom.onMount = (setAtom) => {
 //   document.documentElement.style.setProperty(cssVar, initial.toString());
 // }
 
-
-
 // fun stuff
 
 export const enableBitesAtom = atomWithStorage<boolean>(
   "enableBitesAtom",
-  false
+  false,
 );
 
 export const enableBridgyTextAtom = atomWithStorage<boolean>(
   "enableBridgyTextAtom",
-  false
+  false,
 );
 
 export const enableWafrnTextAtom = atomWithStorage<boolean>(
   "enableWafrnTextAtom",
-  false
+  false,
 );
 
 export const enableAppViewAtom = atomWithStorage<boolean>(
   "enableAppViewAtom",
-  true
+  true,
 );
 export const defaultAppviewURL = "https://api.bsky.app";
 export const appviewUrlAtom = atomWithStorage<string>(
   "AppviewUrl",
-  defaultAppviewURL
+  defaultAppviewURL,
 );
-
 
 // polls state
 
-export type PollVoteStatus = 'pending' | 'confirmed';
+export type PollVoteStatus = "pending" | "confirmed";
 
 export interface LocalVote {
   pollUri: string;
-  option: 'a' | 'b' | 'c' | 'd';
+  option: "a" | "b" | "c" | "d";
   status: PollVoteStatus;
   uri?: string; // The AT-URI. 'undefined' if pending
   timestamp: number;
