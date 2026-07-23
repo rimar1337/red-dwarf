@@ -30,29 +30,35 @@ const FOUR_GLOBAL_LABELS = [
   "nudity",
 ] as const;
 
-const FOUR_GLOBAL_LABELS_TEXT: Record<FourGlobalLabel, {title: string, desc: string}> = {
+const FOUR_GLOBAL_LABELS_TEXT: Record<
+  FourGlobalLabel,
+  { title: string; desc: string }
+> = {
   porn: {
     title: "Adult Content",
-    desc: "Explicit sexual images."
+    desc: "Explicit sexual images.",
   },
   sexual: {
     title: "Sexually Suggestive",
-    desc: "Does not include nudity."
+    desc: "Does not include nudity.",
   },
   "graphic-media": {
     title: "Graphic Media",
-    desc: "Explicit or potentially disturbing media."
+    desc: "Explicit or potentially disturbing media.",
   },
   nudity: {
     title: "Non-sexual Nudity",
-    desc: "E.g. artistic nudes."
-  }
+    desc: "E.g. artistic nudes.",
+  },
 };
 
-type FourGlobalLabel = typeof FOUR_GLOBAL_LABELS[number];
+type FourGlobalLabel = (typeof FOUR_GLOBAL_LABELS)[number];
 
 // todo please make this part of labeler resolution process / policies.ts
-const DEFAULT_FOUR_GLOBAL_PREFS: Record<FourGlobalLabel, ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition["defaultSetting"]> = {
+const DEFAULT_FOUR_GLOBAL_PREFS: Record<
+  FourGlobalLabel,
+  ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition["defaultSetting"]
+> = {
   porn: "ignore",
   sexual: "ignore",
   "graphic-media": "ignore",
@@ -95,11 +101,13 @@ function RouteComponent() {
 
   const parsedPref = parsePreferences(rawprefs);
 
-  const hostmandate = FORCED_LABELER_DIDS
+  const hostmandate = FORCED_LABELER_DIDS;
 
-  const fourGlobalPrefs = normalizeFourGlobalPrefs(parsedPref?.contentLabelPrefs ?? {})
+  const fourGlobalPrefs = normalizeFourGlobalPrefs(
+    parsedPref?.contentLabelPrefs ?? {},
+  );
 
-  console.log(parsedPref?.labelers?.map(l => `&l=${l}`).join("") ?? "")
+  console.log(parsedPref?.labelers?.map((l) => `&l=${l}`).join("") ?? "");
 
   return (
     <div>
@@ -133,14 +141,9 @@ function RouteComponent() {
       </p> */}
       <SettingHeading title="Moderation Tools" />
       <div>
-        TODO: hello please add the entire bsky mod tools set including but not limited to:
-        Interaction settings,
-        Muted Words & Tags,
-        Moderation lists,
-        Muted accounts,
-        Blocked accounts,
-        Verification settings
-
+        TODO: hello please add the entire bsky mod tools set including but not
+        limited to: Interaction settings, Muted Words & Tags, Moderation lists,
+        Muted accounts, Blocked accounts, Verification settings
       </div>
       <SettingHeading title="Global Content Filters" />
       <div>
@@ -180,36 +183,34 @@ function RouteComponent() {
         <TestModeration subject="did:plc:ia76kvnndjutgedggx2ibrem" />
         <TestModeration subject="did:plc:w2wbinubagmo4hlxx2ik5rrp" /> */}
         <div className="">
-          {Object.entries(fourGlobalPrefs).map(
-            ([label, visibility]) => (
-              <div
-                key={label}
-                className="flex justify-between border-b py-2 px-4"
+          {Object.entries(fourGlobalPrefs).map(([label, visibility]) => (
+            <div
+              key={label}
+              className="flex justify-between border-b py-2 px-4"
+            >
+              <label
+                htmlFor={`switch-${"hardcoded"}`}
+                className="flex flex-row flex-1"
               >
-                <label
-                  htmlFor={`switch-${"hardcoded"}`}
-                  className="flex flex-row flex-1"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-md">{FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].title}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].desc}
-                    </span>
-                  </div>
-                </label>
-                {/* <span className="text-md text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col">
+                  <span className="text-md">
+                    {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].title}
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].desc}
+                  </span>
+                </div>
+              </label>
+              {/* <span className="text-md text-gray-500 dark:text-gray-400">
                   {visibility}
                 </span> */}
-                <TripleToggle
-                  value={visibility as "ignore" | "warn" | "hide"}
-                />
-              </div>
-            ),
-          )}
+              <TripleToggle value={visibility as "ignore" | "warn" | "hide"} />
+            </div>
+          ))}
         </div>
       </div>
       {/* probably replace "Advanced" with "User Subscribed Moderation Labelers" or something */}
-      {hostmandate && (<SettingHeading title="Host-Mandated Labelers" />)}
+      {hostmandate && <SettingHeading title="Host-Mandated Labelers" />}
       {hostmandate?.map((labeler) => {
         return (
           // todo this sucks
@@ -236,11 +237,11 @@ function RouteComponent() {
   );
 }
 
-function ignoreToShow(input:string):string{
+function ignoreToShow(input: string): string {
   if (input === "ignore") {
-    return "show"
+    return "show";
   }
-  return input
+  return input;
 }
 export function TripleToggle({
   value,
@@ -265,13 +266,15 @@ export function TripleToggle({
               });
               onChange?.(opt);
             }}
-            className={`flex-1 px-3 py-1.5 rounded-full transition-colors ${isActive
-              ? "bg-gray-400 dark:bg-gray-600 text-white"
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
-              }`}
+            className={`flex-1 px-3 py-1.5 rounded-full transition-colors ${
+              isActive
+                ? "bg-gray-400 dark:bg-gray-600 text-white"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
+            }`}
           >
             {" "}
-            {ignoreToShow(opt).charAt(0).toUpperCase() + ignoreToShow(opt).slice(1)}
+            {ignoreToShow(opt).charAt(0).toUpperCase() +
+              ignoreToShow(opt).slice(1)}
           </button>
         );
       })}
@@ -358,7 +361,6 @@ export function parsePreferences(
   return normalized;
 }
 
-
 export function TestModeration({ subject }: { subject: string }) {
   return (
     <>
@@ -373,33 +375,35 @@ export function TestModeration({ subject }: { subject: string }) {
         </div>
       </div>
     </>
-  )
-
+  );
 }
 
 export function ModerationInner({ subject }: { subject: string }) {
-  const { isLoading: moderationLoading, labels: testLabels } = useModeration(
-    subject,
-  );
+  const { isLoading: moderationLoading, labels: testLabels } =
+    useModeration(subject);
 
-  return (<>{moderationLoading ? (
-    <span className="text-sm text-blue-500">
-      Loading moderation data...
-    </span>
-  ) : (
-    <div className="mt-2">
-      <span className="text-sm">
-        Found {testLabels.length} labels for {subject}
-      </span>
-      {testLabels.map((label, index) => (
-        <div
-          key={index}
-          className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1"
-        >
-          <span className="font-medium">{label.val}</span> -{" "}
-          {label.preference} (from {label.sourceDid})
+  return (
+    <>
+      {moderationLoading ? (
+        <span className="text-sm text-blue-500">
+          Loading moderation data...
+        </span>
+      ) : (
+        <div className="mt-2">
+          <span className="text-sm">
+            Found {testLabels.length} labels for {subject}
+          </span>
+          {testLabels.map((label, index) => (
+            <div
+              key={index}
+              className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1"
+            >
+              <span className="font-medium">{label.val}</span> -{" "}
+              {label.preference} (from {label.sourceDid})
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
-  )}</>)
+      )}
+    </>
+  );
 }

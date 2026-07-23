@@ -8,13 +8,13 @@ export interface LabelerDefinition {
   isDefault: boolean;
   supportedLabels: Record<string, LabelPreference>;
   // The lookup map for UI strings
-  labelDefs: Record<string, LabelValueDefinition>; 
+  labelDefs: Record<string, LabelValueDefinition>;
 }
 
 export interface LabelValueDefinition {
   identifier: string;
-  severity: 'inform' | 'alert' | 'none';
-  blurs: 'content' | 'media' | 'none';
+  severity: "inform" | "alert" | "none";
+  blurs: "content" | "media" | "none";
   adultOnly: boolean;
   defaultSetting?: LabelPreference;
   locales: Array<{

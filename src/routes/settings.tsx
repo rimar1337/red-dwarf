@@ -154,7 +154,9 @@ export function Settings() {
       <TextInputSetting
         atom={slingshotURLAtom}
         title={"Slingshot"}
-        description={"Customize the Slingshot instance to be used by " + HOST_TITLE}
+        description={
+          "Customize the Slingshot instance to be used by " + HOST_TITLE
+        }
         init={defaultslingshotURL}
       />
       <TextInputSetting
@@ -168,7 +170,9 @@ export function Settings() {
       <TextInputSetting
         atom={videoCDNAtom}
         title={"Video CDN"}
-        description={"Customize the Slingshot instance to be used by " + HOST_TITLE}
+        description={
+          "Customize the Slingshot instance to be used by " + HOST_TITLE
+        }
         init={defaultVideoCDN}
       />
       <TextInputSetting
@@ -205,10 +209,14 @@ export function Settings() {
       <SwitchSetting
         atom={enableAppViewAtom}
         title={"AppView-First"}
-        description={"Prioritize using an AppView to fetch posts before using microcosm"}
+        description={
+          "Prioritize using an AppView to fetch posts before using microcosm"
+        }
         //init={false}
       />
-      <div className={`${isAppViewEnabled ? "" : "opacity-50  pointer-events-none"}`}>
+      <div
+        className={`${isAppViewEnabled ? "" : "opacity-50  pointer-events-none"}`}
+      >
         <div className="h-4" />
         <TextInputSetting
           atom={appviewUrlAtom}
@@ -401,7 +409,6 @@ export const SliderComponent: React.FC<SliderProps> = ({
   );
 };
 
-
 interface SliderPProps {
   value: number;
   min?: number;
@@ -409,14 +416,12 @@ interface SliderPProps {
   step?: number;
 }
 
-
 export const SliderPrimitive: React.FC<SliderPProps> = ({
   value,
   min = 0,
   max = 100,
   step = 1,
 }) => {
-
   return (
     <Slider.Root
       className="relative flex items-center w-full h-4"

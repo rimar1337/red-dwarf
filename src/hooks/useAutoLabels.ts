@@ -61,10 +61,7 @@ export function useAutoLabels({
       labels: ATPAPI.ComAtprotoLabelDefs.Label[];
     }
   >;
-  hydratedLabelDefs: Map<
-    string,
-    HydratedLabelValueDefinition
-  >;
+  hydratedLabelDefs: Map<string, HydratedLabelValueDefinition>;
 } {
   const {
     activeLabelerDids,
@@ -88,7 +85,7 @@ export function useAutoLabels({
   //   l: activeLabelerDids,
   //   strict: false,
   // });
-  const res = useQueryLabels(subjects,activeLabelerDids);
+  const res = useQueryLabels(subjects, activeLabelerDids);
   if (configLoading || res.isLoading) {
     for (const subject of subjects) {
       const subjectLabels = [] as ATPAPI.ComAtprotoLabelDefs.Label[];
@@ -106,19 +103,23 @@ export function useAutoLabels({
     if (res.isError) {
       sendError({
         did: "!all",
-        message: "queryFailure"
-      })
-    } else 
-    if (res.data?.error) {
-      console.log("fuck shit !internal-IDK-unknown, ", res.data)
-      res.data?.error?.forEach((err)=>{
+        message: "queryFailure",
+      });
+    } else if (res.data?.error) {
+      console.log("fuck shit !internal-IDK-unknown, ", res.data);
+      res.data?.error?.forEach((err) => {
         sendError({
           did: err.s,
-          message: err.e || "!internal-uAL-unknown, len: " + res.data.error?.length + ". label-length" + res.data.labels.length
-        })
-      })
+          message:
+            err.e ||
+            "!internal-uAL-unknown, len: " +
+              res.data.error?.length +
+              ". label-length" +
+              res.data.labels.length,
+        });
+      });
     }
-    console.error("Error fetching auto-label configuration or subject labels",{
+    console.error("Error fetching auto-label configuration or subject labels", {
       configError: configError,
       isLoading: res.isLoading,
       isError: res.isError,
@@ -138,8 +139,8 @@ export function useAutoLabels({
       hydratedLabelDefs,
     };
   }
-  
-  if (res.data && (res.data.labels.length === 0) ) {
+
+  if (res.data && res.data.labels.length === 0) {
     // early return because wow you did it theres no labels to be computed! wonderful! wow!
     // group labels by subject (uri)
 
@@ -159,10 +160,7 @@ export function useAutoLabels({
   const effectiveLabels = normalizeLabels(res.data?.labels ?? []);
 
   // group labels by subject (uri)
-  const labelsBySubject = new Map<
-    string,
-    ATPAPI.ComAtprotoLabelDefs.Label[]
-  >();
+  const labelsBySubject = new Map<string, ATPAPI.ComAtprotoLabelDefs.Label[]>();
 
   for (const label of effectiveLabels) {
     const arr = labelsBySubject.get(label.uri) ?? [];
@@ -172,10 +170,7 @@ export function useAutoLabels({
 
   for (const subject of subjects) {
     const subjectLabels = labelsBySubject.get(subject) ?? [];
-    const verdict = computeVerdict(
-      mergedPrefContentLabels,
-      subjectLabels,
-    );
+    const verdict = computeVerdict(mergedPrefContentLabels, subjectLabels);
     results.set(subject, {
       labelVerdict: verdict,
       labels: subjectLabels,
@@ -189,10 +184,7 @@ export function useAutoLabels({
 }
 
 export function getGetHydratedLabelDefs(
-  hydratedLabelDefs: Map<
-    string,
-    HydratedLabelValueDefinition
-  >,
+  hydratedLabelDefs: Map<string, HydratedLabelValueDefinition>,
 ) {
   function getHydratedLabelDefs(did: string, label: string) {
     return hydratedLabelDefs.get(did + "::" + label);

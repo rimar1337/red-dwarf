@@ -9,19 +9,23 @@ import {
 //import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 import { imgCDNAtom } from "~/utils/atoms";
-import { useQueryArbitrary, useQueryConstellation, useQueryProfile } from "~/utils/useQuery";
+import {
+  useQueryArbitrary,
+  useQueryConstellation,
+  useQueryProfile,
+} from "~/utils/useQuery";
 
 import { type embedtryfall } from "./PostEmbeds";
 import { ExternalLinkEmbed } from "./PostEmbeds";
 
-export function PollEmbed({ 
-  did, 
+export function PollEmbed({
+  did,
   rkey,
   redactedLoading,
-  embedtryfall 
-}: { 
-  did: string; 
-  rkey: string; 
+  embedtryfall,
+}: {
+  did: string;
+  rkey: string;
   redactedLoading?: boolean;
   embedtryfall?: embedtryfall;
 }) {
@@ -29,7 +33,10 @@ export function PollEmbed({
   const { refreshPollData } = usePollMutationQueue();
   const pollUri = `at://${did}/app.reddwarf.embed.poll/${rkey}`;
   const { data: pollRecord, isLoading, error } = useQueryArbitrary(pollUri);
-  const dontLoadPolls = embedtryfall && (isLoading || pollRecord === undefined || error !== null) || false
+  const dontLoadPolls =
+    (embedtryfall &&
+      (isLoading || pollRecord === undefined || error !== null)) ||
+    false;
 
   const { data: voteCountsA } = useQueryConstellation({
     method: "/links/count/distinct-dids",
@@ -37,7 +44,7 @@ export function PollEmbed({
     collection: "app.reddwarf.poll.vote.a",
     path: ".subject.uri",
     customkey: "constellation-polls",
-    enabled: !dontLoadPolls
+    enabled: !dontLoadPolls,
   });
 
   const { data: voteCountsB } = useQueryConstellation({
@@ -46,7 +53,7 @@ export function PollEmbed({
     collection: "app.reddwarf.poll.vote.b",
     path: ".subject.uri",
     customkey: "constellation-polls",
-    enabled: !dontLoadPolls
+    enabled: !dontLoadPolls,
   });
 
   const { data: voteCountsC } = useQueryConstellation({
@@ -55,7 +62,7 @@ export function PollEmbed({
     collection: "app.reddwarf.poll.vote.c",
     path: ".subject.uri",
     customkey: "constellation-polls",
-    enabled: !dontLoadPolls
+    enabled: !dontLoadPolls,
   });
 
   const { data: voteCountsD } = useQueryConstellation({
@@ -64,7 +71,7 @@ export function PollEmbed({
     collection: "app.reddwarf.poll.vote.d",
     path: ".subject.uri",
     customkey: "constellation-polls",
-    enabled: !dontLoadPolls
+    enabled: !dontLoadPolls,
   });
 
   // const { data: votersA } = useQueryConstellation({
@@ -122,26 +129,39 @@ export function PollEmbed({
     d: parseInt((voteCountsD as any)?.total || "0"),
   };
 
-  const { results, totalVotes, handleVote, votersA, votersB, votersC, votersD } = usePollData(
+  const {
+    results,
+    totalVotes,
+    handleVote,
+    votersA,
+    votersB,
+    votersC,
+    votersD,
+  } = usePollData(
     pollUri,
     pollRecord?.cid,
     !!poll.multiple,
     serverCounts,
-    !dontLoadPolls
+    !dontLoadPolls,
   );
   if (dontLoadPolls && embedtryfall) {
     const link = embedtryfall.embed.external;
-    const onOpen = embedtryfall.onOpen
+    const onOpen = embedtryfall.onOpen;
     return (
       <>
-      {/* pass thru confirm<br />
+        {/* pass thru confirm<br />
       embedtryfall = {JSON.stringify(embedtryfall, null, 2)}<br />
       isLoading = {JSON.stringify(isLoading, null, 2)}<br />
       pollRecord = {JSON.stringify(pollRecord, null, 2)}<br />
       error = {JSON.stringify(error, null, 2)}<br /> */}
-      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} redactedLoading={redactedLoading}/>
+        <ExternalLinkEmbed
+          link={link}
+          onOpen={onOpen}
+          style={{ marginTop: 0 }}
+          redactedLoading={redactedLoading}
+        />
       </>
-    )
+    );
   }
   if (isLoading && !embedtryfall) {
     return (
@@ -165,7 +185,7 @@ export function PollEmbed({
 
   return (
     <>
-      <div className={`${redactedLoading ? "pointer-events-none": ""} my-4`}>
+      <div className={`${redactedLoading ? "pointer-events-none" : ""} my-4`}>
         <div className="mb-4 flex items-center gap-3">
           <div className="flex items-center gap-1.5 rounded-lg border-gray-300 dark:border-gray-600 pl-2 pr-2.5 py-1 text-sm font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
             <IconMdiGlobe />

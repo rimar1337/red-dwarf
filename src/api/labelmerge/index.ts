@@ -7,55 +7,55 @@ import {
   XrpcClient,
   type FetchHandler,
   type FetchHandlerOptions,
-} from '@atproto/xrpc'
-import { schemas } from './lexicons.js'
+} from "@atproto/xrpc";
+import { schemas } from "./lexicons.js";
 // import { CID } from 'multiformats/cid'
-import { type OmitKey, type Un$Typed } from './util.js'
-import * as AppReddwarfLabelmergeQueryLabels from './types/app/reddwarf/labelmerge/queryLabels.js'
-import * as ComAtprotoLabelDefs from './types/com/atproto/label/defs.js'
+import { type OmitKey, type Un$Typed } from "./util.js";
+import * as AppReddwarfLabelmergeQueryLabels from "./types/app/reddwarf/labelmerge/queryLabels.js";
+import * as ComAtprotoLabelDefs from "./types/com/atproto/label/defs.js";
 
-export * as AppReddwarfLabelmergeQueryLabels from './types/app/reddwarf/labelmerge/queryLabels.js'
-export * as ComAtprotoLabelDefs from './types/com/atproto/label/defs.js'
+export * as AppReddwarfLabelmergeQueryLabels from "./types/app/reddwarf/labelmerge/queryLabels.js";
+export * as ComAtprotoLabelDefs from "./types/com/atproto/label/defs.js";
 
 export class AtpBaseClient extends XrpcClient {
-  app: AppNS
+  app: AppNS;
 
   constructor(options: FetchHandler | FetchHandlerOptions) {
-    super(options, schemas)
-    this.app = new AppNS(this)
+    super(options, schemas);
+    this.app = new AppNS(this);
   }
 
   /** @deprecated use `this` instead */
   get xrpc(): XrpcClient {
-    return this
+    return this;
   }
 }
 
 export class AppNS {
-  _client: XrpcClient
-  reddwarf: AppReddwarfNS
+  _client: XrpcClient;
+  reddwarf: AppReddwarfNS;
 
   constructor(client: XrpcClient) {
-    this._client = client
-    this.reddwarf = new AppReddwarfNS(client)
+    this._client = client;
+    this.reddwarf = new AppReddwarfNS(client);
   }
 }
 
 export class AppReddwarfNS {
-  _client: XrpcClient
-  labelmerge: AppReddwarfLabelmergeNS
+  _client: XrpcClient;
+  labelmerge: AppReddwarfLabelmergeNS;
 
   constructor(client: XrpcClient) {
-    this._client = client
-    this.labelmerge = new AppReddwarfLabelmergeNS(client)
+    this._client = client;
+    this.labelmerge = new AppReddwarfLabelmergeNS(client);
   }
 }
 
 export class AppReddwarfLabelmergeNS {
-  _client: XrpcClient
+  _client: XrpcClient;
 
   constructor(client: XrpcClient) {
-    this._client = client
+    this._client = client;
   }
 
   queryLabels(
@@ -63,10 +63,10 @@ export class AppReddwarfLabelmergeNS {
     opts?: AppReddwarfLabelmergeQueryLabels.CallOptions,
   ): Promise<AppReddwarfLabelmergeQueryLabels.Response> {
     return this._client.call(
-      'app.reddwarf.labelmerge.queryLabels',
+      "app.reddwarf.labelmerge.queryLabels",
       params,
       undefined,
       opts,
-    )
+    );
   }
 }

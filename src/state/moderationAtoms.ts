@@ -26,7 +26,7 @@ const mapStorage = {
       if (!item) return initialValue;
 
       const parsed = JSON.parse(item);
-      
+
       // Ensure it is an array (Map serialization format)
       if (!Array.isArray(parsed)) return initialValue;
 
@@ -85,7 +85,7 @@ export const labelerConfigAtom = atom<LabelerDefinition[]>([]);
 export const moderationCacheAtom = atomWithStorage<CacheMap>(
   STORAGE_KEY,
   new Map(),
-  mapStorage // <--- Pass our custom object here
+  mapStorage, // <--- Pass our custom object here
 );
 
 export const pendingUriQueueAtom = atom<Set<string>>(new Set<string>());

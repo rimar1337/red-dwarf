@@ -1,5 +1,8 @@
 import * as ATPAPI from "@atproto/api";
-import { isContentLabelPref, isLabelersPref } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
+import {
+  isContentLabelPref,
+  isLabelersPref,
+} from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { Dialog } from "radix-ui";
@@ -12,32 +15,33 @@ import { disabledLabelersAtom, slingshotURLAtom } from "~/utils/atoms";
 import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
 
 // higher prio overwrites lower prio
-export const LABEL_PRIO_DEFAULT = 0
-export const LABEL_PRIO_USER = 5
+export const LABEL_PRIO_DEFAULT = 0;
+export const LABEL_PRIO_USER = 5;
 // export const LABEL_PRIO_FORCED = 20 // Not used in pref merging
 
-export interface HydratedLabelValueDefinition extends ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition { 
-  pref: ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition["defaultSetting"]
+export interface HydratedLabelValueDefinition
+  extends ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition {
+  pref: ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition["defaultSetting"];
 }
 
 export type labelpref = {
-  did: string,
-  label: string,
-  visibility: ATPAPI.AppBskyActorDefs.ContentLabelPref["visibility"],
-  priority: number
-}
+  did: string;
+  label: string;
+  visibility: ATPAPI.AppBskyActorDefs.ContentLabelPref["visibility"];
+  priority: number;
+};
 
 type labeldefpref = {
-  did: string,
-  labeldefs?: ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition[],
-  err?: string
-}
+  did: string;
+  labeldefs?: ATPAPI.ComAtprotoLabelDefs.LabelValueDefinition[];
+  err?: string;
+};
 
 type hydratedlabeldefpref = {
-  did: string,
-  labeldefs?: HydratedLabelValueDefinition[],
-  err?: string
-}
+  did: string;
+  labeldefs?: HydratedLabelValueDefinition[];
+  err?: string;
+};
 
 type AutoLabelConfig = {
   activeLabelerDids: string[];
@@ -55,7 +59,9 @@ const AutoLabelContext = createContext<AutoLabelConfig | undefined>(undefined);
 export function useAutoLabelConfig(): AutoLabelConfig {
   const context = useContext(AutoLabelContext);
   if (!context) {
-    throw new Error('useAutoLabelConfig must be used within an AutoLabelProvider');
+    throw new Error(
+      "useAutoLabelConfig must be used within an AutoLabelProvider",
+    );
   }
   return context;
 }
@@ -70,19 +76,16 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
   // Modal state
   const [errorModalOpen, setErrorModalOpen] = React.useState(false);
   const [labelerErrors, setLabelerErrors] = React.useState<LabelerError[]>([]);
-  const erroredLabelerDids = new Set(
-    labelerErrors.map(e => e.did)
-  );
+  const erroredLabelerDids = new Set(labelerErrors.map((e) => e.did));
 
   const sendError = React.useCallback((error: LabelerError) => {
     setLabelerErrors((prev) => {
       // Avoid duplicates
-      if (prev.find(e => e.did === error.did)) return prev;
+      if (prev.find((e) => e.did === error.did)) return prev;
       return [...prev, error];
     });
     setErrorModalOpen(true);
   }, []);
-
 
   const isUnauthed = status === "signedOut" || !agent;
 
@@ -91,40 +94,52 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
   const {
     data: prefs,
     isLoading: prefsLoading,
-    isError: prefsError
+    isError: prefsError,
   } = useQueryPreferences({
     agent: agent ?? undefined,
     pdsUrl: identity?.pds,
   });
 
   // 2. Identify Labeler DIDs & User Preferences (Use useMemo for stability)
-  const userPrefLabelerDids = useMemo(() =>
-    prefs?.preferences?.find(isLabelersPref)?.labelers.map(l => l.did) ?? []
-    , [prefs]);
+  const userPrefLabelerDids = useMemo(
+    () =>
+      prefs?.preferences?.find(isLabelersPref)?.labelers.map((l) => l.did) ??
+      [],
+    [prefs],
+  );
 
-  const userPrefContentLabelsRaw = useMemo(() =>
-    prefs?.preferences?.filter(isContentLabelPref) ?? []
-    , [prefs]);
+  const userPrefContentLabelsRaw = useMemo(
+    () => prefs?.preferences?.filter(isContentLabelPref) ?? [],
+    [prefs],
+  );
 
-  const userPrefContentLabels: labelpref[] = useMemo(() => userPrefContentLabelsRaw.map((pref) => {
-    const res: labelpref = {
-      did: pref.labelerDid || "global",
-      label: pref.label,
-      visibility: pref.visibility,
-      priority: LABEL_PRIO_USER
-    }
-    return res
-  }), [userPrefContentLabelsRaw]);
+  const userPrefContentLabels: labelpref[] = useMemo(
+    () =>
+      userPrefContentLabelsRaw.map((pref) => {
+        const res: labelpref = {
+          did: pref.labelerDid || "global",
+          label: pref.label,
+          visibility: pref.visibility,
+          priority: LABEL_PRIO_USER,
+        };
+        return res;
+      }),
+    [userPrefContentLabelsRaw],
+  );
 
   // 3. Force Bsky DID + User DIDs
   const userPrefLabelerDidsFiltered = React.useMemo(
-    () => userPrefLabelerDids.filter(did => !disabledLabelers.includes(did)),
-    [userPrefLabelerDids, disabledLabelers]
+    () => userPrefLabelerDids.filter((did) => !disabledLabelers.includes(did)),
+    [userPrefLabelerDids, disabledLabelers],
   );
 
-  const activeLabelerDids = useMemo(() => Array.from(
-    new Set([...FORCED_LABELER_DIDS, ...userPrefLabelerDidsFiltered])
-  ), [userPrefLabelerDidsFiltered]);
+  const activeLabelerDids = useMemo(
+    () =>
+      Array.from(
+        new Set([...FORCED_LABELER_DIDS, ...userPrefLabelerDidsFiltered]),
+      ),
+    [userPrefLabelerDidsFiltered],
+  );
 
   // 4. Parallel fetch Service Records (The expensive part)
   const labelerServiceQueries = useQueries({
@@ -137,101 +152,125 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
         );
         if (!response.ok) throw new Error("Failed to fetch labeler service");
         try {
-          const res = await response.json() as {
+          const res = (await response.json()) as {
             uri: string;
             cid: string;
             value: ATPAPI.AppBskyLabelerService.Record;
           };
-          const labeldefs = res.value.policies.labelValueDefinitions
+          const labeldefs = res.value.policies.labelValueDefinitions;
           return {
             did: did,
-            labeldefs: labeldefs
-          } as labeldefpref
+            labeldefs: labeldefs,
+          } as labeldefpref;
         } catch {
           sendError({ did, message: ".json()" });
           return {
             did: did,
-            err: ".json()"
-          } as labeldefpref
+            err: ".json()",
+          } as labeldefpref;
         }
       },
       staleTime: 1000 * 60 * 60, // Cache for 1 hour
     })),
   });
 
-  const defaultPrefContentLabels: labelpref[] = useMemo(() =>
-    labelerServiceQueries.flatMap(labeler => {
-      if (labeler.error || labeler.data?.err || !labeler.data) {
-        return []
-      }
+  const defaultPrefContentLabels: labelpref[] = useMemo(
+    () =>
+      labelerServiceQueries.flatMap((labeler) => {
+        if (labeler.error || labeler.data?.err || !labeler.data) {
+          return [];
+        }
 
-      const labelerDid = labeler.data.did
+        const labelerDid = labeler.data.did;
 
-      return labeler.data.labeldefs?.map(label => ({
-        did: labelerDid,
-        label: label.identifier,
-        visibility: label.defaultSetting,
-        priority: LABEL_PRIO_DEFAULT,
-      })) ?? []
-    })
-    , [labelerServiceQueries]);
+        return (
+          labeler.data.labeldefs?.map((label) => ({
+            did: labelerDid,
+            label: label.identifier,
+            visibility: label.defaultSetting,
+            priority: LABEL_PRIO_DEFAULT,
+          })) ?? []
+        );
+      }),
+    [labelerServiceQueries],
+  );
 
   // 5. Merge Default and User Preferences
   const mergedPrefContentLabels: labelpref[] = useMemo(() => {
-    const allrawPrefContentLabels = [...defaultPrefContentLabels, ...userPrefContentLabels]
+    const allrawPrefContentLabels = [
+      ...defaultPrefContentLabels,
+      ...userPrefContentLabels,
+    ];
 
     return Object.values(
       allrawPrefContentLabels.reduce(
         (acc, pref) => {
-          const key = `${pref.did}::${pref.label}`
-          const existing = acc[key]
+          const key = `${pref.did}::${pref.label}`;
+          const existing = acc[key];
           if (!existing || pref.priority > existing.priority) {
-            acc[key] = pref
+            acc[key] = pref;
           }
-          return acc
+          return acc;
         },
-        {} as Record<string, labelpref>
-      )
-    )
+        {} as Record<string, labelpref>,
+      ),
+    );
   }, [defaultPrefContentLabels, userPrefContentLabels]);
 
   const hydratedLabelDefs = convertLabelDefsToMap(
     labelerServiceQueries
-      .map(item => item.data)
+      .map((item) => item.data)
       .filter((data): data is labeldefpref => data !== undefined),
-    mergedPrefContentLabels
-  )
+    mergedPrefContentLabels,
+  );
 
-  const labelerServiceLoading = labelerServiceQueries.some(q => q.isLoading);
-  const labelerServiceError = labelerServiceQueries.some(q => q.isError);
+  const labelerServiceLoading = labelerServiceQueries.some((q) => q.isLoading);
+  const labelerServiceError = labelerServiceQueries.some((q) => q.isError);
 
   const isLoading = prefsLoading || labelerServiceLoading;
   const isError = (!isUnauthed && prefsError) || labelerServiceError;
 
-  const value = useMemo(() => ({
-    activeLabelerDids,
-    mergedPrefContentLabels,
-    hydratedLabelDefs,
-    isLoading,
-    isError,
-    sendError
-  }), [activeLabelerDids, mergedPrefContentLabels, hydratedLabelDefs, isLoading, isError, sendError]);
+  const value = useMemo(
+    () => ({
+      activeLabelerDids,
+      mergedPrefContentLabels,
+      hydratedLabelDefs,
+      isLoading,
+      isError,
+      sendError,
+    }),
+    [
+      activeLabelerDids,
+      mergedPrefContentLabels,
+      hydratedLabelDefs,
+      isLoading,
+      isError,
+      sendError,
+    ],
+  );
 
   // The provider must wrap the application root where useAutoLabels is called
   return (
     <>
-      <AutoLabelContext.Provider value={value}>{children}</AutoLabelContext.Provider>
+      <AutoLabelContext.Provider value={value}>
+        {children}
+      </AutoLabelContext.Provider>
       {errorModalOpen && (
         <Dialog.Root open={errorModalOpen} onOpenChange={setErrorModalOpen}>
           <Dialog.Overlay className="z-70 fixed inset-0 bg-black/40" />
           <Dialog.Content className="z-80 fixed inset-0 flex justify-center items-center">
             <div className="max-w-md max-h-[calc(100dvh-80px)] flex flex-col py-6 bg-gray-100 dark:bg-gray-900 rounded-xl shadow-xl">
               <div className="flex flex-col gap-2 mx-4">
-                <span className="text-[19px] font-semibold">Labeler Errors</span>
-                <span className="text-gray-700 dark:text-gray-400">These labelers have returned an error. <br />You can disable them to continue using the app.</span>
+                <span className="text-[19px] font-semibold">
+                  Labeler Errors
+                </span>
+                <span className="text-gray-700 dark:text-gray-400">
+                  These labelers have returned an error. <br />
+                  You can disable them to continue using the app.
+                </span>
               </div>
               <div className="mb-4 space-y-2 overflow-y-auto">
-                {labelerErrors.map(e => (
+                {labelerErrors.map((e) => (
                   // <li key={e.did} className="flex justify-between items-center border-b pb-1">
                   //   <span>{e.did}: {e.message}</span>
                   //   <button
@@ -263,14 +302,11 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
                   className="rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex-1 flex items-center justify-center"
                   onClick={() => {
                     queryClient.refetchQueries({
-                      predicate: query => {
+                      predicate: (query) => {
                         const key = query.queryKey;
 
                         // Defensive: ensure shape matches
-                        if (
-                          !Array.isArray(key) ||
-                          key.length < 4
-                        ) return false;
+                        if (!Array.isArray(key) || key.length < 4) return false;
 
                         const [, kind, , labelerDid] = key;
 
@@ -299,9 +335,8 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
 
 function convertLabelDefsToMap(
   labelDefPrefs: labeldefpref[],
-  mergedPrefContentLabels: labelpref[]
+  mergedPrefContentLabels: labelpref[],
 ): Map<string, HydratedLabelValueDefinition> {
-
   const labelMap = new Map<string, HydratedLabelValueDefinition>();
 
   for (const pref of labelDefPrefs) {
@@ -311,13 +346,17 @@ function convertLabelDefsToMap(
     if (pref.labeldefs && pref.labeldefs.length > 0) {
       for (const def of pref.labeldefs) {
         // Construct the key: did + "::" + identifier
-        
+
         const key = `${did}::${def.identifier}`;
 
-        const prefdlabelvis = mergedPrefContentLabels.find(i => i.did === did && i.label === def.identifier)?.visibility
+        const prefdlabelvis = mergedPrefContentLabels.find(
+          (i) => i.did === did && i.label === def.identifier,
+        )?.visibility;
         const hydrateddef: HydratedLabelValueDefinition = {
           ...def,
-          pref: collapsePrefs(prefdlabelvis ? prefdlabelvis : def.defaultSetting)
+          pref: collapsePrefs(
+            prefdlabelvis ? prefdlabelvis : def.defaultSetting,
+          ),
         };
 
         // Set the key and the LabelValueDefinition as the value
@@ -329,13 +368,15 @@ function convertLabelDefsToMap(
   return labelMap;
 }
 
-function collapsePrefs(def: "ignore" | "warn" | "hide" | "show" | (string & {})): "ignore" | "warn" | "hide" {
-  if (def === "ignore") return "ignore"
-  if (def === "warn") return "warn"
-  if (def === "hide") return "hide"
-  if (def === "show") return "ignore"
-  if (def === "alert") return "warn"
-  if (def === "inform") return "warn"
-  if (def === "none") return "ignore"
-  return "ignore"
+function collapsePrefs(
+  def: "ignore" | "warn" | "hide" | "show" | (string & {}),
+): "ignore" | "warn" | "hide" {
+  if (def === "ignore") return "ignore";
+  if (def === "warn") return "warn";
+  if (def === "hide") return "hide";
+  if (def === "show") return "ignore";
+  if (def === "alert") return "warn";
+  if (def === "inform") return "warn";
+  if (def === "none") return "ignore";
+  return "ignore";
 }

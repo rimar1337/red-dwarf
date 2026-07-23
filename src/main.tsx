@@ -32,7 +32,7 @@ persistQueryClient({
   persister: localStoragePersister,
   dehydrateOptions: {
     shouldDehydrateQuery: (query) => {
-      return !query.queryKey.includes('__volatile')
+      return !query.queryKey.includes("__volatile");
     },
   },
 });
@@ -64,7 +64,7 @@ if (rootElement && !rootElement.innerHTML) {
     <QueryClientProvider client={queryClient}>
       <ScrollTopWatcher />
       <RouterProvider router={router} />
-    </QueryClientProvider>
+    </QueryClientProvider>,
     // </StrictMode>
   );
 }

@@ -17,14 +17,20 @@ export const useModeration = (opaqueIdentifierStringToBeModerated: string) => {
 
   // 1. Select ONLY this URI's cache entry
   const entryAtom = useMemo(
-    () => selectAtom(moderationCacheAtom, (cache) => cache.get(opaqueIdentifierStringToBeModerated)),
+    () =>
+      selectAtom(moderationCacheAtom, (cache) =>
+        cache.get(opaqueIdentifierStringToBeModerated),
+      ),
     [opaqueIdentifierStringToBeModerated],
   );
   const [cachedEntry] = useAtom(entryAtom);
 
   // 2. Select ONLY this opaqueIdentifierStringToBeModerated's processing state
   const isProcessingAtom = useMemo(
-    () => selectAtom(processingUriSetAtom, (set) => set.has(opaqueIdentifierStringToBeModerated)),
+    () =>
+      selectAtom(processingUriSetAtom, (set) =>
+        set.has(opaqueIdentifierStringToBeModerated),
+      ),
     [opaqueIdentifierStringToBeModerated],
   );
   const [isProcessing] = useAtom(isProcessingAtom);
@@ -45,11 +51,17 @@ export const useModeration = (opaqueIdentifierStringToBeModerated: string) => {
       next.add(opaqueIdentifierStringToBeModerated);
       return next;
     });
-  }, [opaqueIdentifierStringToBeModerated, exists, isStale, isProcessing, setQueue]);
+  }, [
+    opaqueIdentifierStringToBeModerated,
+    exists,
+    isStale,
+    isProcessing,
+    setQueue,
+  ]);
 
   return {
     // Show loading ONLY if we have absolutely no data (first load)
-    isLoading: !exists, 
+    isLoading: !exists,
     labels: cachedEntry?.labels || [],
   };
 };

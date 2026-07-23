@@ -16,7 +16,7 @@ export function Import({
   optionaltextstring?: string;
 }) {
   const [textInput, setTextInput] = useState<string | undefined>(
-    optionaltextstring
+    optionaltextstring,
   );
   const navigate = useNavigate();
 

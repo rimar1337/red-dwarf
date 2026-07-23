@@ -80,30 +80,32 @@ export function constructFastAVIdentityQuery(
   didorhandle?: string,
   slingshoturl?: string,
   queryClient?: QueryClient,
-  enabled?: boolean
+  enabled?: boolean,
 ) {
   return queryOptions({
     queryKey: ["identity", didorhandle],
     queryFn: async () => {
       try {
-        console.log("whathuh trying", ["savpq", didorhandle])
-        if (!queryClient) throw "whatever"
-        const datas = queryClient.getQueriesData<SingularAVPostResult | undefined>({
+        console.log("whathuh trying", ["savpq", didorhandle]);
+        if (!queryClient) throw "whatever";
+        const datas = queryClient.getQueriesData<
+          SingularAVPostResult | undefined
+        >({
           queryKey: ["savpq", didorhandle],
-        })
-        console.log("whathuh checking", datas)
+        });
+        console.log("whathuh checking", datas);
         const data = datas[0][1];
         if (!data) {
-          throw "whatever"
+          throw "whatever";
         }
         //const parsedaturi = new ATPAPI.AtUri(data.uri)
-        console.log("whathuh success")
+        console.log("whathuh success");
         return {
           did: data.author.did,
-          handle: data.author.handle
-        }
+          handle: data.author.handle,
+        };
       } catch {
-        console.log("whathuh failure")
+        console.log("whathuh failure");
         if (!didorhandle) return undefined as undefined;
         const res = await fetch(
           `https://${slingshoturl}/xrpc/com.bad-example.identity.resolveMiniDoc?identifier=${encodeURIComponent(didorhandle)}`,
@@ -127,9 +129,20 @@ export function constructFastAVIdentityQuery(
   });
 }
 
-
-export function useQueryFastAVIdentity(didorhandle?: string, slingshoturl?: string, queryClient?: QueryClient, enabled: boolean = true) {
-  return useQuery(constructFastAVIdentityQuery(didorhandle, slingshoturl, queryClient, enabled));
+export function useQueryFastAVIdentity(
+  didorhandle?: string,
+  slingshoturl?: string,
+  queryClient?: QueryClient,
+  enabled: boolean = true,
+) {
+  return useQuery(
+    constructFastAVIdentityQuery(
+      didorhandle,
+      slingshoturl,
+      queryClient,
+      enabled,
+    ),
+  );
 }
 
 export function constructPostQuery(uri?: string, slingshoturl?: string) {
@@ -468,7 +481,7 @@ export function useQueryConstellation(query?: {
       query && { constellation: constellationurl, ...query },
     ),
   );
-  return res
+  return res;
 }
 
 export type linksRecord = {
@@ -1056,7 +1069,9 @@ export function constructLycanSearchQuery(options: {
 
 // HOST_LABELMERGE
 
-export async function innerLabelMergeQueryFn(options: LabelMergeQueryLabelsQueryParams): Promise<LabelMergeQueryLabelsOutputSchema | undefined> {
+export async function innerLabelMergeQueryFn(
+  options: LabelMergeQueryLabelsQueryParams,
+): Promise<LabelMergeQueryLabelsOutputSchema | undefined> {
   const { s, l, strict } = options;
   const params = new URLSearchParams();
   s.forEach((v) => params.append("s", v));
@@ -1070,8 +1085,7 @@ export async function innerLabelMergeQueryFn(options: LabelMergeQueryLabelsQuery
     `${HOST_LABELMERGE}/xrpc/app.reddwarf.labelmerge.queryLabels?` + qs;
   console.log("LabelMerge URL", url);
   const res = await fetch(url);
-  if (!res.ok)
-    throw new Error(`Labelmerge fetch failed: ${res.statusText}`);
+  if (!res.ok) throw new Error(`Labelmerge fetch failed: ${res.statusText}`);
   return (await res.json()) as LabelMergeQueryLabelsOutputSchema;
 }
 
@@ -1091,7 +1105,7 @@ export function constructLabelMergeQuery(
     enabled:
       Array.isArray(s) && s.length > 0 && Array.isArray(l) && l.length > 0,
 
-    queryFn: ()=>innerLabelMergeQueryFn(options),
+    queryFn: () => innerLabelMergeQueryFn(options),
   });
 }
 export function useQueryLabelMerge(options: LabelMergeQueryLabelsQueryParams) {
@@ -1134,10 +1148,9 @@ export const unpersistedQueryClient = new QueryClient(/*{
   },
 }*/);
 
-
 interface MicroSingleResult {
-  l: string,
-  t: number,
+  l: string;
+  t: number;
 }
 
 const labelmerge = create(
@@ -1153,7 +1166,7 @@ const labelmerge = create(
       //const result = await batShitQueryClient.fetchQuery(
       //  constructLabelMergeQuery({ s: sarr, l: larr }),
       //);
-      const result = await innerLabelMergeQueryFn({s:sarr, l: larr})
+      const result = await innerLabelMergeQueryFn({ s: sarr, l: larr });
       //const qfn = constructLabelMergeQuery({ s: sarr, l: larr }).queryFn
       //const result = await (qfn ? qfn() : ()=>{})
       if (!result) return [];
@@ -1163,7 +1176,9 @@ const labelmerge = create(
       const resmap = new Map<string, ATPAPI.ComAtprotoLabelDefs.Label>();
 
       result.error?.forEach((err) => errmap.set(err.s, err));
-      result.labels?.forEach((label) => resmap.set(`${label.src}::${label.uri}`, label));
+      result.labels?.forEach((label) =>
+        resmap.set(`${label.src}::${label.uri}`, label),
+      );
 
       // Map back to the original queries
       const output: Record<string, SingularLabelResult>[] = slqa.map((slq) => {
@@ -1176,15 +1191,15 @@ const labelmerge = create(
         if (label) return { [key]: { labels: label } };
 
         // if result is neither, it means the subject is free of labels
-        return { 
-          [key]: { labels: undefined} 
+        return {
+          [key]: { labels: undefined },
         };
         // idiot
-        // return { 
+        // return {
         //   [key]: { error: {
         //     s: slq.l,
         //     e: `!internal-bslm-unknown: ${slq.s}`
-        //   }} 
+        //   }}
         // };
       });
 
@@ -1214,9 +1229,12 @@ const labelmerge = create(
       //   }
       //   return undefined;
       // });
-      const outputMap: Record<string, SingularLabelResult> = Object.assign({}, ...rslra)
+      const outputMap: Record<string, SingularLabelResult> = Object.assign(
+        {},
+        ...rslra,
+      );
       const key = `${slq.l}::${slq.s}`; // or just slq.l if you prefer
-      const result: SingularLabelResult | undefined = outputMap[key]
+      const result: SingularLabelResult | undefined = outputMap[key];
       return result;
     },
     scheduler: windowScheduler(10 * 100), // 1 second
@@ -1367,9 +1385,7 @@ export function useQueryLabels(subjects: string[], labelers: string[]) {
   );
 
   const queries = useQueries({
-    queries: singulars.map((q) =>
-      constructSingularLabelQuery(q),
-    ),
+    queries: singulars.map((q) => constructSingularLabelQuery(q)),
   });
 
   // derive merged state synchronously
@@ -1378,10 +1394,7 @@ export function useQueryLabels(subjects: string[], labelers: string[]) {
       new Map(
         queries
           .map((q) => q.data?.labels)
-          .filter(
-            (l): l is ATPAPI.ComAtprotoLabelDefs.Label =>
-              !!l?.src,
-          )
+          .filter((l): l is ATPAPI.ComAtprotoLabelDefs.Label => !!l?.src)
           .map((l) => [`${l.src}::${l.uri}`, l]),
       ).values(),
     );
@@ -1421,7 +1434,7 @@ export function constructSingularLabelQuery(options: SingularLabelQuery) {
   const { s, l } = options;
 
   return queryOptions({
-    queryKey: ["__volatile","slq", s, l],
+    queryKey: ["__volatile", "slq", s, l],
 
     enabled: !!s && !!l,
 
@@ -1436,9 +1449,9 @@ export function constructSingularLabelQuery(options: SingularLabelQuery) {
         .catch(
           (err) => ({ error: err }) as SingularLabelResult,
         )) as SingularLabelResult;
-      
+
       if (result === undefined) {
-        throw new Error("what the hell happened")
+        throw new Error("what the hell happened");
       }
       return result;
     },
@@ -1451,18 +1464,17 @@ export function useQuerySingularLabelQuery(options: SingularLabelQuery) {
   return useQuery(constructSingularLabelQuery(options));
 }
 
-
 type SingularAVPostQuery = {
-  aturi: string,
-  avurl: string,
-  instantBypass?: boolean,
-}
-type SingularAVPostResult = ATPAPI.AppBskyFeedDefs.PostView
+  aturi: string;
+  avurl: string;
+  instantBypass?: boolean;
+};
+type SingularAVPostResult = ATPAPI.AppBskyFeedDefs.PostView;
 
 type AVPostQueryPostsQueryParams = {
-  aturis: string[],
-  avurl: string,
-}
+  aturis: string[];
+  avurl: string;
+};
 
 const MAX_URIS_PER_REQUEST = 25;
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -1473,9 +1485,8 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return result;
 }
 
-
 export async function innerAVPostsQueryFn(
-  options: AVPostQueryPostsQueryParams
+  options: AVPostQueryPostsQueryParams,
 ): Promise<ATPAPI.AppBskyFeedGetPosts.OutputSchema | undefined> {
   const { aturis, avurl } = options;
 
@@ -1492,11 +1503,13 @@ export async function innerAVPostsQueryFn(
 
       const res = await fetch(url);
       if (!res.ok) {
-        throw new Error(`Labelmerge fetch failed: ${res.status} ${res.statusText}`);
+        throw new Error(
+          `Labelmerge fetch failed: ${res.status} ${res.statusText}`,
+        );
       }
 
       return (await res.json()) as ATPAPI.AppBskyFeedGetPosts.OutputSchema;
-    })
+    }),
   );
 
   // Merge all posts into one response
@@ -1519,7 +1532,10 @@ const postquerymerge = create(
       //const result = await batShitQueryClient.fetchQuery(
       //  constructLabelMergeQuery({ s: sarr, l: larr }),
       //);
-      const result = await innerAVPostsQueryFn({aturis: sarr, avurl: savpqa.at(-1)?.avurl || savpqa[0].avurl})
+      const result = await innerAVPostsQueryFn({
+        aturis: sarr,
+        avurl: savpqa.at(-1)?.avurl || savpqa[0].avurl,
+      });
       //const qfn = constructLabelMergeQuery({ s: sarr, l: larr }).queryFn
       //const result = await (qfn ? qfn() : ()=>{})
       if (!result) return [];
@@ -1541,15 +1557,15 @@ const postquerymerge = create(
       //   if (post) return { [key]: { labels: label } };
 
       //   // if result is neither, it means the subject is free of labels
-      //   return { 
-      //     [key]: { labels: undefined} 
+      //   return {
+      //     [key]: { labels: undefined}
       //   };
       //   // idiot
-      //   // return { 
+      //   // return {
       //   //   [key]: { error: {
       //   //     s: slq.l,
       //   //     e: `!internal-bslm-unknown: ${slq.s}`
-      //   //   }} 
+      //   //   }}
       //   // };
       // });
       const output = result.posts;
@@ -1582,8 +1598,8 @@ const postquerymerge = create(
       // });
       //const outputMap: Record<string, SingularLabelResult> = Object.assign({}, ...rslra)
       //const key = `${slq.l}::${slq.s}`; // or just slq.l if you prefer
-      const item = rslra.find(obj => obj.uri === savpq.aturi);
-      const result: SingularAVPostResult | undefined = item//outputMap[key]
+      const item = rslra.find((obj) => obj.uri === savpq.aturi);
+      const result: SingularAVPostResult | undefined = item; //outputMap[key]
       return result;
     },
     scheduler: windowScheduler(10 * 100), // 1 second
@@ -1592,10 +1608,10 @@ const postquerymerge = create(
 
 export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
   const { aturi, avurl, instantBypass } = options;
-  const parsedaturi = new ATPAPI.AtUri(aturi)
+  const parsedaturi = new ATPAPI.AtUri(aturi);
 
   return queryOptions({
-    queryKey: ["savpq", parsedaturi.host, /*"__volatile", */aturi],
+    queryKey: ["savpq", parsedaturi.host, /*"__volatile", */ aturi],
 
     enabled: !!aturi && !!avurl,
 
@@ -1607,25 +1623,29 @@ export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
       // return result;
       if (instantBypass) {
         const params = new URLSearchParams();
-        params.append("uris", aturi)
+        params.append("uris", aturi);
         const url = `${avurl}/xrpc/app.bsky.feed.getPosts?${params.toString()}`;
 
         const res = await fetch(url);
         if (!res.ok) {
-          throw new Error(`Labelmerge fetch failed: ${res.status} ${res.statusText}`);
+          throw new Error(
+            `Labelmerge fetch failed: ${res.status} ${res.statusText}`,
+          );
         }
 
-        const result = (await res.json()) as ATPAPI.AppBskyFeedGetPosts.OutputSchema;
-        return result.posts[0]
+        const result =
+          (await res.json()) as ATPAPI.AppBskyFeedGetPosts.OutputSchema;
+        return result.posts[0];
       }
-      const result = (await postquerymerge
-        .fetch(options))as SingularAVPostResult;
-        // .catch(
-        //   (err) => ({ error: err }) as SingularAVPostResult,
-        // )) as SingularAVPostResult;
-      
+      const result = (await postquerymerge.fetch(
+        options,
+      )) as SingularAVPostResult;
+      // .catch(
+      //   (err) => ({ error: err }) as SingularAVPostResult,
+      // )) as SingularAVPostResult;
+
       if (result === undefined) {
-        throw new Error("what the hell happened")
+        throw new Error("what the hell happened");
       }
       return result;
     },

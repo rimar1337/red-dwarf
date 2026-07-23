@@ -51,7 +51,7 @@ export function Lightbox() {
   console.log("hey the $i route is loaded w!!!");
   const { did, rkey, i } = Route.useParams();
   const [images, setImages] = useState<LightboxProps["images"] | undefined>(
-    undefined
+    undefined,
   );
   const index = Number(i);
   const navigate = useNavigate();
@@ -160,6 +160,6 @@ export function Lightbox() {
         )}
       </div>
     </>,
-    document.body
+    document.body,
   );
 }

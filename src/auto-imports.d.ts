@@ -12,7 +12,7 @@ declare global {
   const IconMaterialSymbolsHome: typeof import('~icons/material-symbols/home.jsx').default
   const IconMaterialSymbolsHomeOutline: typeof import('~icons/material-symbols/home-outline.jsx').default
   const IconMaterialSymbolsInfo: typeof import('~icons/material-symbols/info.jsx').default
-  const IconMaterialSymbolsInfoO: typeof import('~icons/material-symbols/info-o.jsx').default
+  const IconMaterialSymbolsInfoO: typeof import("~icons/material-symbols/info-o.jsx").default
   const IconMaterialSymbolsInfoOutline: typeof import('~icons/material-symbols/info-outline.jsx').default
   const IconMaterialSymbolsMoreVert: typeof import('~icons/material-symbols/more-vert.jsx').default
   const IconMaterialSymbolsNotifications: typeof import('~icons/material-symbols/notifications.jsx').default
@@ -23,19 +23,19 @@ declare global {
   const IconMaterialSymbolsSettings: typeof import('~icons/material-symbols/settings.jsx').default
   const IconMaterialSymbolsSettingsOutline: typeof import('~icons/material-symbols/settings-outline.jsx').default
   const IconMaterialSymbolsTag: typeof import('~icons/material-symbols/tag.jsx').default
-  const IconMdiAccountCircle: typeof import('~icons/mdi/account-circle.jsx').default
-  const IconMdiAccountPlus: typeof import('~icons/mdi/account-plus.jsx').default
+  const IconMdiAccountCircle: typeof import("~icons/mdi/account-circle.jsx").default
+  const IconMdiAccountPlus: typeof import("~icons/mdi/account-plus.jsx").default
   const IconMdiCardsHeart: typeof import('~icons/mdi/cards-heart.jsx').default
   const IconMdiCardsHeartOutline: typeof import('~icons/mdi/cards-heart-outline.jsx').default
   const IconMdiCheck: typeof import('~icons/mdi/check.jsx').default
   const IconMdiCheckCircle: typeof import('~icons/mdi/check-circle.jsx').default
   const IconMdiCheckboxMultipleMarked: typeof import('~icons/mdi/checkbox-multiple-marked.jsx').default
   const IconMdiChevronDown: typeof import('~icons/mdi/chevron-down.jsx').default
-  const IconMdiClock: typeof import('~icons/mdi/clock.jsx').default
+  const IconMdiClock: typeof import("~icons/mdi/clock.jsx").default
   const IconMdiClockOutline: typeof import('~icons/mdi/clock-outline.jsx').default
   const IconMdiClose: typeof import('~icons/mdi/close.jsx').default
   const IconMdiCommentOutline: typeof import('~icons/mdi/comment-outline.jsx').default
-  const IconMdiElipsis: typeof import('~icons/mdi/elipsis.jsx').default
+  const IconMdiElipsis: typeof import("~icons/mdi/elipsis.jsx").default
   const IconMdiGlobe: typeof import('~icons/mdi/globe.jsx').default
   const IconMdiLock: typeof import('~icons/mdi/lock.jsx').default
   const IconMdiMessageReplyTextOutline: typeof import('~icons/mdi/message-reply-text-outline.jsx').default
@@ -43,7 +43,7 @@ declare global {
   const IconMdiPencilOutline: typeof import('~icons/mdi/pencil-outline.jsx').default
   const IconMdiPlayCircle: typeof import('~icons/mdi/play-circle.jsx').default
   const IconMdiRepeat: typeof import('~icons/mdi/repeat.jsx').default
-  const IconMdiRepeatGreen: typeof import('~icons/mdi/repeat-green.jsx').default
+  const IconMdiRepeatGreen: typeof import("~icons/mdi/repeat-green.jsx").default
   const IconMdiReply: typeof import('~icons/mdi/reply.jsx').default
   const IconMdiRepost: typeof import('~icons/mdi/repost.jsx').default
   const IconMdiShareVariant: typeof import('~icons/mdi/share-variant.jsx').default

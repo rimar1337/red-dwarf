@@ -12,9 +12,7 @@ import {
   ReusableTabRoute,
   useReusableTabScrollRestore,
 } from "~/components/ReusableTabRoute";
-import {
-  UniversalPostRendererATURILoader,
-} from "~/components/UniversalPostRenderer";
+import { UniversalPostRendererATURILoader } from "~/components/UniversalPostRenderer";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import {
   constellationURLAtom,
@@ -66,9 +64,11 @@ export default function NotificationsTabs() {
         Mentions: <MentionsTab />,
         Follows: <FollowsTab />,
         "Post Interactions": <PostInteractionsTab />,
-        ...bitesEnabled ? {
-          Bites: <BitesTab />,
-        } : {}
+        ...(bitesEnabled
+          ? {
+              Bites: <BitesTab />,
+            }
+          : {}),
       }}
     />
   );
@@ -85,7 +85,7 @@ function MentionsTab() {
         target: agent?.did,
         collection: "app.bsky.feed.post",
         path: ".facets[app.bsky.richtext.facet].features[app.bsky.richtext.facet#mention].did",
-      }
+      },
     ),
     enabled: !!agent?.did,
   });
@@ -106,8 +106,8 @@ function MentionsTab() {
       infiniteMentionsData?.pages.flatMap(
         (page) =>
           page?.linking_records.map(
-            (r) => `at://${r.did}/${r.collection}/${r.rkey}`
-          ) ?? []
+            (r) => `at://${r.did}/${r.collection}/${r.rkey}`,
+          ) ?? [],
       ) ?? []
     );
   }, [infiniteMentionsData]);
@@ -153,7 +153,7 @@ export function FollowsTab({ did }: { did?: string }) {
         target: userdid,
         collection: "app.bsky.graph.follow",
         path: ".subject",
-      }
+      },
     ),
     enabled: !!userdid,
   });
@@ -174,8 +174,8 @@ export function FollowsTab({ did }: { did?: string }) {
       infiniteFollowsData?.pages.flatMap(
         (page) =>
           page?.linking_records.map(
-            (r) => `at://${r.did}/${r.collection}/${r.rkey}`
-          ) ?? []
+            (r) => `at://${r.did}/${r.collection}/${r.rkey}`,
+          ) ?? [],
       ) ?? []
     );
   }, [infiniteFollowsData]);
@@ -206,7 +206,6 @@ export function FollowsTab({ did }: { did?: string }) {
   );
 }
 
-
 export function BitesTab({ did }: { did?: string }) {
   const { agent } = useAuth();
   const userdidunsafe = did ?? agent?.did;
@@ -222,8 +221,8 @@ export function BitesTab({ did }: { did?: string }) {
         target: "at://" + userdid,
         collection: "net.wafrn.feed.bite",
         path: ".subject",
-        staleMult: 0 // safe fun
-      }
+        staleMult: 0, // safe fun
+      },
     ),
     enabled: !!userdid,
   });
@@ -244,8 +243,8 @@ export function BitesTab({ did }: { did?: string }) {
       infiniteFollowsData?.pages.flatMap(
         (page) =>
           page?.linking_records.map(
-            (r) => `at://${r.did}/${r.collection}/${r.rkey}`
-          ) ?? []
+            (r) => `at://${r.did}/${r.collection}/${r.rkey}`,
+          ) ?? [],
       ) ?? []
     );
   }, [infiniteFollowsData]);
@@ -302,20 +301,20 @@ function PostInteractionsTab() {
 
   const posts = React.useMemo(
     () => postsData?.pages.flatMap((page) => page.records) ?? [],
-    [postsData]
+    [postsData],
   );
 
   useReusableTabScrollRestore("Notifications");
 
   const [filters] = useAtom(postInteractionsFiltersAtom);
-  const empty = (!filters.likes && !filters.quotes && !filters.replies && !filters.reposts);
+  const empty =
+    !filters.likes && !filters.quotes && !filters.replies && !filters.reposts;
 
   return (
     <>
       <PostInteractionsFilterChipBar />
-      {!empty && posts.map((m) => (
-        <PostInteractionsItem key={m.uri} uri={m.uri} />
-      ))}
+      {!empty &&
+        posts.map((m) => <PostInteractionsItem key={m.uri} uri={m.uri} />)}
 
       {hasNextPage && (
         <button
@@ -397,9 +396,10 @@ export function Chip({
     <button
       onClick={onClick}
       className={`relative inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-        ${state
-          ? "bg-primary/20 text-primary bg-gray-200 dark:bg-gray-800 border border-transparent"
-          : "bg-surface-container-low text-on-surface-variant border border-outline"
+        ${
+          state
+            ? "bg-primary/20 text-primary bg-gray-200 dark:bg-gray-800 border border-transparent"
+            : "bg-surface-container-low text-on-surface-variant border border-outline"
         }
         hover:bg-primary/30 active:scale-[0.97]
         dark:border-outline-variant
@@ -443,10 +443,10 @@ function PostInteractionsItem({ uri }: { uri: string }) {
   //const failReplies = filters.replies && replies < 1;
   //const failQuotes = filters.quotes && quotes < 1;
 
-  const showLikes = filters.showAll || filters.likes
-  const showReposts = filters.showAll || filters.reposts
-  const showReplies = filters.showAll || filters.replies
-  const showQuotes = filters.showAll || filters.quotes
+  const showLikes = filters.showAll || filters.likes;
+  const showReposts = filters.showAll || filters.reposts;
+  const showReplies = filters.showAll || filters.replies;
+  const showQuotes = filters.showAll || filters.quotes;
 
   //const showNone = !showLikes && !showReposts && !showReplies && !showQuotes;
 
@@ -459,10 +459,7 @@ function PostInteractionsItem({ uri }: { uri: string }) {
 
   const matchesAnything =
     // filters.showAll ||
-    matchesLikes ||
-    matchesReposts ||
-    matchesReplies ||
-    matchesQuotes;
+    matchesLikes || matchesReposts || matchesReplies || matchesQuotes;
 
   if (!matchesAnything) return null;
 
@@ -483,26 +480,18 @@ function PostInteractionsItem({ uri }: { uri: string }) {
           concise={true}
         />
         <div className="flex flex-col divide-x">
-          {showLikes && (<InteractionsButton
-            type={"like"}
-            uri={uri}
-            count={likes}
-          />)}
-          {showReposts && (<InteractionsButton
-            type={"repost"}
-            uri={uri}
-            count={reposts}
-          />)}
-          {showReplies && (<InteractionsButton
-            type={"reply"}
-            uri={uri}
-            count={replies}
-          />)}
-          {showQuotes && (<InteractionsButton
-            type={"quote"}
-            uri={uri}
-            count={quotes}
-          />)}
+          {showLikes && (
+            <InteractionsButton type={"like"} uri={uri} count={likes} />
+          )}
+          {showReposts && (
+            <InteractionsButton type={"repost"} uri={uri} count={reposts} />
+          )}
+          {showReplies && (
+            <InteractionsButton type={"reply"} uri={uri} count={replies} />
+          )}
+          {showQuotes && (
+            <InteractionsButton type={"quote"} uri={uri} count={quotes} />
+          )}
           {!all && (
             <div className="text-center text-gray-500 dark:text-gray-400 pb-3 pt-2 border-t">
               No interactions yet.
@@ -572,7 +561,19 @@ function InteractionsButton({
   );
 }
 
-export function NotificationItem({ notification, labeler, blocking = undefined, disablefollow = false, labelererror }: { notification: string, labeler?: boolean | string, blocking?: "unblock" | "blocked"; disablefollow?: boolean, labelererror?: string }) {
+export function NotificationItem({
+  notification,
+  labeler,
+  blocking = undefined,
+  disablefollow = false,
+  labelererror,
+}: {
+  notification: string;
+  labeler?: boolean | string;
+  blocking?: "unblock" | "blocked";
+  disablefollow?: boolean;
+  labelererror?: string;
+}) {
   const aturi = new AtUri(notification);
   const bite = aturi.collection === "net.wafrn.feed.bite";
   const navigate = useNavigate();
@@ -598,7 +599,8 @@ export function NotificationItem({ notification, labeler, blocking = undefined, 
     <div
       className={`flex items-center p-4 ${blocking ? "" : "cursor-pointer"} gap-3 justify-around border-b flex-row`}
       onClick={() =>
-        aturi && !labelererror &&
+        aturi &&
+        !labelererror &&
         navigate({
           to: "/profile/$did",
           params: { did: aturi.host },
@@ -614,7 +616,7 @@ export function NotificationItem({ notification, labeler, blocking = undefined, 
           <></>
         )}
       </div> */}
-      {profile ?
+      {profile ? (
         labeler && !avatar ? (
           <div
             className={`w-10 h-10 shrink-0 rounded-md items-center justify-center flex object-cover border-1 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700`}
@@ -627,16 +629,24 @@ export function NotificationItem({ notification, labeler, blocking = undefined, 
             alt={identity?.handle}
             className={`w-10 h-10 shrink-0 ${labeler ? "rounded-md" : "rounded-full"}`}
           />
-        ) : (
-          <div className="w-10 h-10 shrink-0 rounded-full bg-gray-300 dark:bg-gray-700" />
-        )}
+        )
+      ) : (
+        <div className="w-10 h-10 shrink-0 rounded-full bg-gray-300 dark:bg-gray-700" />
+      )}
       <div className="flex flex-col min-w-0">
-        <div className={`flex ${labelererror ? "flex-col gap-1 " : "flex-row gap-2"} overflow-hidden text-ellipsis whitespace-nowrap min-w-0 truncate`}>
+        <div
+          className={`flex ${labelererror ? "flex-col gap-1 " : "flex-row gap-2"} overflow-hidden text-ellipsis whitespace-nowrap min-w-0 truncate`}
+        >
           <span className="font-medium text-gray-900 dark:text-gray-100 truncate min-w-0">
-            {profile?.displayName || identity?.handle || identity?.did || aturi.host}
+            {profile?.displayName ||
+              identity?.handle ||
+              identity?.did ||
+              aturi.host}
           </span>
           <span className="text-gray-700 dark:text-gray-400 truncate min-w-0">
-            {identity?.handle ? "@" + identity.handle : identity?.did || aturi.host}
+            {identity?.handle
+              ? "@" + identity.handle
+              : identity?.did || aturi.host}
           </span>
           {labelererror && (
             <span className="text-gray-700 dark:text-gray-400 truncate min-w-0">
@@ -652,7 +662,9 @@ export function NotificationItem({ notification, labeler, blocking = undefined, 
         </div>
       </div>
       <div className="flex-1" />
-      {!disablefollow && !blocking && identity?.did && !labeler && <FollowButton targetdidorhandle={identity?.did} />}
+      {!disablefollow && !blocking && identity?.did && !labeler && (
+        <FollowButton targetdidorhandle={identity?.did} />
+      )}
       {blocking === "blocked" && (
         <div className="flex items-center shrink-0 font-medium rounded-md h-8 bg-gray-200 dark:bg-gray-700 px-3 py-2 text-[14px]">
           Blocking You
@@ -686,7 +698,11 @@ export function NotificationItem({ notification, labeler, blocking = undefined, 
           </span>
         </button>
       )}
-      {labeler && !disablefollow && <LabelerToggleLocalEnablementButton labeler={identity?.did || aturi.host} />}
+      {labeler && !disablefollow && (
+        <LabelerToggleLocalEnablementButton
+          labeler={identity?.did || aturi.host}
+        />
+      )}
     </div>
   );
 }
@@ -697,17 +713,17 @@ export function LabelerToggleLocalEnablementButton({
   labeler: string;
 }) {
   const [disabledLabelers, setDisabledLabelers] = useAtom(disabledLabelersAtom);
-  const labelerEnabledState = !disabledLabelers.includes(labeler)
-  const isMandatory = FORCED_LABELER_DIDS.includes(labeler)
+  const labelerEnabledState = !disabledLabelers.includes(labeler);
+  const isMandatory = FORCED_LABELER_DIDS.includes(labeler);
 
   function toggleLocalLabelerEnabledState() {
     if (labeler) {
       if (labelerEnabledState) {
-        console.log("button clicked disabled it")
-        setDisabledLabelers([...disabledLabelers, labeler])
+        console.log("button clicked disabled it");
+        setDisabledLabelers([...disabledLabelers, labeler]);
       } else {
-        console.log("button clicked enabled it")
-        setDisabledLabelers(disabledLabelers.filter(v => v !== labeler))
+        console.log("button clicked enabled it");
+        setDisabledLabelers(disabledLabelers.filter((v) => v !== labeler));
       }
     }
   }
@@ -715,7 +731,9 @@ export function LabelerToggleLocalEnablementButton({
   if (isMandatory) {
     return (
       <>
-        <span className=" shrink-0 font-medium relative inline-flex items-center rounded-lg text-sm px-3 py-1.5 bg-gray-300 dark:bg-gray-600 border border-outline dark:border-outline-variant">mandated by host</span>
+        <span className=" shrink-0 font-medium relative inline-flex items-center rounded-lg text-sm px-3 py-1.5 bg-gray-300 dark:bg-gray-600 border border-outline dark:border-outline-variant">
+          mandated by host
+        </span>
       </>
       /**
        * relative inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all
@@ -724,7 +742,7 @@ export function LabelerToggleLocalEnablementButton({
           dark:border-outline-variant
         
        */
-    )
+    );
   }
 
   return (
@@ -754,7 +772,6 @@ export function LabelerToggleLocalEnablementButton({
     // </button>
   );
 }
-
 
 export const EmptyState = ({ text }: { text: string }) => (
   <div className="py-10 text-center text-gray-500 dark:text-gray-400">

@@ -5,7 +5,10 @@ import React from "react";
 
 import { Header } from "~/components/Header";
 import { constellationURLAtom } from "~/utils/atoms";
-import { useQueryIdentity, yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks } from "~/utils/useQuery";
+import {
+  useQueryIdentity,
+  yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
+} from "~/utils/useQuery";
 
 import {
   EmptyState,
@@ -21,7 +24,10 @@ export const Route = createFileRoute("/profile/$did/post/$rkey/reposted-by")({
 function RouteComponent() {
   const { did, rkey } = Route.useParams();
   const { data: identity } = useQueryIdentity(did);
-  const atUri = identity?.did && rkey ? `at://${decodeURIComponent(identity.did)}/app.bsky.feed.post/${rkey}` : '';
+  const atUri =
+    identity?.did && rkey
+      ? `at://${decodeURIComponent(identity.did)}/app.bsky.feed.post/${rkey}`
+      : "";
 
   const [constellationurl] = useAtom(constellationURLAtom);
   const infinitequeryresults = useInfiniteQuery({
@@ -32,7 +38,7 @@ function RouteComponent() {
         target: atUri,
         collection: "app.bsky.feed.repost",
         path: ".subject.uri",
-      }
+      },
     ),
     enabled: !!atUri,
   });
@@ -53,8 +59,8 @@ function RouteComponent() {
       infiniteRepostsData?.pages.flatMap(
         (page) =>
           page?.linking_records.map(
-            (r) => `at://${r.did}/${r.collection}/${r.rkey}`
-          ) ?? []
+            (r) => `at://${r.did}/${r.collection}/${r.rkey}`,
+          ) ?? [],
       ) ?? []
     );
   }, [infiniteRepostsData]);

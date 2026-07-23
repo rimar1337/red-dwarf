@@ -1,4 +1,4 @@
-import * as ATPAPI from "@atproto/api"
+import * as ATPAPI from "@atproto/api";
 import {
   AppBskyEmbedDefs,
   AppBskyEmbedExternal,
@@ -20,7 +20,10 @@ import { FeedItemRenderAturiLoader } from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 
 import { PollEmbed } from "./PollComponents";
-import { UniversalPostRenderer, UniversalPostRendererATURILoader } from "./UniversalPostRenderer";
+import {
+  UniversalPostRenderer,
+  UniversalPostRendererATURILoader,
+} from "./UniversalPostRenderer";
 
 type Embed =
   | AppBskyEmbedRecord.View
@@ -28,7 +31,7 @@ type Embed =
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
-  | { $type: string;[k: string]: unknown };
+  | { $type: string; [k: string]: unknown };
 
 enum PostEmbedViewContext {
   ThreadHighlighted = "ThreadHighlighted",
@@ -57,7 +60,7 @@ export function PostEmbeds({
   lightboxCallback,
   constellationLinks,
   redactedLoading,
-  referral
+  referral,
 }: {
   embed?: Embed;
   moderation?: ModerationDecision;
@@ -157,28 +160,52 @@ export function PostEmbeds({
     const reallybadaturi = reallybaduri ? new AtUri(reallybaduri) : undefined;
 
     if (AppBskyFeedDefs.isGeneratorView(embed.record)) {
-      return <div style={stopgap} className={(redactedLoading ? " blur animate-pulse" : undefined)}>feedgen placeholder</div>;
+      return (
+        <div
+          style={stopgap}
+          className={redactedLoading ? " blur animate-pulse" : undefined}
+        >
+          feedgen placeholder
+        </div>
+      );
     } else if (
       !!reallybaduri &&
       !!reallybadaturi &&
       reallybadaturi.collection === "app.bsky.feed.generator"
     ) {
       return (
-        <div className={`rounded-xl border` + (redactedLoading ? " blur animate-pulse" : undefined)}>
+        <div
+          className={
+            `rounded-xl border` +
+            (redactedLoading ? " blur animate-pulse" : undefined)
+          }
+        >
           <FeedItemRenderAturiLoader aturi={reallybaduri} disableBottomBorder />
         </div>
       );
     }
 
     if (AppBskyGraphDefs.isListView(embed.record)) {
-      return <div style={stopgap} className={(redactedLoading ? " blur animate-pulse" : undefined)}>list placeholder</div>;
+      return (
+        <div
+          style={stopgap}
+          className={redactedLoading ? " blur animate-pulse" : undefined}
+        >
+          list placeholder
+        </div>
+      );
     } else if (
       !!reallybaduri &&
       !!reallybadaturi &&
       reallybadaturi.collection === "app.bsky.graph.list"
     ) {
       return (
-        <div className={"rounded-xl border" + (redactedLoading ? " blur animate-pulse" : undefined)}>
+        <div
+          className={
+            "rounded-xl border" +
+            (redactedLoading ? " blur animate-pulse" : undefined)
+          }
+        >
           <FeedItemRenderAturiLoader
             aturi={reallybaduri}
             disableBottomBorder
@@ -190,14 +217,26 @@ export function PostEmbeds({
     }
 
     if (AppBskyGraphDefs.isStarterPackViewBasic(embed.record)) {
-      return <div style={stopgap} className={(redactedLoading ? " blur animate-pulse" : undefined)}>starter pack card placeholder</div>;
+      return (
+        <div
+          style={stopgap}
+          className={redactedLoading ? " blur animate-pulse" : undefined}
+        >
+          starter pack card placeholder
+        </div>
+      );
     } else if (
       !!reallybaduri &&
       !!reallybadaturi &&
       reallybadaturi.collection === "app.bsky.graph.starterpack"
     ) {
       return (
-        <div className={"rounded-xl border" + (redactedLoading ? " blur animate-pulse" : undefined)}>
+        <div
+          className={
+            "rounded-xl border" +
+            (redactedLoading ? " blur animate-pulse" : undefined)
+          }
+        >
           <FeedItemRenderAturiLoader
             aturi={reallybaduri}
             disableBottomBorder
@@ -235,7 +274,10 @@ export function PostEmbeds({
             borderRadius: 12,
             overflow: "hidden",
           }}
-          className={"shadow border border-gray-200 dark:border-gray-800 was7" + (redactedLoading ? " blur animate-pulse" : undefined)}
+          className={
+            "shadow border border-gray-200 dark:border-gray-800 was7" +
+            (redactedLoading ? " blur animate-pulse" : undefined)
+          }
         >
           <UniversalPostRenderer
             post={post}
@@ -255,11 +297,11 @@ export function PostEmbeds({
           />
         </div>
       );
-
-    } if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
+    }
+    if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
       return (
         <UniversalPostRendererATURILoader atUri={embed.record.uri} isQuote />
-      )
+      );
     } else {
       console.log("what the hell is a ", embed);
       return <>sorry</>;
@@ -291,10 +333,10 @@ export function PostEmbeds({
                 width: "100%",
                 aspectRatio: image.aspectRatio
                   ? (() => {
-                    const { width, height } = image.aspectRatio;
-                    const ratio = width / height;
-                    return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
-                  })()
+                      const { width, height } = image.aspectRatio;
+                      const ratio = width / height;
+                      return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                    })()
                   : "1 / 1",
                 borderRadius: 12,
                 overflow: "hidden",
@@ -551,20 +593,30 @@ export function PostEmbeds({
   if (AppBskyEmbedExternal.isView(embed)) {
     const pollLinks = constellationLinks?.links?.["app.reddwarf.embed.poll"];
     const hasPollLink = pollLinks && Object.keys(pollLinks).length > 0;
-    const isfromappview = referral?.includes("appview")
+    const isfromappview = referral?.includes("appview");
 
     if ((hasPollLink || isfromappview) && postid) {
       // warning: i gave up and warpped it in a div lmao
       return (
-        <div className={(redactedLoading ? " blur animate-pulse " : undefined)}>
-          <PollEmbed did={postid.did} rkey={postid.rkey} embedtryfall={isfromappview ? {embed, onOpen} : undefined} redactedLoading={redactedLoading}/>
+        <div className={redactedLoading ? " blur animate-pulse " : undefined}>
+          <PollEmbed
+            did={postid.did}
+            rkey={postid.rkey}
+            embedtryfall={isfromappview ? { embed, onOpen } : undefined}
+            redactedLoading={redactedLoading}
+          />
         </div>
       );
     }
 
     const link = embed.external;
     return (
-      <ExternalLinkEmbed link={link} onOpen={onOpen} style={{ marginTop: 0 }} redactedLoading={redactedLoading}/>
+      <ExternalLinkEmbed
+        link={link}
+        onOpen={onOpen}
+        style={{ marginTop: 0 }}
+        redactedLoading={redactedLoading}
+      />
     );
   }
 
@@ -584,16 +636,16 @@ export function PostEmbeds({
   return <div />;
 }
 export type embedtryfall = {
-  embed: ATPAPI.AppBskyEmbedExternal.View,
+  embed: ATPAPI.AppBskyEmbedExternal.View;
   onOpen?: () => void;
-}
+};
 
 export function ExternalLinkEmbed({
   link,
   onOpen,
   style,
   redactedLoading,
-  referral
+  referral,
 }: {
   link: AppBskyEmbedExternal.ViewExternal;
   onOpen?: () => void;
@@ -713,13 +765,19 @@ export function ExternalLinkEmbed({
         >
           <div
             style={titleStyle as React.CSSProperties}
-            className={"text-gray-900 dark:text-gray-100 " + (redactedLoading ? " blur animate-pulse " : undefined)}
+            className={
+              "text-gray-900 dark:text-gray-100 " +
+              (redactedLoading ? " blur animate-pulse " : undefined)
+            }
           >
             {title}
           </div>
           <div
             style={descriptionStyle as React.CSSProperties}
-            className={"text-gray-500 dark:text-gray-400 " + (redactedLoading ? " blur animate-pulse " : undefined)}
+            className={
+              "text-gray-500 dark:text-gray-400 " +
+              (redactedLoading ? " blur animate-pulse " : undefined)
+            }
           >
             {description}
           </div>
@@ -744,7 +802,10 @@ export function ExternalLinkEmbed({
               style={{
                 fontSize: 12,
               }}
-              className={"text-gray-500 dark:text-gray-400 " + (redactedLoading ? " blur animate-pulse " : undefined)}
+              className={
+                "text-gray-500 dark:text-gray-400 " +
+                (redactedLoading ? " blur animate-pulse " : undefined)
+              }
             >
               {getDomain(uri)}
             </span>
@@ -848,7 +909,7 @@ export const SmartHLSPlayer = ({
               pointerEvents: "none",
               userSelect: "none",
             }}
-          //className="text-shadow-md"
+            //className="text-shadow-md"
           >
             <IconMdiPlayCircle className="h-14 w-14 drop-shadow-xl drop-shadow-gray-950/10 text-gray-50" />
           </div>
@@ -861,8 +922,9 @@ export const SmartHLSPlayer = ({
             width: "100%",
             borderRadius: 12,
             overflow: "hidden",
-            paddingTop: `${100 / (aspect ? aspect.width / aspect.height : 16 / 9)
-              }%`,
+            paddingTop: `${
+              100 / (aspect ? aspect.width / aspect.height : 16 / 9)
+            }%`,
           }}
           className="border border-gray-200 dark:border-gray-800 was7"
         >

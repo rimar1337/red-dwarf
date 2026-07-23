@@ -16,7 +16,7 @@ export function ReusableTabRoute({
   tabs: Record<string, React.ReactNode>;
 }) {
   const [reusableTabState, setReusableTabState] = useAtom(
-    reusableTabRouteScrollAtom
+    reusableTabRouteScrollAtom,
   );
   const [isAtTop] = useAtom(isAtTopAtom);
 
@@ -92,32 +92,34 @@ export function ReusableTabRoute({
         </TabsPrimitive.List>
 
         {Object.entries(tabs).map(([key, node]) => (
-          <TabsPrimitive.Content key={key} value={key} className="flex-1 min-h-[80dvh]">
+          <TabsPrimitive.Content
+            key={key}
+            value={key}
+            className="flex-1 min-h-[80dvh]"
+          >
             {activeTab === key && node}
           </TabsPrimitive.Content>
         ))}
       </TabsPrimitive.Root>
     </>
-    
   );
 }
 
 export function useReusableTabScrollRestore(route: string) {
-  const [reusableTabState] = useAtom(
-    reusableTabRouteScrollAtom
-  );
+  const [reusableTabState] = useAtom(reusableTabRouteScrollAtom);
 
   const routeState = reusableTabState?.[route];
   const activeTab = routeState?.activeTab;
 
   useEffect(() => {
-    const savedScroll = activeTab ? routeState?.scrollPositions[activeTab] ?? 0 : 0;
+    const savedScroll = activeTab
+      ? (routeState?.scrollPositions[activeTab] ?? 0)
+      : 0;
     //window.scrollTo(0, savedScroll);
     window.scrollTo({ top: savedScroll });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
-
 
 /*
 
@@ -129,8 +131,6 @@ export function useReusableTabScrollRestore(route: string) {
   }, [activeTab, notifState.scrollPositions]);
 
  */
-
-
 
 export function useSticky(top: number = 0) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -144,7 +144,7 @@ export function useSticky(top: number = 0) {
       {
         rootMargin: `-${top}px 0px 0px 0px`,
         threshold: 0,
-      }
+      },
     );
 
     observer.observe(sentinelRef.current);

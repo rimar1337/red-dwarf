@@ -77,7 +77,10 @@ export const ModerationBatcher = () => {
 
             // A. Initialize requested URIs (to remove loading state)
             chunk.forEach((uri) => {
-              if (!nextCache.has(uri) || nextCache.get(uri)!.timestamp < updateTime) {
+              if (
+                !nextCache.has(uri) ||
+                nextCache.get(uri)!.timestamp < updateTime
+              ) {
                 nextCache.set(uri, { labels: [], timestamp: updateTime });
               }
             });
@@ -89,7 +92,7 @@ export const ModerationBatcher = () => {
                 const rawLabels = res.value.labels || [];
 
                 // --- REDUCTION LOGIC START ---
-                
+
                 // 1. Group by URI
                 const labelsByUri = new Map<string, typeof rawLabels>();
                 rawLabels.forEach((l) => {
@@ -105,14 +108,16 @@ export const ModerationBatcher = () => {
 
                   // 3. Find latest state per (Source + Value)
                   // Key: "did:plc:xyz::porn" -> Latest Label Object
-                  const latestState = new Map<string, typeof rawLabels[0]>();
+                  const latestState = new Map<string, (typeof rawLabels)[0]>();
 
                   labels.forEach((l) => {
                     const key = `${l.src}::${l.val}`;
                     const existing = latestState.get(key);
-                    
+
                     const currentCts = new Date(l.cts).getTime();
-                    const existingCts = existing ? new Date(existing.cts).getTime() : 0;
+                    const existingCts = existing
+                      ? new Date(existing.cts).getTime()
+                      : 0;
 
                     if (!existing || currentCts > existingCts) {
                       latestState.set(key, l);
@@ -130,7 +135,7 @@ export const ModerationBatcher = () => {
                       labeler.supportedLabels?.[activeLabel.val] || "ignore";
 
                     cacheEntry.labels.push({
-                      sourceDid: labeler.did, 
+                      sourceDid: labeler.did,
                       val: activeLabel.val,
                       cts: activeLabel.cts,
                       preference: resolvedPref,
@@ -138,9 +143,11 @@ export const ModerationBatcher = () => {
                   }
                 });
                 // --- REDUCTION LOGIC END ---
-
               } else {
-                console.error(`[Batcher] Labeler ${currentLabelers[index].url} failed:`, res.reason);
+                console.error(
+                  `[Batcher] Labeler ${currentLabelers[index].url} failed:`,
+                  res.reason,
+                );
               }
             });
 

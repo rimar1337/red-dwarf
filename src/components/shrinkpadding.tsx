@@ -5,7 +5,7 @@ export default function ShrinkingBox() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setSize(prev => Math.max(prev - 125, 0));
+      setSize((prev) => Math.max(prev - 125, 0));
     }, 250);
 
     return () => clearInterval(interval);

@@ -6,7 +6,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import React, { type ReactNode, useEffect, useState } from "react";
 
-import { FORCE_HIDE_LABELS, FORCE_HIDE_LABELS_WHITELISTED_SOURCE } from "~/../policy";
+import {
+  FORCE_HIDE_LABELS,
+  FORCE_HIDE_LABELS_WHITELISTED_SOURCE,
+} from "~/../policy";
 import defaultpfp from "~/../public/defaultpfp.png";
 import { Header } from "~/components/Header";
 import {
@@ -39,7 +42,7 @@ import {
   useQueryProfile,
 } from "~/utils/useQuery";
 // README this weird manual import is required because icon auto imports in this file (and some other files) are broken
-// for some reason which i dont know. 
+// for some reason which i dont know.
 import IconMdiMoreHoriz from "~icons/mdi/more-horiz.jsx";
 import IconMdiShieldOutline from "~icons/mdi/shield-outline.jsx";
 
@@ -50,8 +53,9 @@ export const Route = createFileRoute("/profile/$did/")({
   component: ProfileComponent,
 });
 
-export interface LabelWithHydratedLocaleName extends ATPAPI.ComAtprotoLabelDefs.Label {
-  name: string
+export interface LabelWithHydratedLocaleName
+  extends ATPAPI.ComAtprotoLabelDefs.Label {
+  name: string;
 }
 
 function ProfileComponent() {
@@ -72,51 +76,49 @@ function ProfileComponent() {
   const userBlocksAuthor = useGetOneToOneState(
     agentDid && authorDid
       ? {
-        target: authorDid,
-        user: agentDid,
-        collection: "app.bsky.graph.block",
-        path: ".subject",
-      }
+          target: authorDid,
+          user: agentDid,
+          collection: "app.bsky.graph.block",
+          path: ".subject",
+        }
       : undefined,
   );
   const authorBlocksUser = useGetOneToOneState(
     agentDid && authorDid
       ? {
-        target: agentDid,
-        user: authorDid,
-        collection: "app.bsky.graph.block",
-        path: ".subject",
-      }
+          target: agentDid,
+          user: authorDid,
+          collection: "app.bsky.graph.block",
+          path: ".subject",
+        }
       : undefined,
   );
-  
-  const redactWhileLoadingBlock = userBlocksAuthor.isLoading || authorBlocksUser.isLoading
-  const redactFinalBlock = userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0
 
-  const subjects = identity ? [
-    identity.did,
-    `at://${identity.did}/app.bsky.actor.profile/self`,
-  ] : []
-  
-  const {
-    results: labelResults,
-    hydratedLabelDefs,
-  } = useAutoLabels({
+  const redactWhileLoadingBlock =
+    userBlocksAuthor.isLoading || authorBlocksUser.isLoading;
+  const redactFinalBlock =
+    userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0;
+
+  const subjects = identity
+    ? [identity.did, `at://${identity.did}/app.bsky.actor.profile/self`]
+    : [];
+
+  const { results: labelResults, hydratedLabelDefs } = useAutoLabels({
     subjects,
     type: "post", // or whatever you’re keying on for now
-  })
+  });
 
-  const ghld = getGetHydratedLabelDefs(hydratedLabelDefs)
-  const accountResult = labelResults.get(identity?.did || did)
+  const ghld = getGetHydratedLabelDefs(hydratedLabelDefs);
+  const accountResult = labelResults.get(identity?.did || did);
   const profileResult = labelResults.get(
     `at://${identity?.did || did}/app.bsky.actor.profile/self`,
-  )
+  );
 
-  const accountLabelVerdict = accountResult?.labelVerdict ?? "unknown"
-  const authorLabels = accountResult?.labels ?? []
+  const accountLabelVerdict = accountResult?.labelVerdict ?? "unknown";
+  const authorLabels = accountResult?.labels ?? [];
 
-  const profileLabelVerdict = profileResult?.labelVerdict ?? "unknown"
-  const profileLabels = profileResult?.labels ?? []
+  const profileLabelVerdict = profileResult?.labelVerdict ?? "unknown";
+  const profileLabels = profileResult?.labels ?? [];
 
   const authorModUnknown = accountLabelVerdict === "unknown";
   const profileModUnknown = profileLabelVerdict === "unknown";
@@ -127,36 +129,47 @@ function ProfileComponent() {
   const authorModError = accountLabelVerdict === "error";
   const profileModError = profileLabelVerdict === "error";
 
-  const strictModerationUnknown = authorModUnknown || profileModUnknown
-  const strictModerationLoading = authorModLoading || profileModLoading || redactWhileLoadingBlock
-  const strictModerationError = authorModError || profileModError
+  const strictModerationUnknown = authorModUnknown || profileModUnknown;
+  const strictModerationLoading =
+    authorModLoading || profileModLoading || redactWhileLoadingBlock;
+  const strictModerationError = authorModError || profileModError;
 
-  const strictModerationDontShow = strictModerationUnknown || strictModerationLoading || strictModerationError || redactFinalBlock
+  const strictModerationDontShow =
+    strictModerationUnknown ||
+    strictModerationLoading ||
+    strictModerationError ||
+    redactFinalBlock;
 
-  const verdictDebugString = `accountLabelVerdict: ${accountLabelVerdict}, profileLabelVerdict: ${profileLabelVerdict}`
+  const verdictDebugString = `accountLabelVerdict: ${accountLabelVerdict}, profileLabelVerdict: ${profileLabelVerdict}`;
 
   const hideAuthorLabels = authorLabels.filter(
-    (label) => ghld(label.src,label.val)?.pref === "hide",
+    (label) => ghld(label.src, label.val)?.pref === "hide",
   );
   const warnAuthorLabels = authorLabels.filter(
-    (label) => ghld(label.src,label.val)?.severity === "warn" && ghld(label.src,label.val)?.pref === "warn",
+    (label) =>
+      ghld(label.src, label.val)?.severity === "warn" &&
+      ghld(label.src, label.val)?.pref === "warn",
   );
-  const informAuthorLabels: LabelWithHydratedLocaleName[] = authorLabels.flatMap(
-    (label) => {
-      if (ghld(label.src,label.val)?.severity === "inform" && ghld(label.src,label.val)?.pref === "warn") {
-        return [{
-          ...label,
-          name: getLocaleLabel(ghld(label.src,label.val))?.name || label.val
-        }]
+  const informAuthorLabels: LabelWithHydratedLocaleName[] =
+    authorLabels.flatMap((label) => {
+      if (
+        ghld(label.src, label.val)?.severity === "inform" &&
+        ghld(label.src, label.val)?.pref === "warn"
+      ) {
+        return [
+          {
+            ...label,
+            name: getLocaleLabel(ghld(label.src, label.val))?.name || label.val,
+          },
+        ];
       }
-      return []
-    },
-  );
+      return [];
+    });
   const hideProfileLabels = profileLabels.filter(
-    (label) => ghld(label.src,label.val)?.pref === "hide",
+    (label) => ghld(label.src, label.val)?.pref === "hide",
   );
   const warnProfileLabels = profileLabels.filter(
-    (label) => ghld(label.src,label.val)?.pref === "warn",
+    (label) => ghld(label.src, label.val)?.pref === "warn",
   );
 
   // i was gonna check the did doc but useQueryIdentity doesnt return that info (slingshot minidoc)
@@ -165,7 +178,7 @@ function ProfileComponent() {
   const { data: labelerProfile } = useQueryArbitrary(
     identity?.did
       ? `at://${identity?.did}/app.bsky.labeler.service/self`
-      : undefined
+      : undefined,
   );
 
   const isLabeler = !!labelerProfile?.cid;
@@ -182,7 +195,7 @@ function ProfileComponent() {
     : undefined;
   const { data: profileRecord } = useQueryProfile(profileUri);
   const profile = profileRecord?.value;
-  const pronoun = profile?.pronouns || undefined
+  const pronoun = profile?.pronouns || undefined;
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
@@ -207,22 +220,25 @@ function ProfileComponent() {
   const resultwhateversure = useQueryConstellationLinksCountDistinctDids(
     resolvedDid
       ? {
-        method: "/links/count/distinct-dids",
-        collection: "app.bsky.graph.follow",
-        target: resolvedDid,
-        path: ".subject",
-      }
-      : undefined
+          method: "/links/count/distinct-dids",
+          collection: "app.bsky.graph.follow",
+          target: resolvedDid,
+          path: ".subject",
+        }
+      : undefined,
   );
 
   const followercount = resultwhateversure?.data?.total;
 
-  const isForceHidden = [...[...authorLabels].filter((label) => {
-    return (
-      FORCE_HIDE_LABELS.has(label.val) &&
-      FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
-    );
-  }), ...hideAuthorLabels];
+  const isForceHidden = [
+    ...[...authorLabels].filter((label) => {
+      return (
+        FORCE_HIDE_LABELS.has(label.val) &&
+        FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
+      );
+    }),
+    ...hideAuthorLabels,
+  ];
 
   // // todo remove this replace it with blurs
   // if (strictModerationLoading) {
@@ -248,7 +264,7 @@ function ProfileComponent() {
   //   );
   // }
 
-  console.log("HLLO HLLO HisForceHidden" + did + isForceHidden + authorLabels)
+  console.log("HLLO HLLO HisForceHidden" + did + isForceHidden + authorLabels);
   if (isForceHidden.length > 0 || redactFinalBlock) {
     // todo pretify this please
     return (
@@ -275,43 +291,51 @@ function ProfileComponent() {
                 <NotificationItem
                   key={item.src}
                   notification={item.src}
-                  labeler={getLocaleLabel(ghld(item.src, item.val))?.name || item.val}
+                  labeler={
+                    getLocaleLabel(ghld(item.src, item.val))?.name || item.val
+                  }
                   disablefollow={true}
                 />
-              )
+              );
             })}
             {/* todo add unblock button duhhhhhh */}
             {/* {userBlocksAuthor.uris.length > 0 && (<div className="p-4">User Blocked by You</div>)} */}
             {userBlocksAuthor.uris.length > 0 && (
               <NotificationItem
-                notification={authorDid||did}
+                notification={authorDid || did}
                 blocking={"unblock"}
               />
             )}
             {/* {authorBlocksUser.uris.length > 0 && (<div className="p-4">User Blocking You</div>)} */}
             {authorBlocksUser.uris.length > 0 && (
               <NotificationItem
-                notification={authorDid||did}
+                notification={authorDid || did}
                 blocking={"blocked"}
               />
             )}
             <div className="flex flex-row gap-2">
-              <Link to="/moderation" className="flex-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex items-center justify-center">
-              <span>Moderation Settings</span>
-            </Link>
-            <Link to="/about" className="flex-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex items-center justify-center">
-              <span>Host instance's policies</span>
-            </Link>
+              <Link
+                to="/moderation"
+                className="flex-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex items-center justify-center"
+              >
+                <span>Moderation Settings</span>
+              </Link>
+              <Link
+                to="/about"
+                className="flex-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 p-4 flex items-center justify-center"
+              >
+                <span>Host instance's policies</span>
+              </Link>
             </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
   return (
     <div className="">
       <Header
-        title={`${strictModerationLoading ? "Loading " :" "}Profile`}
+        title={`${strictModerationLoading ? "Loading " : " "}Profile`}
         backButtonCallback={() => {
           if (window.history.length > 1) {
             window.history.back();
@@ -346,8 +370,12 @@ function ProfileComponent() {
         <div
           className="w-full h-40 bg-gray-300 dark:bg-gray-700"
           style={{
-            backgroundImage: strictModerationLoading ? undefined : `url(${getBannerUrl(profile)})`,
-            backgroundColor: strictModerationLoading ? "var(--color-placeholder)" : undefined,
+            backgroundImage: strictModerationLoading
+              ? undefined
+              : `url(${getBannerUrl(profile)})`,
+            backgroundColor: strictModerationLoading
+              ? "var(--color-placeholder)"
+              : undefined,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -359,8 +387,9 @@ function ProfileComponent() {
             <div
               className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700 overflow-clip`}
             >
-              <div className={`w-28 h-28 bg-gray-400 dark:bg-gray-600 animate-pulse`}
-            />
+              <div
+                className={`w-28 h-28 bg-gray-400 dark:bg-gray-600 animate-pulse`}
+              />
             </div>
           ) : !getAvatarUrl(profile) && isLabeler ? (
             <div
@@ -428,13 +457,10 @@ function ProfileComponent() {
             </div>
           )}
           {/* <ModerationInner subject={post.author.did} /> */}
-          {authorModLoading ?
-            (
-              <div className="flex flex-wrap flex-row gap-1">
-                <div
-                  className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1"
-                >
-                  {/* <img
+          {authorModLoading ? (
+            <div className="flex flex-wrap flex-row gap-1">
+              <div className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-full flex flex-row items-center gap-1">
+                {/* <img
                                 src={resolvedpfp || defaultpfp}
                                 alt="avatar"
                                 className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
@@ -443,27 +469,28 @@ function ProfileComponent() {
                                   height: 12,
                                 }}
                               /> */}
-                  <span className="font-medium">loading badges...</span>
-                </div>
+                <span className="font-medium">loading badges...</span>
               </div>
-            )
-            :
-            (
-              <div className="flex flex-wrap flex-row gap-1">
-                {/* authorLabels{JSON.stringify(authorLabels,null,2)} */}
-                {pronoun && (
-                  <SmallAuthorLabelBadgeInner
-                    text={pronoun}
-                    disablepfp={true}
-                    large
-                  />
-                )}
-                {informAuthorLabels.map((label, index) => (
-                  <SmallAuthorLabelBadge label={label} key={label.cts + label.src + label.val} large />
-                ))}
-              </div>
-            )
-          }
+            </div>
+          ) : (
+            <div className="flex flex-wrap flex-row gap-1">
+              {/* authorLabels{JSON.stringify(authorLabels,null,2)} */}
+              {pronoun && (
+                <SmallAuthorLabelBadgeInner
+                  text={pronoun}
+                  disablepfp={true}
+                  large
+                />
+              )}
+              {informAuthorLabels.map((label, index) => (
+                <SmallAuthorLabelBadge
+                  label={label}
+                  key={label.cts + label.src + label.val}
+                  large
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -474,8 +501,8 @@ function ProfileComponent() {
           tabs={{
             ...(isLabeler
               ? {
-                Labels: <LabelsTab did={did} labelerRecord={labelerRecord} />,
-              }
+                  Labels: <LabelsTab did={did} labelerRecord={labelerRecord} />,
+                }
               : {}),
             ...{
               Posts: <PostsTab did={did} />,
@@ -604,7 +631,7 @@ function PostsTab({ did }: { did: string }) {
 
   const posts = React.useMemo(
     () => postsData?.pages.flatMap((page) => page.records) ?? [],
-    [postsData]
+    [postsData],
   );
 
   const toggle = (key: keyof ProfilePostsFilter) => {
@@ -685,12 +712,12 @@ function RepostsTab({ did }: { did: string }) {
   } = useInfiniteQueryAuthorFeed(
     resolvedDid,
     identity?.pds,
-    "app.bsky.feed.repost"
+    "app.bsky.feed.repost",
   );
 
   const reposts = React.useMemo(
     () => repostsData?.pages.flatMap((page) => page.records) ?? [],
-    [repostsData]
+    [repostsData],
   );
 
   return (
@@ -762,12 +789,12 @@ function FeedsTab({ did }: { did: string }) {
   } = useInfiniteQueryAuthorFeed(
     resolvedDid,
     identity?.pds,
-    "app.bsky.feed.generator"
+    "app.bsky.feed.generator",
   );
 
   const feeds = React.useMemo(
     () => feedsData?.pages.flatMap((page) => page.records) ?? [],
-    [feedsData]
+    [feedsData],
   );
 
   return (
@@ -837,7 +864,7 @@ function LabelsTab({
           defaultSetting: def.defaultSetting,
         },
       ];
-    })
+    }),
   );
 
   return (
@@ -939,12 +966,12 @@ export function FeedItemRender({
     // @ts-expect-error overloads sucks
     !listmode
       ? {
-        target: feed.uri,
-        method: "/links/count",
-        collection: "app.bsky.feed.like",
-        path: ".subject.uri",
-      }
-      : undefined
+          target: feed.uri,
+          method: "/links/count",
+          collection: "app.bsky.feed.like",
+          path: ".subject.uri",
+        }
+      : undefined,
   );
 
   return (
@@ -1001,12 +1028,12 @@ function ListsTab({ did }: { did: string }) {
   } = useInfiniteQueryAuthorFeed(
     resolvedDid,
     identity?.pds,
-    "app.bsky.graph.list"
+    "app.bsky.graph.list",
   );
 
   const feeds = React.useMemo(
     () => feedsData?.pages.flatMap((page) => page.records) ?? [],
-    [feedsData]
+    [feedsData],
   );
 
   return (
@@ -1066,12 +1093,12 @@ function SelfLikesTab({ did }: { did: string }) {
   } = useInfiniteQueryAuthorFeed(
     resolvedDid,
     identity?.pds,
-    "app.bsky.feed.like"
+    "app.bsky.feed.like",
   );
 
   const likes = React.useMemo(
     () => likesData?.pages.flatMap((page) => page.records) ?? [],
-    [likesData]
+    [likesData],
   );
 
   const { setFastState } = useFastSetLikesFromFeed();
@@ -1287,12 +1314,12 @@ export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
   const { uris: theyFollowYouRes } = useGetOneToOneState(
     agent?.did
       ? {
-        target: agent?.did,
-        user: identity?.did ?? targetdidorhandle,
-        collection: "app.bsky.graph.follow",
-        path: ".subject",
-      }
-      : undefined
+          target: agent?.did,
+          user: identity?.did ?? targetdidorhandle,
+          collection: "app.bsky.graph.follow",
+          path: ".subject",
+        }
+      : undefined,
   );
 
   const youFollowThemRes = useGetFollowState({
@@ -1336,7 +1363,7 @@ export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
 
 export function RichTextRenderer({ description }: { description: string }) {
   const [richDescription, setRichDescription] = useState<string | ReactNode[]>(
-    description
+    description,
   );
   const { agent } = useAuth();
   const navigate = useNavigate();
@@ -1356,7 +1383,11 @@ export function RichTextRenderer({ description }: { description: string }) {
 
         if (rt.facets) {
           setRichDescription(
-            renderTextWithFacets({ text: rt.text, facets: rt.facets, navigate })
+            renderTextWithFacets({
+              text: rt.text,
+              facets: rt.facets,
+              navigate,
+            }),
           );
         } else {
           setRichDescription(rt.text);
@@ -1380,10 +1411,11 @@ export function RichTextRenderer({ description }: { description: string }) {
 }
 
 export function getLocaleLabel(hlvd?: HydratedLabelValueDefinition) {
-  if (!hlvd) return undefined
-  const userLang = "en"; 
-  const locale = hlvd.locales.find((l) => l.lang === userLang) 
-    || hlvd.locales.find((l) => l.lang === "en")
-    || hlvd.locales[0];
-    return locale
+  if (!hlvd) return undefined;
+  const userLang = "en";
+  const locale =
+    hlvd.locales.find((l) => l.lang === userLang) ||
+    hlvd.locales.find((l) => l.lang === "en") ||
+    hlvd.locales[0];
+  return locale;
 }

@@ -2,7 +2,7 @@ import type { Agent } from "@atproto/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useAtom } from "jotai";
-import { useEffect,useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { HOST_TITLE } from "~/../policy";
 import { Header } from "~/components/Header";
@@ -78,7 +78,7 @@ export function Search() {
     });
     try {
       const response = await queryClient.fetchQuery(
-        constructLycanRequestIndexQuery(opts)
+        constructLycanRequestIndexQuery(opts),
       );
       if (
         response?.message !== "Import has already started" &&
@@ -224,7 +224,7 @@ function LycanTab({
           return [];
         }
       }) ?? [],
-    [postsData]
+    [postsData],
   );
 
   return (

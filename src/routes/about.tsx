@@ -1,17 +1,32 @@
-import { createFileRoute } from '@tanstack/react-router'
-import React from 'react';
+import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 
-import { FORCED_LABELER_DIDS, HOST_ABOUT_MARKDOWN, HOST_ADMIN, HOST_DESCRIPTION, HOST_HERO, HOST_LABELMERGE, HOST_SIGNUP_PDS } from '~/../policy';
-import { Header } from '~/components/Header';
-import { defaultAppviewURL, defaultconstellationURL, defaultImgCDN, defaultLycanURL, defaultslingshotURL, defaultVideoCDN } from '~/utils/atoms';
+import {
+  FORCED_LABELER_DIDS,
+  HOST_ABOUT_MARKDOWN,
+  HOST_ADMIN,
+  HOST_DESCRIPTION,
+  HOST_HERO,
+  HOST_LABELMERGE,
+  HOST_SIGNUP_PDS,
+} from "~/../policy";
+import { Header } from "~/components/Header";
+import {
+  defaultAppviewURL,
+  defaultconstellationURL,
+  defaultImgCDN,
+  defaultLycanURL,
+  defaultslingshotURL,
+  defaultVideoCDN,
+} from "~/utils/atoms";
 
-import { ProfileSmall } from './__root';
-import { NotificationItem } from './notifications';
+import { ProfileSmall } from "./__root";
+import { NotificationItem } from "./notifications";
 //import { SettingHeading } from './settings';
 
-export const Route = createFileRoute('/about')({
+export const Route = createFileRoute("/about")({
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
   return (
@@ -29,18 +44,26 @@ function RouteComponent() {
       />
       <div className="flex flex-col justify-around mt-4 mx-4 gap-4">
         <img className="rounded-sm" src={HOST_HERO} />
-        <span className=" text-gray-500 dark:text-gray-400 leading-tight"><span className=" font-bold">{window.location.host}</span> is a Red Dwarf instance that you can use to participate in the Bluesky social network.</span>
+        <span className=" text-gray-500 dark:text-gray-400 leading-tight">
+          <span className=" font-bold">{window.location.host}</span> is a Red
+          Dwarf instance that you can use to participate in the Bluesky social
+          network.
+        </span>
         {/* <img className="rounded-sm" src={HOST_HERO} /> */}
-        <span className=" text-gray-500 dark:text-gray-400">{HOST_DESCRIPTION}</span>
+        <span className=" text-gray-500 dark:text-gray-400">
+          {HOST_DESCRIPTION}
+        </span>
         <div className="flex flex-col gap-1 p-4 border-1 border-gray-200 dark:border-gray-700 rounded-3xl">
-          <span className="text-gray-500 dark:text-gray-400 font-bold">ADMINISTERED BY:</span>
+          <span className="text-gray-500 dark:text-gray-400 font-bold">
+            ADMINISTERED BY:
+          </span>
           <ProfileSmall did={HOST_ADMIN} />
         </div>
 
         <PolicyMarkdown source={HOST_ABOUT_MARKDOWN} />
       </div>
     </div>
-  )
+  );
 }
 
 const REQUIRED_COMPONENTS = ["PolicyViewer"];
@@ -52,21 +75,19 @@ const COMPONENT_MAP: Record<string, React.FC> = {
 
 function PolicyViewer() {
   return (
-  <>
-  {/* TODO: render all of the layered overlay enforced moderation stuff here or something idk. 
+    <>
+      {/* TODO: render all of the layered overlay enforced moderation stuff here or something idk. 
   still waiting on the server-sided queryLabels proxy and layered moderation spec and also feature bounded moderation spec to finish */}
-  <PolicyRenderer />
-  </>
-  )
+      <PolicyRenderer />
+    </>
+  );
 }
 
 function assertRequiredComponents(input: string) {
   for (const name of REQUIRED_COMPONENTS) {
     const pattern = new RegExp(`<${name}\\s*/>`);
     if (!pattern.test(input)) {
-      throw new Error(
-        `Missing required policy component: <${name} />`
-      );
+      throw new Error(`Missing required policy component: <${name} />`);
     }
   }
 }
@@ -87,9 +108,14 @@ function renderInline(text: string) {
     }
 
     parts.push(
-      <a key={start} href={url} className="underline" style={{color: "var(--link-text-color)"}}>
+      <a
+        key={start}
+        href={url}
+        className="underline"
+        style={{ color: "var(--link-text-color)" }}
+      >
         {label}
-      </a>
+      </a>,
     );
 
     lastIndex = start + full.length;
@@ -101,33 +127,33 @@ function renderInline(text: string) {
 
   return parts;
 }
-export function Heading2({title}:{title:string}){
+export function Heading2({ title }: { title: string }) {
   return (
     <span className="text-gray-700 dark:text-gray-300 font-medium text-xl pt-2 pb-1">
       {title}
     </span>
-  )
+  );
 }
-export function Heading3({title}:{title:string}){
+export function Heading3({ title }: { title: string }) {
   return (
     <span className="text-gray-700 dark:text-gray-300 font-medium text-lg pt-2 pb-1">
       {title}
     </span>
-  )
+  );
 }
-export function Heading4({title}:{title:string}){
+export function Heading4({ title }: { title: string }) {
   return (
     <span className="text-gray-600 dark:text-gray-400 font-medium text pt-0.5 pb-0">
       {title}
     </span>
-  )
+  );
 }
 export function PolicyMarkdown({ source }: { source: string }) {
   assertRequiredComponents(source);
 
   const blocks = source
     .split(/\n{2,}/) // 2+ line breaks = new block
-    .map(b => b.trim())
+    .map((b) => b.trim())
     .filter(Boolean);
 
   return (
@@ -136,9 +162,7 @@ export function PolicyMarkdown({ source }: { source: string }) {
         // Section heading
         if (block.startsWith("## ")) {
           const title = block.slice(3).trim();
-          return (
-            <Heading2 key={i} title={title} />
-          );
+          return <Heading2 key={i} title={title} />;
         }
 
         // Self-closing component
@@ -165,8 +189,7 @@ export function PolicyMarkdown({ source }: { source: string }) {
   );
 }
 
-
-function PolicyRenderer(){
+function PolicyRenderer() {
   //
   // policy.ts vars to show:
 
@@ -193,7 +216,6 @@ function PolicyRenderer(){
   // unauthed experience
   // - [ ] UNAUTHED_FORCE_WARN_LABELS
   // - [ ] UNAUTHED_PREVENT_OPENING_WARNS
-
 
   return (
     <>
@@ -243,7 +265,7 @@ function PolicyRenderer(){
       />
       {/* {hostmandate && (<Heading2 title="Host-Mandated Labelers" />)} */}
       <Heading3 title="General Moderation" />
-      {hostmandate && (<Heading4 title="Host-Mandated Labelers" />)}
+      {hostmandate && <Heading4 title="Host-Mandated Labelers" />}
       {hostmandate?.map((labeler) => {
         return (
           // todo this sucks
@@ -255,21 +277,20 @@ function PolicyRenderer(){
           />
         );
       })}
-      <div className='h-[300px] w-auto' />
-
+      <div className="h-[300px] w-auto" />
     </>
-  )
+  );
 }
 
 type KeyValueItem = {
-  label: string
-  value?: string | null
+  label: string;
+  value?: string | null;
   //italicIfEmpty?: boolean
-}
+};
 
 interface KeyValueGridProps {
-  items: KeyValueItem[]
-  className?: string
+  items: KeyValueItem[];
+  className?: string;
 }
 
 export function KeyValueGrid({ items, className = "" }: KeyValueGridProps) {
@@ -278,7 +299,7 @@ export function KeyValueGrid({ items, className = "" }: KeyValueGridProps) {
       className={`grid grid-cols-2 gap-x-2 gap-y-2 text-sm mr-auto ml-2 ${className}`}
     >
       {items.map((item, i) => {
-        const isEmpty = !item.value
+        const isEmpty = !item.value;
 
         return (
           <React.Fragment key={i}>
@@ -298,8 +319,8 @@ export function KeyValueGrid({ items, className = "" }: KeyValueGridProps) {
               {item.value || "not set"}
             </span>
           </React.Fragment>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

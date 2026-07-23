@@ -274,32 +274,32 @@ const PasswordForm = () => {
         className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
       /> */}
       <div className="m3input-field m3input-label m3input-border size-md flex-1">
-          <input
-            type="text"
-            placeholder=" "
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-          />
-          <label>AT Handle</label>
-        </div>
-        <div className="m3input-field m3input-label m3input-border size-md flex-1">
-          <input
-            type="text"
-            placeholder=" "
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <label>App Password</label>
-        </div>
-        <div className="m3input-field m3input-label m3input-border size-md flex-1">
-          <input
-            type="text"
-            placeholder=" "
-            value={serviceURL}
-            onChange={(e) => setServiceURL(e.target.value)}
-          />
-          <label>PDS</label>
-        </div>
+        <input
+          type="text"
+          placeholder=" "
+          value={user}
+          onChange={(e) => setUser(e.target.value)}
+        />
+        <label>AT Handle</label>
+      </div>
+      <div className="m3input-field m3input-label m3input-border size-md flex-1">
+        <input
+          type="text"
+          placeholder=" "
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <label>App Password</label>
+      </div>
+      <div className="m3input-field m3input-label m3input-border size-md flex-1">
+        <input
+          type="text"
+          placeholder=" "
+          value={serviceURL}
+          onChange={(e) => setServiceURL(e.target.value)}
+        />
+        <label>PDS</label>
+      </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <button
         type="submit"
@@ -324,11 +324,11 @@ export const ProfileThing = ({
     agent?.did) as string | undefined;
   const { data: identity } = useQueryIdentity(did);
   const { data: profiledata } = useQueryProfile(
-    `at://${did}/app.bsky.actor.profile/self`
+    `at://${did}/app.bsky.actor.profile/self`,
   );
   const profile = profiledata?.value;
 
-  const [imgcdn] = useAtom(imgCDNAtom)
+  const [imgcdn] = useAtom(imgCDNAtom);
 
   function getAvatarUrl(p: typeof profile) {
     const link = p?.avatar?.ref?.["$link"];

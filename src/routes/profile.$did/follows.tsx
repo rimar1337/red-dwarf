@@ -1,16 +1,21 @@
-import * as ATPAPI from "@atproto/api"
-import { createFileRoute } from '@tanstack/react-router'
-import React from 'react';
+import * as ATPAPI from "@atproto/api";
+import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 
-import { Header } from '~/components/Header';
-import { useReusableTabScrollRestore } from '~/components/ReusableTabRoute';
-import { useInfiniteQueryAuthorFeed, useQueryIdentity } from '~/utils/useQuery';
+import { Header } from "~/components/Header";
+import { useReusableTabScrollRestore } from "~/components/ReusableTabRoute";
+import { useInfiniteQueryAuthorFeed, useQueryIdentity } from "~/utils/useQuery";
 
-import { EmptyState, ErrorState, LoadingState, NotificationItem } from '../notifications';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  NotificationItem,
+} from "../notifications";
 
-export const Route = createFileRoute('/profile/$did/follows')({
+export const Route = createFileRoute("/profile/$did/follows")({
   component: RouteComponent,
-})
+});
 
 // todo: scroll restoration
 function RouteComponent() {
@@ -27,14 +32,18 @@ function RouteComponent() {
           }
         }}
       />
-      <Follows did={params.did}/>
+      <Follows did={params.did} />
     </div>
   );
 }
 
-function Follows({did}:{did:string}) {
-  const {data: identity} = useQueryIdentity(did);
-  const infinitequeryresults = useInfiniteQueryAuthorFeed(identity?.did, identity?.pds, "app.bsky.graph.follow");
+function Follows({ did }: { did: string }) {
+  const { data: identity } = useQueryIdentity(did);
+  const infinitequeryresults = useInfiniteQueryAuthorFeed(
+    identity?.did,
+    identity?.pds,
+    "app.bsky.graph.follow",
+  );
 
   const {
     data: infiniteFollowsData,
@@ -48,7 +57,7 @@ function Follows({did}:{did:string}) {
 
   const followsAturis = React.useMemo(
     () => infiniteFollowsData?.pages.flatMap((page) => page.records) ?? [],
-    [infiniteFollowsData]
+    [infiniteFollowsData],
   );
 
   useReusableTabScrollRestore("Notifications");
@@ -62,7 +71,12 @@ function Follows({did}:{did:string}) {
     <>
       {followsAturis.map((m) => {
         const record = m.value as unknown as ATPAPI.AppBskyGraphFollow.Record;
-        return <NotificationItem key={record.subject} notification={record.subject} />
+        return (
+          <NotificationItem
+            key={record.subject}
+            notification={record.subject}
+          />
+        );
       })}
 
       {hasNextPage && (

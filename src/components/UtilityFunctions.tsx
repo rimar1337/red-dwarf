@@ -1,4 +1,4 @@
-import type { $Typed,Facet } from "@atproto/api";
+import type { $Typed, Facet } from "@atproto/api";
 import * as React from "react";
 
 export const CACHE_TIMEOUT = 5 * 60 * 1000;

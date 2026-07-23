@@ -101,9 +101,15 @@ export const UnifiedAuthProvider = ({
 
   useEffect(() => {
     const handleOAuthSessionDeleted = (
-      event: CustomEvent<{ sub: string; cause: TokenRefreshError | TokenRevokedError | TokenInvalidError }>,
+      event: CustomEvent<{
+        sub: string;
+        cause: TokenRefreshError | TokenRevokedError | TokenInvalidError;
+      }>,
     ) => {
-      console.error(`OAuth Session for ${event.detail.sub} was deleted.`, event.detail.cause);
+      console.error(
+        `OAuth Session for ${event.detail.sub} was deleted.`,
+        event.detail.cause,
+      );
       setAgent(null);
       setOauthSession(null);
       setAuthMethod(null);
@@ -111,11 +117,17 @@ export const UnifiedAuthProvider = ({
       setQuickAuth(null);
     };
 
-    oauthClient.addEventListener("deleted", handleOAuthSessionDeleted as EventListener);
+    oauthClient.addEventListener(
+      "deleted",
+      handleOAuthSessionDeleted as EventListener,
+    );
     initialize();
 
     return () => {
-      oauthClient.removeEventListener("deleted", handleOAuthSessionDeleted as EventListener);
+      oauthClient.removeEventListener(
+        "deleted",
+        handleOAuthSessionDeleted as EventListener,
+      );
     };
   }, [initialize, setQuickAuth]);
 
@@ -155,15 +167,21 @@ export const UnifiedAuthProvider = ({
     }
   };
 
-  const loginWithOAuth = useCallback(async (handleOrPdsUrl: string) => {
-    if (status !== "signedOut") return;
-    try {
-      sessionStorage.setItem("postLoginRedirect", window.location.pathname + window.location.search);
-      await oauthClient.signIn(handleOrPdsUrl);
-    } catch (err) {
-      console.error("OAuth sign-in aborted or failed:", err);
-    }
-  }, [status]);
+  const loginWithOAuth = useCallback(
+    async (handleOrPdsUrl: string) => {
+      if (status !== "signedOut") return;
+      try {
+        sessionStorage.setItem(
+          "postLoginRedirect",
+          window.location.pathname + window.location.search,
+        );
+        await oauthClient.signIn(handleOrPdsUrl);
+      } catch (err) {
+        console.error("OAuth sign-in aborted or failed:", err);
+      }
+    },
+    [status],
+  );
 
   const logout = useCallback(async () => {
     if (status !== "signedIn" || !agent) return;

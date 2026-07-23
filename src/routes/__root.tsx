@@ -19,7 +19,17 @@ import { toast as sonnerToast } from "sonner";
 import { Toaster } from "sonner";
 import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
-import { HOST_ADMIN, HOST_DESCRIPTION, HOST_HERO, HOST_LOGIN_BLURB, HOST_MAIN_TITLE, HOST_SIGNUP_PDS, HOST_SUB_TITLE, HOST_TITLE, HOST_UNAUTHED_DEFAULT_FEEDS } from "~/../policy";
+import {
+  HOST_ADMIN,
+  HOST_DESCRIPTION,
+  HOST_HERO,
+  HOST_LOGIN_BLURB,
+  HOST_MAIN_TITLE,
+  HOST_SIGNUP_PDS,
+  HOST_SUB_TITLE,
+  HOST_TITLE,
+  HOST_UNAUTHED_DEFAULT_FEEDS,
+} from "~/../policy";
 import { Composer } from "~/components/Composer";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { Import } from "~/components/Import";
@@ -33,9 +43,19 @@ import { LikeMutationQueueProvider } from "~/providers/LikeMutationQueueProvider
 import { PollMutationQueueProvider } from "~/providers/PollMutationQueueProvider";
 import { UnifiedAuthProvider, useAuth } from "~/providers/UnifiedAuthProvider";
 import { FeedTabOnTop } from "~/routes/index";
-import { composerAtom, hueAtom, imgCDNAtom, quickAuthAtom, useAtomCssVar } from "~/utils/atoms";
+import {
+  composerAtom,
+  hueAtom,
+  imgCDNAtom,
+  quickAuthAtom,
+  useAtomCssVar,
+} from "~/utils/atoms";
 import { seo } from "~/utils/seo";
-import { useQueryIdentity, useQueryPreferences, useQueryProfile } from "~/utils/useQuery";
+import {
+  useQueryIdentity,
+  useQueryPreferences,
+  useQueryProfile,
+} from "~/utils/useQuery";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -79,10 +99,10 @@ export const Route = createRootRouteWithContext<{
   errorComponent: import.meta.env.DEV
     ? undefined
     : (props) => (
-      <RootDocument>
-        <DefaultCatchBoundary {...props} />
-      </RootDocument>
-    ),
+        <RootDocument>
+          <DefaultCatchBoundary {...props} />
+        </RootDocument>
+      ),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
 });
@@ -132,11 +152,11 @@ export function renderSnack({
       button={
         button?.label
           ? {
-            label: button?.label,
-            onClick: () => {
-              button?.onClick?.();
-            },
-          }
+              label: button?.label,
+              onClick: () => {
+                button?.onClick?.();
+              },
+            }
           : undefined
       }
     />
@@ -239,20 +259,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     | "moderation"
     | "about"
     | "home" = isFeeds
-      ? "feeds"
-      : isSearch
-        ? "search"
-        : isSettings
-          ? "settings"
-          : isNotifications
-            ? "notifications"
-            : isProfile
-              ? "profile"
-              : isModeration
-                ? "moderation"
-                : isAbout ?
-                  "about"
-                  : "home";
+    ? "feeds"
+    : isSearch
+      ? "search"
+      : isSettings
+        ? "settings"
+        : isNotifications
+          ? "notifications"
+          : isProfile
+            ? "profile"
+            : isModeration
+              ? "moderation"
+              : isAbout
+                ? "about"
+                : "home";
 
   const [, setComposerPost] = useAtom(composerAtom);
 
@@ -272,9 +292,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             />
             <span className="font-extrabold text-2xl text-gray-900 dark:text-gray-100">
               {HOST_MAIN_TITLE}
-              {HOST_SUB_TITLE && (<span className="text-gray-500 dark:text-gray-400 text-sm">
-                {HOST_SUB_TITLE}
-              </span>) }
+              {HOST_SUB_TITLE && (
+                <span className="text-gray-500 dark:text-gray-400 text-sm">
+                  {HOST_SUB_TITLE}
+                </span>
+              )}
             </span>
           </div>
           <MaterialNavItem
@@ -740,19 +762,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <Import />
           </div>
           <div className="px-4 pt-4 gap-4 flex flex-col max-h-[calc(100dvh - 80px)] overflow-y-auto">
-            {(
-              (!agent?.did && HOST_UNAUTHED_DEFAULT_FEEDS.length > 0)
-              || (!!agent?.did)
-            ) && (
-                <FeedListDesktopSidebar />
-              )}
+            {((!agent?.did && HOST_UNAUTHED_DEFAULT_FEEDS.length > 0) ||
+              !!agent?.did) && <FeedListDesktopSidebar />}
             {!agent?.did && (
               <>
-                <span className=" text-gray-500 dark:text-gray-400 text-sm leading-tight"><span className=" font-bold">{window.location.host}</span> is a hosted Red Dwarf instance that you can use to participate in the Bluesky social network.</span>
+                <span className=" text-gray-500 dark:text-gray-400 text-sm leading-tight">
+                  <span className=" font-bold">{window.location.host}</span> is
+                  a hosted Red Dwarf instance that you can use to participate in
+                  the Bluesky social network.
+                </span>
                 <img className="rounded-sm" src={HOST_HERO} />
-                <span className=" text-gray-500 dark:text-gray-400 text-sm">{HOST_DESCRIPTION}</span>
+                <span className=" text-gray-500 dark:text-gray-400 text-sm">
+                  {HOST_DESCRIPTION}
+                </span>
                 <div className="flex flex-col gap-1 ">
-                  <span className="text-gray-500 dark:text-gray-400 text-sm font-bold">ADMINISTERED BY:</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm font-bold">
+                    ADMINISTERED BY:
+                  </span>
                   <ProfileSmall did={HOST_ADMIN} />
                 </div>
               </>
@@ -760,7 +786,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex-1"></div>
           {/* todo */}
-          <span>TODO: add red dwarf the software policy along with instance policy here</span>
+          <span>
+            TODO: add red dwarf the software policy along with instance policy
+            here
+          </span>
         </aside>
       </div>
 
@@ -948,9 +977,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             />
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
               {HOST_MAIN_TITLE}
-              {HOST_SUB_TITLE && (<span className="text-gray-500 dark:text-gray-400 text-sm">
-                {HOST_SUB_TITLE}
-              </span>) }
+              {HOST_SUB_TITLE && (
+                <span className="text-gray-500 dark:text-gray-400 text-sm">
+                  {HOST_SUB_TITLE}
+                </span>
+              )}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -988,14 +1019,15 @@ export function MaterialNavItem({
   onClickCallbback: () => void;
   small?: boolean | string;
 }) {
-  if (!visible) return null
+  if (!visible) return null;
   if (small)
     return (
       <button
-        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${active
-          ? "text-gray-900 dark:text-gray-100"
-          : "text-gray-600 dark:text-gray-400"
-          }`}
+        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${
+          active
+            ? "text-gray-900 dark:text-gray-100"
+            : "text-gray-600 dark:text-gray-400"
+        }`}
         onClick={() => {
           onClickCallbback();
         }}
@@ -1015,10 +1047,11 @@ export function MaterialNavItem({
 
   return (
     <button
-      className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${active
-        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-900"
-        }`}
+      className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${
+        active
+          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-900"
+      }`}
       onClick={() => {
         onClickCallbback();
       }}
@@ -1053,10 +1086,11 @@ function MaterialPillButton({
   const active = false;
   return (
     <button
-      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${active
-        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
-        }`}
+      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${
+        active
+          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+      }`}
       onClick={() => {
         onClickCallbback();
       }}
@@ -1075,22 +1109,21 @@ function MaterialPillButton({
   );
 }
 
-
 export const ProfileSmall = ({
   did,
   large = false,
 }: {
-  did: string,
+  did: string;
   large?: boolean;
 }) => {
   const navigate = useNavigate();
   const { data: identity } = useQueryIdentity(did);
   const { data: profiledata } = useQueryProfile(
-    `at://${did}/app.bsky.actor.profile/self`
+    `at://${did}/app.bsky.actor.profile/self`,
   );
   const profile = profiledata?.value;
 
-  const [imgcdn] = useAtom(imgCDNAtom)
+  const [imgcdn] = useAtom(imgCDNAtom);
 
   function getAvatarUrl(p: typeof profile) {
     const link = p?.avatar?.ref?.["$link"];
@@ -1104,7 +1137,7 @@ export const ProfileSmall = ({
       to: "/profile/$did",
       params: { did: did },
     });
-  }
+  };
 
   if (!profiledata) {
     return (
@@ -1154,7 +1187,6 @@ export const ProfileSmall = ({
   );
 };
 
-
 function FeedListDesktopSidebar() {
   const { agent, status } = useAuth();
   const [quickAuth] = useAtom(quickAuthAtom);
@@ -1182,25 +1214,36 @@ function FeedListDesktopSidebar() {
     return savedFeeds.filter((feed: any) => feed.pinned);
   }, [savedFeeds]);
 
-  const shimmedunautheddefault = HOST_UNAUTHED_DEFAULT_FEEDS.map((aturi: string, idx: number) => {
-    return {
-      value: aturi,
-      pinned: true,
-    }
-  })
+  const shimmedunautheddefault = HOST_UNAUTHED_DEFAULT_FEEDS.map(
+    (aturi: string, idx: number) => {
+      return {
+        value: aturi,
+        pinned: true,
+      };
+    },
+  );
 
   const feedsmap = agent?.did ? pinnedFeeds : shimmedunautheddefault;
 
   return (
     <div className="flex flex-col gap-1 items-start ">
-      {feedsmap.map((item: any, idx: number) => { return <FeedTabOnTop key={item} item={item} idx={idx} rightDesktopSidebar={true} /> })}
+      {feedsmap.map((item: any, idx: number) => {
+        return (
+          <FeedTabOnTop
+            key={item}
+            item={item}
+            idx={idx}
+            rightDesktopSidebar={true}
+          />
+        );
+      })}
     </div>
-  )
+  );
 }
 
 function LoginRedirect() {
   const location = useLocation();
-  const dontShowLoginButton = location.pathname === "/settings"
+  const dontShowLoginButton = location.pathname === "/settings";
   return (
     <div className="">
       <span className="text-gray-500 dark:text-gray-400 text-sm leading-tight">
@@ -1208,22 +1251,22 @@ function LoginRedirect() {
       </span>
 
       <div className="flex flex-col gap-2 my-4">
-        {!dontShowLoginButton && (<Link
-          to="/settings"
-          className="w-full rounded-full bg-gray-600 text-gray-100 dark:bg-gray-400 dark:text-gray-900 px-4 py-2 text-sm font-medium text-center"
-        >
-          Log in
-        </Link>)}
+        {!dontShowLoginButton && (
+          <Link
+            to="/settings"
+            className="w-full rounded-full bg-gray-600 text-gray-100 dark:bg-gray-400 dark:text-gray-900 px-4 py-2 text-sm font-medium text-center"
+          >
+            Log in
+          </Link>
+        )}
 
         {HOST_SIGNUP_PDS && (
           // todo make signup actually work
-          <button
-            className="w-full rounded-sm border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+          <button className="w-full rounded-sm border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             Sign up
           </button>
         )}
       </div>
     </div>
-  )
+  );
 }

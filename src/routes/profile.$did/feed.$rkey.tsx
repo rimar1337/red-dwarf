@@ -80,8 +80,8 @@ function FeedRoute() {
           feedUri={uri}
           pdsUrl={identity?.pds}
           feedServiceDid={feedServiceDid}
-          authedOverride={!authed && true || undefined}
-          unauthedfeedurl={!authed && web || undefined}
+          authedOverride={(!authed && true) || undefined}
+          unauthedfeedurl={(!authed && web) || undefined}
         />
       ) : (
         <div className="p-4 text-center text-gray-500">Loading.......</div>

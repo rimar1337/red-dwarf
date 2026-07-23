@@ -306,7 +306,7 @@ function usePollSelfVotes(pollUri: string, enabled?: boolean) {
           user: agentDid,
           collection: "app.reddwarf.poll.vote.a",
           path: ".subject.uri",
-          enabled: enabled
+          enabled: enabled,
         }
       : undefined,
   );
@@ -317,7 +317,7 @@ function usePollSelfVotes(pollUri: string, enabled?: boolean) {
           user: agentDid,
           collection: "app.reddwarf.poll.vote.b",
           path: ".subject.uri",
-          enabled: enabled
+          enabled: enabled,
         }
       : undefined,
   );
@@ -328,7 +328,7 @@ function usePollSelfVotes(pollUri: string, enabled?: boolean) {
           user: agentDid,
           collection: "app.reddwarf.poll.vote.c",
           path: ".subject.uri",
-          enabled: enabled
+          enabled: enabled,
         }
       : undefined,
   );
@@ -339,7 +339,7 @@ function usePollSelfVotes(pollUri: string, enabled?: boolean) {
           user: agentDid,
           collection: "app.reddwarf.poll.vote.d",
           path: ".subject.uri",
-          enabled: enabled
+          enabled: enabled,
         }
       : undefined,
   );
@@ -359,7 +359,7 @@ export function usePollData(
   pollCid: string | undefined,
   isMultiple: boolean,
   serverCounts: { a: number; b: number; c: number; d: number },
-  enabled?: boolean
+  enabled?: boolean,
 ) {
   const { agent } = useAuth();
   const myDid = agent?.did;
@@ -492,7 +492,7 @@ export function usePollData(
       votersA,
       votersB,
       votersC,
-      votersD
+      votersD,
     };
   }, [
     localVotes,

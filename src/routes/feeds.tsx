@@ -105,7 +105,9 @@ function FeedItem({ feedUri }: { feedUri: string }) {
     aturi = new ATPAPI.AtUri(feedUri);
   } catch (err) {
     // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
-    aturi = new ATPAPI.AtUri("at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds");
+    aturi = new ATPAPI.AtUri(
+      "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds",
+    );
   }
 
   function getAvatarUrl() {
@@ -143,7 +145,9 @@ function FeedItem({ feedUri }: { feedUri: string }) {
               {feed?.displayName || feedUri.split("/").pop()}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
-              {feedUri === "following" ? "(not implemented, if clicked will open an alternative)" : feed?.description || "No description"}
+              {feedUri === "following"
+                ? "(not implemented, if clicked will open an alternative)"
+                : feed?.description || "No description"}
             </p>
           </div>
         </div>
@@ -167,7 +171,13 @@ function FeedItem({ feedUri }: { feedUri: string }) {
   );
 }
 
-export function FeedIcon({ feedUri, className = "w-10 h-10 rounded-sm object-cover" }: {feedUri: string, className?: string }) {
+export function FeedIcon({
+  feedUri,
+  className = "w-10 h-10 rounded-sm object-cover",
+}: {
+  feedUri: string;
+  className?: string;
+}) {
   const { data: feedData } = useQueryArbitrary(feedUri);
   const feed = feedData?.value as ATPAPI.AppBskyFeedGenerator.Record;
   const [imgcdn] = useAtom(imgCDNAtom);
@@ -176,7 +186,9 @@ export function FeedIcon({ feedUri, className = "w-10 h-10 rounded-sm object-cov
     aturi = new ATPAPI.AtUri(feedUri);
   } catch (err) {
     // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
-    aturi = new ATPAPI.AtUri("at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds");
+    aturi = new ATPAPI.AtUri(
+      "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds",
+    );
   }
 
   function getAvatarUrl() {
@@ -188,12 +200,10 @@ export function FeedIcon({ feedUri, className = "w-10 h-10 rounded-sm object-cov
   const avatarUrl = getAvatarUrl();
   if (!avatarUrl) {
     return (
-      <div
-        className={className}
-      >
+      <div className={className}>
         <IconMaterialSymbolsRssFeed className="text-gray-200 p-0.5 rounded-sm bg-gray-600" />
       </div>
-    )
+    );
   }
   return (
     <img
@@ -206,5 +216,5 @@ export function FeedIcon({ feedUri, className = "w-10 h-10 rounded-sm object-cov
         target.src = "/defaultpfp.png";
       }}
     />
-  )
+  );
 }

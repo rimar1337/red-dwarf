@@ -53,9 +53,8 @@ export function InfiniteCustomFeed({
   });
   const queryClient = useQueryClient();
 
-
   const handleRefresh = () => {
-    queryClient.removeQueries({queryKey: queryKey});
+    queryClient.removeQueries({ queryKey: queryKey });
     //queryClient.invalidateQueries(["infinite-feed", feedUri] as const);
     refetch();
   };

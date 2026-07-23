@@ -5,7 +5,11 @@ import { useEffect, useRef } from "react";
 import { FORCED_LABELER_DIDS, UNAUTHED_FORCE_WARN_LABELS } from "~/../policy";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { labelerConfigAtom } from "~/state/moderationAtoms";
-import type { LabelerDefinition, LabelPreference, LabelValueDefinition } from "~/types/moderation";
+import type {
+  LabelerDefinition,
+  LabelPreference,
+  LabelValueDefinition,
+} from "~/types/moderation";
 import { slingshotURLAtom } from "~/utils/atoms";
 import { useQueryIdentity } from "~/utils/useQuery";
 import { useQueryPreferences } from "~/utils/useQuery";
@@ -40,7 +44,7 @@ export const ModerationInitializer = () => {
 
   // Define clear boolean for mode
   const isUnauthed = status === "signedOut" || !agent;
-  
+
   // Track previous status to detect transitions
   const prevStatusRef = useRef(status);
 
@@ -50,7 +54,9 @@ export const ModerationInitializer = () => {
   // while the async queries are spinning up.
   useEffect(() => {
     if (prevStatusRef.current !== status) {
-      console.log(`[Moderation] Auth status changed (${prevStatusRef.current} -> ${status}). Flushing config.`);
+      console.log(
+        `[Moderation] Auth status changed (${prevStatusRef.current} -> ${status}). Flushing config.`,
+      );
       setLabelerConfig([]); // <--- WIPE CLEAN
       prevStatusRef.current = status;
     }
@@ -68,14 +74,14 @@ export const ModerationInitializer = () => {
   // 4. Identify Labeler DIDs
   // Important: If unauthed, userPrefDids MUST be empty, even if cache exists.
   const userPrefDids = !isUnauthed
-    ? prefs?.preferences
+    ? (prefs?.preferences
         ?.find((pref: any) => pref.$type === "app.bsky.actor.defs#labelersPref")
-        ?.labelers?.map((l: any) => l.did) ?? []
+        ?.labelers?.map((l: any) => l.did) ?? [])
     : [];
 
   // 5. Force Bsky DID + User DIDs
   const activeLabelerDids = Array.from(
-    new Set([...FORCED_LABELER_DIDS, ...userPrefDids])
+    new Set([...FORCED_LABELER_DIDS, ...userPrefDids]),
   );
 
   // 6. Parallel fetch DID Docs
@@ -83,7 +89,7 @@ export const ModerationInitializer = () => {
     queries: activeLabelerDids.map((did: string) => ({
       queryKey: ["labelerDidDoc", did],
       queryFn: () => fetchDidDocument(did),
-      staleTime: 1000 * 60 * 60 * 24, 
+      staleTime: 1000 * 60 * 60 * 24,
     })),
   });
 
@@ -92,7 +98,7 @@ export const ModerationInitializer = () => {
     queries: activeLabelerDids.map((did: string) => ({
       queryKey: ["labelerService", did],
       queryFn: async () => {
-        const host = slingshoturl || "public.api.bsky.app"; 
+        const host = slingshoturl || "public.api.bsky.app";
         const response = await fetch(
           `https://${host}/xrpc/com.atproto.repo.getRecord?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent("app.bsky.labeler.service")}&rkey=self`,
         );
@@ -121,7 +127,7 @@ export const ModerationInitializer = () => {
     // A. Extract User Global Overrides
     // STRICT SEPARATION: If unauthed, force this to be empty to ensure no leakage.
     const globalPrefs: Record<string, LabelPreference> = {};
-    
+
     if (!isUnauthed && prefs?.preferences) {
       const contentLabelPrefs = prefs.preferences.filter(
         (pref: any) => pref.$type === "app.bsky.actor.defs#contentLabelPref",
@@ -147,8 +153,12 @@ export const ModerationInitializer = () => {
 
         // B. Gather ALL identifiers
         const allIdentifiers = new Set<string>();
-        record.policies?.labelValues?.forEach((val: string) => allIdentifiers.add(val));
-        record.policies?.labelValueDefinitions?.forEach((def: any) => allIdentifiers.add(def.identifier));
+        record.policies?.labelValues?.forEach((val: string) =>
+          allIdentifiers.add(val),
+        );
+        record.policies?.labelValueDefinitions?.forEach((def: any) =>
+          allIdentifiers.add(def.identifier),
+        );
 
         // C. Create Metadata Map
         const labelDefs: Record<string, LabelValueDefinition> = {};
@@ -160,7 +170,7 @@ export const ModerationInitializer = () => {
               blurs: def.blurs,
               adultOnly: def.adultOnly,
               defaultSetting: def.defaultSetting,
-              locales: def.locales || []
+              locales: def.locales || [],
             };
           });
         }
@@ -178,11 +188,11 @@ export const ModerationInitializer = () => {
               supportedLabels[val] = "warn"; // or 'hide' if that's what your policy constant implies
               return;
             }
-            
+
             // 2. Default Labeler Settings
             const def = labelDefs[val];
             const rawDefault = def?.defaultSetting || "ignore";
-            
+
             // 3. Apply Unauthed-Specific Aliasing (Optional)
             // e.g., if you want to hide 'inform' labels for unauthed users
             supportedLabels[val] = rawDefault as LabelPreference;
@@ -216,12 +226,12 @@ export const ModerationInitializer = () => {
 
     setLabelerConfig(definitions);
   }, [
-    prefs, 
-    labelerDidDocQueries, 
-    labelerServiceQueries, 
-    setLabelerConfig, 
-    activeLabelerDids, 
-    isUnauthed // <--- Critical dependency triggers re-eval on login/out
+    prefs,
+    labelerDidDocQueries,
+    labelerServiceQueries,
+    setLabelerConfig,
+    activeLabelerDids,
+    isUnauthed, // <--- Critical dependency triggers re-eval on login/out
   ]);
 
   return null;
