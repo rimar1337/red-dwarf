@@ -1,4 +1,8 @@
-import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useLocation,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
@@ -166,34 +170,40 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
   const isAuthRestoring = quickAuth ? status === "loading" : false;
 
-  const identityresultmaybe = useQueryIdentity(!isAuthRestoring ? agent?.did : undefined);
+  const identityresultmaybe = useQueryIdentity(
+    !isAuthRestoring ? agent?.did : undefined,
+  );
   const identity = identityresultmaybe?.data;
 
   const prefsresultmaybe = useQueryPreferences({
     agent: !isAuthRestoring ? (agent ?? undefined) : undefined,
-    pdsUrl: !isAuthRestoring ? (identity?.pds) : undefined,
+    pdsUrl: !isAuthRestoring ? identity?.pds : undefined,
   });
   const prefs = prefsresultmaybe?.data;
 
   const savedFeeds = React.useMemo(() => {
     const savedFeedsPref = prefs?.preferences?.find(
-      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2"
+      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
     );
     return savedFeedsPref?.items || [];
   }, [prefs]);
 
   const pinnedFeeds = React.useMemo(() => {
-      return savedFeeds.filter((feed: any) => feed.pinned);
-    }, [savedFeeds]);
+    return savedFeeds.filter((feed: any) => feed.pinned);
+  }, [savedFeeds]);
 
-  const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
-  const [unauthedSelectedFeed, setUnauthedSelectedFeed] = useState(persistentSelectedFeed);
-  const selectedFeed = agent?.did
-    ? persistentSelectedFeed
-    : unauthedSelectedFeed;
-  const setSelectedFeed = agent?.did
-    ? setPersistentSelectedFeed
-    : setUnauthedSelectedFeed;
+  const [persistentSelectedFeed, setPersistentSelectedFeed] =
+    useAtom(selectedFeedUriAtom);
+  const [unauthedSelectedFeed, setUnauthedSelectedFeed] = useState(
+    () => persistentSelectedFeed,
+  );
+  const isAuthLoading = status === "loading";
+  const selectedFeed =
+    agent?.did || isAuthLoading ? persistentSelectedFeed : unauthedSelectedFeed;
+  const setSelectedFeed =
+    agent?.did || isAuthLoading
+      ? setPersistentSelectedFeed
+      : setUnauthedSelectedFeed;
 
   // /*mass comment*/ console.log("my selectedFeed is: ", selectedFeed);
   React.useEffect(() => {
@@ -205,17 +215,17 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
         setSelectedFeed((prev) =>
           prev && savedFeeds.some((f: any) => f.value === prev)
             ? prev
-            : savedFeeds[0].value
+            : savedFeeds[0].value,
         );
       } else {
         if (selectedFeed) return;
         setSelectedFeed(fallbackFeed);
       }
-    } else {
+    } else if (!isAuthLoading) {
       if (selectedFeed) return;
       setSelectedFeed(fallbackFeed);
     }
-  }, [savedFeeds, authed, setSelectedFeed]);
+  }, [savedFeeds, authed, isAuthLoading, setSelectedFeed]);
 
   // React.useEffect(() => {
   //   if (loadering || !selectedFeed) return;
@@ -301,7 +311,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   // }, [authed, agent, loadering, selectedFeed, get, set]);
 
   const [scrollPositions, setScrollPositions] = useAtom(
-    feedScrollPositionsAtom
+    feedScrollPositionsAtom,
   );
 
   const scrollPositionsRef = React.useRef(scrollPositions);
@@ -336,8 +346,12 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
     };
   }, [isAuthRestoring, selectedFeed, setScrollPositions]);
 
-  const feedGengetrecordquery = useQueryArbitrary(!isAuthRestoring ? selectedFeed ?? undefined : undefined);
-  const feedServiceDid = !isAuthRestoring ? (feedGengetrecordquery?.data?.value as any)?.did as string | undefined : undefined;
+  const feedGengetrecordquery = useQueryArbitrary(
+    !isAuthRestoring ? (selectedFeed ?? undefined) : undefined,
+  );
+  const feedServiceDid = !isAuthRestoring
+    ? ((feedGengetrecordquery?.data?.value as any)?.did as string | undefined)
+    : undefined;
 
   // const {
   //   data: feedData,
@@ -353,25 +367,30 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   // const feed = feedData?.feed || [];
 
-  const isReadyForAuthedFeed = !isAuthRestoring && authed && agent && identity?.pds && feedServiceDid;
+  const isReadyForAuthedFeed =
+    !isAuthRestoring && authed && agent && identity?.pds && feedServiceDid;
   const isReadyForUnauthedFeed = !isAuthRestoring && !authed && selectedFeed;
-
 
   const [isAtTop] = useAtom(isAtTopAtom);
 
-
   // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
-  const selectedFeedComputed = selectedFeed === "following" ? "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds" : selectedFeed;
-  const feedServiceDidComputed = selectedFeed === "following" ? "did:web:rinds.whey.party" : feedServiceDid;
+  const selectedFeedComputed =
+    selectedFeed === "following"
+      ? "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"
+      : selectedFeed;
+  const feedServiceDidComputed =
+    selectedFeed === "following" ? "did:web:rinds.whey.party" : feedServiceDid;
 
   //${/*divide-y divide-gray-200 dark:divide-gray-800*/""}
   return (
-    <div
-      className={`relative flex flex-col ${hidden && "hidden"}`}
-    >
+    <div className={`relative flex flex-col ${hidden && "hidden"}`}>
       {!isAuthRestoring && pinnedFeeds.length > 0 ? (
-        <div className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}>
-          {pinnedFeeds.map((item: any, idx: number) => { return <FeedTabOnTop key={item} item={item} idx={idx} /> })}
+        <div
+          className={`flex items-center px-4 py-2 h-[52px] sticky top-0 bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] ${!isAtTop && "shadow-sm"} sm:shadow-none sm:bg-white sm:dark:bg-gray-950 z-10 border-0 sm:border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden scroll-thin`}
+        >
+          {pinnedFeeds.map((item: any, idx: number) => {
+            return <FeedTabOnTop key={item} item={item} idx={idx} />;
+          })}
         </div>
       ) : (
         // <span className="text-xl font-bold ml-2">Home</span>
@@ -389,11 +408,12 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
         />
       ))} */}
 
-      {isAuthRestoring || authed && (!identity?.pds || !feedServiceDidComputed) && (
-        <div className="p-4 text-center text-gray-500">
-          Preparing your feed...
-        </div>
-      )}
+      {isAuthRestoring ||
+        (authed && (!identity?.pds || !feedServiceDidComputed) && (
+          <div className="p-4 text-center text-gray-500">
+            Preparing your feed...
+          </div>
+        ))}
 
       {!isAuthRestoring && (isReadyForAuthedFeed || isReadyForUnauthedFeed) ? (
         <InfiniteCustomFeed
@@ -402,22 +422,21 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
           pdsUrl={identity?.pds}
           feedServiceDid={feedServiceDidComputed}
         />
-
-        // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
-      ) : selectedFeed === "following" ? (
+      ) : // todo terrible hack lmaoo (hack type: forcing following feed to fallback to rinds fresh feed)
+      selectedFeed === "following" ? (
         <InfiniteCustomFeed
-          key={"at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"}
-          feedUri={"at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"}
+          key={
+            "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"
+          }
+          feedUri={
+            "at://did:plc:mn45tewwnse5btfftvd3powc/app.bsky.feed.generator/rinds"
+          }
           pdsUrl={identity?.pds}
           feedServiceDid={"did:web:rinds.whey.party"}
         />
       ) : (
-        <div className="p-4 text-center text-gray-500">
-          Loading.......
-        </div>
-      )
-
-      }
+        <div className="p-4 text-center text-gray-500">Loading.......</div>
+      )}
       {/* {false && restoringScrollPosition && (
         <div className="fixed top-1/2 left-1/2 right-1/2">
           restoringScrollPosition
@@ -427,51 +446,55 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   );
 }
 
-
 // todo please use types this is dangerous very dangerous.
 // todo fix this whenever proper preferences is handled
-export function FeedTabOnTop({ 
-  item, 
-  idx, 
-  rightDesktopSidebar = false 
-} : { 
-  item: any, 
-  idx: number, 
-  rightDesktopSidebar?: boolean 
+export function FeedTabOnTop({
+  item,
+  idx,
+  rightDesktopSidebar = false,
+}: {
+  item: any;
+  idx: number;
+  rightDesktopSidebar?: boolean;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isAtHome = location.pathname == "/" || location.pathname == "";
-  const [persistentSelectedFeed, setPersistentSelectedFeed] = useAtom(selectedFeedUriAtom);
-  const selectedFeed = persistentSelectedFeed
-  const setSelectedFeed = setPersistentSelectedFeed
+  const [persistentSelectedFeed, setPersistentSelectedFeed] =
+    useAtom(selectedFeedUriAtom);
+  const selectedFeed = persistentSelectedFeed;
+  const setSelectedFeed = setPersistentSelectedFeed;
   const rkey = item.value.split("/").pop() || item.value;
   const isActive = selectedFeed === item.value;
-  const { data: feedrecord } = useQueryArbitrary(item.value)
-  const label = feedrecord?.value?.displayName || rkey
+  const { data: feedrecord } = useQueryArbitrary(item.value);
+  const label = feedrecord?.value?.displayName || rkey;
   return (
     <button
       key={item.value || idx}
-      className={`${rightDesktopSidebar ? "flex flex-row items-center gap-2 pr-4 pl-2.5 py-1.5": "px-3 py-1 font-medium"} rounded-full whitespace-nowrap transition-colors ${isActive
-        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600 font-medium"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
+      className={`${rightDesktopSidebar ? "flex flex-row items-center gap-2 pr-4 pl-2.5 py-1.5" : "px-3 py-1 font-medium"} rounded-full whitespace-nowrap transition-colors ${
+        isActive
+          ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600 font-medium"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
         // ? "bg-gray-500 text-white"
         // : item.pinned
         //   ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
         //   : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
-        }`}
+      }`}
       onClick={() => {
         if (rightDesktopSidebar && !isAtHome) {
           navigate({
-            to: "/"
-          })
+            to: "/",
+          });
         }
-        setSelectedFeed(item.value)
+        setSelectedFeed(item.value);
       }}
       title={item.value}
     >
       {rightDesktopSidebar && (
-        <FeedIcon feedUri={item.value} className="w-5 h-5 rounded-sm object-cover" />
+        <FeedIcon
+          feedUri={item.value}
+          className="w-5 h-5 rounded-sm object-cover"
+        />
       )}
       {label}
       {/* {!rightDesktopSidebar && item.pinned && (
