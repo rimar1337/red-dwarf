@@ -15,7 +15,11 @@ import { HoverCard } from "radix-ui";
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-import { FORCE_HIDE_LABELS, FORCE_HIDE_LABELS_WHITELISTED_SOURCE, UNAUTHED_PREVENT_OPENING_WARNS } from "~/../policy";
+import {
+  FORCE_HIDE_LABELS,
+  FORCE_HIDE_LABELS_WHITELISTED_SOURCE,
+  UNAUTHED_PREVENT_OPENING_WARNS,
+} from "~/../policy";
 import defaultpfp from "~/../public/defaultpfp.png";
 import { getGetHydratedLabelDefs, useAutoLabels } from "~/hooks/useAutoLabels";
 import { useLabelInfo } from "~/hooks/useLabelInfo";
@@ -23,7 +27,12 @@ import { useLabelInfo } from "~/hooks/useLabelInfo";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 //import { ModerationInner } from "~/routes/moderation";
-import { FollowButton, getLocaleLabel, type LabelWithHydratedLocaleName, Mutual } from "~/routes/profile.$did";
+import {
+  FollowButton,
+  getLocaleLabel,
+  type LabelWithHydratedLocaleName,
+  Mutual,
+} from "~/routes/profile.$did";
 import type { LightboxProps } from "~/routes/profile.$did/post.$rkey.image.$i";
 //import type { ContentLabel } from "~/types/moderation";
 import {
@@ -124,7 +133,7 @@ export function UniversalPostRendererATURILoader({
         filterMustHaveMedia={filterMustHaveMedia}
         filterMustBeReply={filterMustBeReply}
       />
-    )
+    );
   }
   return (
     <UniversalPostRendererATURILoader_Microcosm
@@ -148,7 +157,7 @@ export function UniversalPostRendererATURILoader({
       filterMustHaveMedia={filterMustHaveMedia}
       filterMustBeReply={filterMustBeReply}
     />
-  )
+  );
 }
 /* 
   todo:
@@ -183,11 +192,10 @@ export function UniversalPostRendererATURILoader_AppView({
   const navigate = useNavigate();
   const parsedaturi = new AtUri(atUri);
 
-  const { data, isLoading, isEnabled, isError, error } = useQuerySingularAVPostQuery({ aturi: atUri, avurl: avurl });
+  const { data, isLoading, isEnabled, isError, error } =
+    useQuerySingularAVPostQuery({ aturi: atUri, avurl: avurl });
 
-
-  const thereply = (data?.record as AppBskyFeedPost.Record)?.reply?.parent
-    ?.uri;
+  const thereply = (data?.record as AppBskyFeedPost.Record)?.reply?.parent?.uri;
   const feedviewpostreplydid =
     thereply && !filterNoReplies ? new AtUri(thereply).host : undefined;
   const replyhookvalue = useQueryIdentity(
@@ -223,7 +231,7 @@ export function UniversalPostRendererATURILoader_AppView({
         filterMustHaveMedia={filterMustHaveMedia}
         filterMustBeReply={filterMustBeReply}
       />
-    )
+    );
   }
   return (
     <UniversalPostRenderer
@@ -245,23 +253,24 @@ export function UniversalPostRendererATURILoader_AppView({
           });
         }
       }}
-      post={data || {
-        uri: atUri,
-        cid: atUri,
-        author: {
-          did: parsedaturi.host,
-          handle: parsedaturi.host,
-        },
-        record: {},
-        indexedAt: "",
-      }} // todo: this is bad. just make it so that UPR allows missing data
+      post={
+        data || {
+          uri: atUri,
+          cid: atUri,
+          author: {
+            did: parsedaturi.host,
+            handle: parsedaturi.host,
+          },
+          record: {},
+          indexedAt: "",
+        }
+      } // todo: this is bad. just make it so that UPR allows missing data
       uprrrsauthor={{
-        ...(data?.author ||
-        {
+        ...(data?.author || {
           did: parsedaturi.host,
           handle: parsedaturi.host,
         }),
-        "$type": "app.bsky.actor.defs#profileViewDetailed",
+        $type: "app.bsky.actor.defs#profileViewDetailed",
       }}
       salt={atUri}
       bottomReplyLine={bottomReplyLine}
@@ -280,7 +289,7 @@ export function UniversalPostRendererATURILoader_AppView({
       isQuote={isQuote}
       constellationLinks={{}}
     />
-  )
+  );
 }
 export function UniversalPostRendererATURILoader_Microcosm({
   atUri,
@@ -337,19 +346,20 @@ export function UniversalPostRendererATURILoader_Microcosm({
     );
     setReposts(
       links
-        // add the two quote forms as well
-        ? links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records
-        // .embed.record.uri
-        + links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]?.records
-        // .embed.record.record.uri
-        + links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]?.records
-        || 0
+        ? // add the two quote forms as well
+          links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records +
+            // .embed.record.uri
+            links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]
+              ?.records +
+            // .embed.record.record.uri
+            links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]
+              ?.records || 0
         : null,
     );
     setReplies(
       links
         ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-          ?.records || 0
+            ?.records || 0
         : null,
     );
   }, [links]);
@@ -384,13 +394,13 @@ export function UniversalPostRendererATURILoader_Microcosm({
 
   const replyAturis = repliesData
     ? repliesData.pages.flatMap((page) =>
-      page
-        ? page.linking_records.map((record) => {
-          const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
-          return aturi;
-        })
-        : [],
-    )
+        page
+          ? page.linking_records.map((record) => {
+              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+              return aturi;
+            })
+          : [],
+      )
     : [];
 
   const { oldestOpsReply, oldestOpsReplyElseNewestNonOpsReply } = (() => {
@@ -421,9 +431,9 @@ export function UniversalPostRendererATURILoader_Microcosm({
   })();
 
   // placeholder for when a post is missing
-  if (!isPostLoading && !postQuery?.value || isPostError) {
+  if ((!isPostLoading && !postQuery?.value) || isPostError) {
     if (feedviewpost) {
-      return null // if feed view post then missing post isnt important and just remove it from view
+      return null; // if feed view post then missing post isnt important and just remove it from view
     }
     return (
       <>
@@ -431,8 +441,13 @@ export function UniversalPostRendererATURILoader_Microcosm({
         {/* todo dont let the UPR render the shitty placeholder uri we received */}
         {/* <div className={`flex flex-row p-4 ${isQuote ? "border-gray-200 dark:border-gray-800 border-1 rounded-lg" : "border-gray-200 dark:border-gray-800 border-b"}`}> */}
 
-        <div className={`flex flex-col gap-0 border-gray-200 dark:border-gray-800 ${bottomReplyLine ? "" : "border-b"}`}>
-          <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+        <div
+          className={`flex flex-col gap-0 border-gray-200 dark:border-gray-800 ${bottomReplyLine ? "" : "border-b"}`}
+        >
+          <div
+            style={{ width: 42, height: 16, minHeight: 16 }}
+            className="flex items-center flex-col mx-4"
+          >
             <div
               style={{
                 width: 2,
@@ -451,7 +466,10 @@ export function UniversalPostRendererATURILoader_Microcosm({
             </div>
           </div>
 
-          <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+          <div
+            style={{ width: 42, height: 16, minHeight: 16 }}
+            className="flex items-center flex-col mx-4"
+          >
             <div
               style={{
                 width: 2,
@@ -512,13 +530,15 @@ export function UniversalPostRendererATURILoader_Microcosm({
         filterMustBeReply={filterMustBeReply}
       />
       <>
-        {maxReplies !== undefined && maxReplies === 0 && replies && replies > 0 ? (
+        {maxReplies !== undefined &&
+        maxReplies === 0 &&
+        replies &&
+        replies > 0 ? (
           <>
             <MoreReplies atUri={atUri} />
           </>
         ) : (
-          <>
-          </>
+          <></>
         )}
       </>
       {!isQuote && oldestOpsReplyElseNewestNonOpsReply && (
@@ -651,11 +671,11 @@ export function UniversalPostRendererRawRecordShim({
   const isQuotewithImages =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-    "app.bsky.embed.images";
+      "app.bsky.embed.images";
   const isQuotewithVideo =
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
-    "app.bsky.embed.video";
+      "app.bsky.embed.video";
 
   const hasMedia =
     hasEmbed &&
@@ -840,7 +860,6 @@ export function UniversalPostRenderer({
   constellationLinks?: any;
   referral?: string[];
 }) {
-
   // todo move moderation to one of the UniversalPostRenderer wrapper components, and not the pure renderer component. please. thanks
   // todo please move all moderation including labeling and blocks into a wrapper component please i beg you
 
@@ -848,33 +867,30 @@ export function UniversalPostRenderer({
     post.author.did,
     `at://${post.author.did}/app.bsky.actor.profile/self`,
     post.uri,
-  ]
+  ];
 
-  const {
-    results: labelResults,
-    hydratedLabelDefs,
-  } = useAutoLabels({
+  const { results: labelResults, hydratedLabelDefs } = useAutoLabels({
     subjects,
     type: "post", // or whatever you’re keying on for now
-  })
+  });
 
-  const ghld = getGetHydratedLabelDefs(hydratedLabelDefs)
-  const accountResult = labelResults.get(post.author.did)
+  const ghld = getGetHydratedLabelDefs(hydratedLabelDefs);
+  const accountResult = labelResults.get(post.author.did);
   const profileResult = labelResults.get(
     `at://${post.author.did}/app.bsky.actor.profile/self`,
-  )
-  const postResult = labelResults.get(post.uri)
+  );
+  const postResult = labelResults.get(post.uri);
 
-  const accountLabelVerdict = accountResult?.labelVerdict ?? "unknown"
-  const authorLabels = accountResult?.labels ?? []
+  const accountLabelVerdict = accountResult?.labelVerdict ?? "unknown";
+  const authorLabels = accountResult?.labels ?? [];
 
-  const profileLabelVerdict = profileResult?.labelVerdict ?? "unknown"
-  const profileLabels = profileResult?.labels ?? []
+  const profileLabelVerdict = profileResult?.labelVerdict ?? "unknown";
+  const profileLabels = profileResult?.labels ?? [];
 
-  const postLabelVerdict = postResult?.labelVerdict ?? "unknown"
-  const contentLabels = postResult?.labels ?? []
+  const postLabelVerdict = postResult?.labelVerdict ?? "unknown";
+  const contentLabels = postResult?.labels ?? [];
 
-  const combinedLabels = [...authorLabels, ...profileLabels, ...contentLabels]
+  const combinedLabels = [...authorLabels, ...profileLabels, ...contentLabels];
 
   const authorModUnknown = accountLabelVerdict === "unknown";
   const profileModUnknown = profileLabelVerdict === "unknown";
@@ -888,14 +904,18 @@ export function UniversalPostRenderer({
   const profileModError = profileLabelVerdict === "error";
   const contentModError = postLabelVerdict === "error";
 
-  const verdictDebugString = `accountLabelVerdict: ${accountLabelVerdict}, profileLabelVerdict: ${profileLabelVerdict}, postLabelVerdict: ${postLabelVerdict}`
-  //const verdictDebugStringCauses = 
+  const verdictDebugString = `accountLabelVerdict: ${accountLabelVerdict}, profileLabelVerdict: ${profileLabelVerdict}, postLabelVerdict: ${postLabelVerdict}`;
+  //const verdictDebugStringCauses =
 
-  const strictModerationUnknown = authorModUnknown || profileModUnknown || contentModUnknown
-  const strictModerationLoading = authorModLoading || profileModLoading || contentModLoading
-  const strictModerationError = authorModError || profileModError || contentModError
+  const strictModerationUnknown =
+    authorModUnknown || profileModUnknown || contentModUnknown;
+  const strictModerationLoading =
+    authorModLoading || profileModLoading || contentModLoading;
+  const strictModerationError =
+    authorModError || profileModError || contentModError;
 
-  const strictModerationDontShow = strictModerationUnknown || strictModerationLoading || strictModerationError
+  const strictModerationDontShow =
+    strictModerationUnknown || strictModerationLoading || strictModerationError;
 
   const hideAuthorLabels = authorLabels.filter(
     (label) => ghld(label.src, label.val)?.pref === "hide",
@@ -920,18 +940,22 @@ export function UniversalPostRenderer({
   );
 
   // add user pronouns
-  const pronoun = post.author.pronouns || undefined
-  const informCombinedLabels: LabelWithHydratedLocaleName[] = combinedLabels.flatMap(
-    (label) => {
-      if (ghld(label.src, label.val)?.severity === "inform" && ghld(label.src, label.val)?.pref === "warn") {
-        return [{
-          ...label,
-          name: getLocaleLabel(ghld(label.src, label.val))?.name || label.val
-        }]
+  const pronoun = post.author.pronouns || undefined;
+  const informCombinedLabels: LabelWithHydratedLocaleName[] =
+    combinedLabels.flatMap((label) => {
+      if (
+        ghld(label.src, label.val)?.severity === "inform" &&
+        ghld(label.src, label.val)?.pref === "warn"
+      ) {
+        return [
+          {
+            ...label,
+            name: getLocaleLabel(ghld(label.src, label.val))?.name || label.val,
+          },
+        ];
       }
-      return []
-    },
-  );
+      return [];
+    });
 
   const parsed = new AtUri(post.uri);
   const navigate = useNavigate();
@@ -951,21 +975,21 @@ export function UniversalPostRenderer({
   const userBlocksAuthor = useGetOneToOneState(
     agentDid && authorDid
       ? {
-        target: authorDid,
-        user: agentDid,
-        collection: "app.bsky.graph.block",
-        path: ".subject",
-      }
+          target: authorDid,
+          user: agentDid,
+          collection: "app.bsky.graph.block",
+          path: ".subject",
+        }
       : undefined,
   );
   const authorBlocksUser = useGetOneToOneState(
     agentDid && authorDid
       ? {
-        target: agentDid,
-        user: authorDid,
-        collection: "app.bsky.graph.block",
-        path: ".subject",
-      }
+          target: agentDid,
+          user: authorDid,
+          collection: "app.bsky.graph.block",
+          path: ".subject",
+        }
       : undefined,
   );
 
@@ -1015,18 +1039,18 @@ export function UniversalPostRenderer({
 
   const tags = unfediwafrnTags
     ? unfediwafrnTags
-      .split("\n")
-      .map((t) => t.trim())
-      .filter(Boolean)
+        .split("\n")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : undefined;
 
   const links = tags
     ? tags
-      .map((tag) => {
-        const encoded = encodeURIComponent(tag);
-        return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
-      })
-      .join("<br>")
+        .map((tag) => {
+          const encoded = encodeURIComponent(tag);
+          return `<a href="https://${undfediwafrnHost}/search/${encoded}" target="_blank">#${tag.replaceAll(" ", "-")}</a>`;
+        })
+        .join("<br>")
     : "";
 
   const unfediwafrn = unfediwafrnPartial
@@ -1038,9 +1062,10 @@ export function UniversalPostRenderer({
     (showWafrnText ? unfediwafrn : undefined);
 
   const isMainItem = false;
-  const setMainItem = (any: any) => { };
+  const setMainItem = (any: any) => {};
 
-  const hideWarnsWhenUnauthed = UNAUTHED_PREVENT_OPENING_WARNS && status === "signedOut";
+  const hideWarnsWhenUnauthed =
+    UNAUTHED_PREVENT_OPENING_WARNS && status === "signedOut";
 
   const showContentWarning = warnContentLabels.length > 0;
 
@@ -1067,18 +1092,26 @@ export function UniversalPostRenderer({
       FORCE_HIDE_LABELS_WHITELISTED_SOURCE.has(label.src)
     );
   });
-  const isForceHidden = isForceHiddenAuthor || isForceHiddenProfile || isForceHiddenPost
-
+  const isForceHidden =
+    isForceHiddenAuthor || isForceHiddenProfile || isForceHiddenPost;
 
   useEffect(() => {
     if (!hasUserTouchedToggleYet && showContentWarning) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false);
     }
-  }, [hasUserTouchedToggleYet, showContentWarning])
+  }, [hasUserTouchedToggleYet, showContentWarning]);
 
-
-  console.log("HLLO HLLO HisForceHidden post UPR" + post.uri + post.author.did + isForceHidden, "1what", contentLabels, "2what", authorLabels)
+  console.log(
+    "HLLO HLLO HisForceHidden post UPR" +
+      post.uri +
+      post.author.did +
+      isForceHidden,
+    "1what",
+    contentLabels,
+    "2what",
+    authorLabels,
+  );
 
   // if (hideAuthorLabels.length > 0 || hideContentLabels.length > 0 || isForceHidden || strictModerationDontShow) {
   //   return (
@@ -1099,11 +1132,19 @@ export function UniversalPostRenderer({
 
   // todo respect the blur label def
   // todo scrap the verdict system and rename it into what it is (loading state)
-  const redactWhileLoadingAuthor = authorModLoading || authorModError || authorModUnknown
-  const redactWhileLoadingProfile = profileModLoading || profileModError || profileModUnknown
-  const redactWhileLoadingPost = contentModLoading || contentModError || contentModUnknown
-  const redactWhileLoadingBlock = userBlocksAuthor.isLoading || authorBlocksUser.isLoading
-  const redactWhileLoadingSome = redactWhileLoadingAuthor || redactWhileLoadingProfile || redactWhileLoadingPost || redactWhileLoadingBlock
+  const redactWhileLoadingAuthor =
+    authorModLoading || authorModError || authorModUnknown;
+  const redactWhileLoadingProfile =
+    profileModLoading || profileModError || profileModUnknown;
+  const redactWhileLoadingPost =
+    contentModLoading || contentModError || contentModUnknown;
+  const redactWhileLoadingBlock =
+    userBlocksAuthor.isLoading || authorBlocksUser.isLoading;
+  const redactWhileLoadingSome =
+    redactWhileLoadingAuthor ||
+    redactWhileLoadingProfile ||
+    redactWhileLoadingPost ||
+    redactWhileLoadingBlock;
   /**
    * maybe rules:
    * if author is loading, hide everything
@@ -1114,19 +1155,36 @@ export function UniversalPostRenderer({
   // the  || !post.record?.createdAt is so that users cant imply theyre replying to a non existant post by a user
   // if the post doesnt exist, dont render the name or pfp
 
+  const redactWhileLoading_name =
+    redactWhileLoadingAuthor ||
+    !post.record?.createdAt ||
+    redactWhileLoadingBlock;
+  const redactWhileLoading_content =
+    redactWhileLoadingAuthor ||
+    redactWhileLoadingPost ||
+    !post.record?.createdAt ||
+    redactWhileLoadingBlock;
+  const redactWhileLoading_pfp =
+    redactWhileLoadingAuthor ||
+    redactWhileLoadingProfile ||
+    !post.record?.createdAt ||
+    redactWhileLoadingBlock;
 
-  const redactWhileLoading_name = redactWhileLoadingAuthor || !post.record?.createdAt || redactWhileLoadingBlock
-  const redactWhileLoading_content = redactWhileLoadingAuthor || redactWhileLoadingPost || !post.record?.createdAt || redactWhileLoadingBlock
-  const redactWhileLoading_pfp = redactWhileLoadingAuthor || redactWhileLoadingProfile || !post.record?.createdAt || redactWhileLoadingBlock
+  const redactFinalBlock =
+    userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0;
 
+  const redactFinalAuthor =
+    hideAuthorLabels.length > 0 || isForceHiddenAuthor || redactFinalBlock;
+  const redactFinalProfile =
+    hideProfileLabels.length > 0 || isForceHiddenProfile || redactFinalBlock;
+  const redactFinalPost =
+    hideContentLabels.length > 0 || isForceHiddenPost || redactFinalBlock;
 
-  const redactFinalBlock = userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0
-
-  const redactFinalAuthor = hideAuthorLabels.length > 0 || isForceHiddenAuthor || redactFinalBlock
-  const redactFinalProfile = hideProfileLabels.length > 0 || isForceHiddenProfile || redactFinalBlock
-  const redactFinalPost = hideContentLabels.length > 0 || isForceHiddenPost || redactFinalBlock
-
-  const redactFinalSome = redactFinalAuthor || redactFinalProfile || redactFinalPost || redactFinalBlock
+  const redactFinalSome =
+    redactFinalAuthor ||
+    redactFinalProfile ||
+    redactFinalPost ||
+    redactFinalBlock;
 
   // todo consider if adding an explicit "post removed" visible component is better for this
   //if (redactFinalSome) return null
@@ -1134,7 +1192,7 @@ export function UniversalPostRenderer({
   // todo share the component with the Missing post from above
   if (redactFinalSome) {
     if (feedviewpost) {
-      return null // if feed view post then moderated post isnt important and just remove it from view
+      return null; // if feed view post then moderated post isnt important and just remove it from view
     }
     return (
       <div
@@ -1145,16 +1203,19 @@ export function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                  setMainItem({ post: post });
-                  onPostClick(e);
-                }
+                    setMainItem({ post: post });
+                    onPostClick(e);
+                  }
                 : () => {
-                  setMainItem({ post: post });
-                }
+                    setMainItem({ post: post });
+                  }
               : undefined
-        }>
-
-        <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+        }
+      >
+        <div
+          style={{ width: 42, height: 16, minHeight: 16 }}
+          className="flex items-center flex-col mx-4"
+        >
           <div
             style={{
               width: 2,
@@ -1172,16 +1233,68 @@ export function UniversalPostRenderer({
               <span className=" font-semibold text-[15px]">Moderated Post</span>
             </div>
             <ul className="flex flex-col gap-0.5 list-disc list-outside">
-              {userBlocksAuthor.uris.length > 0 && (<li className=" text-sm ml-[18px]">User Blocked by You</li>)}
-              {authorBlocksUser.uris.length > 0 && (<li className=" text-sm ml-[18px]">User Blocking You</li>)}
-              {hideAuthorLabels.length > 0 && (<>{hideAuthorLabels.map((label) => { return <li key={label.cid || label.exp} className=" text-sm ml-[18px]">Author Label: {getLocaleLabel(ghld(label.src, label.val))?.name || label.val}</li> })}</>)}
-              {hideProfileLabels.length > 0 && (<>{hideProfileLabels.map((label) => { return <li key={label.cid || label.exp} className=" text-sm ml-[18px]">Profile Label: {getLocaleLabel(ghld(label.src, label.val))?.name || label.val}</li> })}</>)}
-              {hideContentLabels.length > 0 && (<>{hideContentLabels.map((label) => { return <li key={label.cid || label.exp} className=" text-sm ml-[18px]">Post Label: {getLocaleLabel(ghld(label.src, label.val))?.name || label.val}</li> })}</>)}
+              {userBlocksAuthor.uris.length > 0 && (
+                <li className=" text-sm ml-[18px]">User Blocked by You</li>
+              )}
+              {authorBlocksUser.uris.length > 0 && (
+                <li className=" text-sm ml-[18px]">User Blocking You</li>
+              )}
+              {hideAuthorLabels.length > 0 && (
+                <>
+                  {hideAuthorLabels.map((label) => {
+                    return (
+                      <li
+                        key={label.cid || label.exp}
+                        className=" text-sm ml-[18px]"
+                      >
+                        Author Label:{" "}
+                        {getLocaleLabel(ghld(label.src, label.val))?.name ||
+                          label.val}
+                      </li>
+                    );
+                  })}
+                </>
+              )}
+              {hideProfileLabels.length > 0 && (
+                <>
+                  {hideProfileLabels.map((label) => {
+                    return (
+                      <li
+                        key={label.cid || label.exp}
+                        className=" text-sm ml-[18px]"
+                      >
+                        Profile Label:{" "}
+                        {getLocaleLabel(ghld(label.src, label.val))?.name ||
+                          label.val}
+                      </li>
+                    );
+                  })}
+                </>
+              )}
+              {hideContentLabels.length > 0 && (
+                <>
+                  {hideContentLabels.map((label) => {
+                    return (
+                      <li
+                        key={label.cid || label.exp}
+                        className=" text-sm ml-[18px]"
+                      >
+                        Post Label:{" "}
+                        {getLocaleLabel(ghld(label.src, label.val))?.name ||
+                          label.val}
+                      </li>
+                    );
+                  })}
+                </>
+              )}
             </ul>
           </div>
         </div>
 
-        <div style={{ width: 42, height: 16, minHeight: 16 }} className="flex items-center flex-col mx-4">
+        <div
+          style={{ width: 42, height: 16, minHeight: 16 }}
+          className="flex items-center flex-col mx-4"
+        >
           <div
             style={{
               width: 2,
@@ -1192,12 +1305,17 @@ export function UniversalPostRenderer({
           />
         </div>
       </div>
-    )
+    );
   }
 
   // ${redactWhileLoadingSome && "blur"}
   return (
-    <div ref={ref} style={style} data-index={dataIndexPropPass} className={` leading-normal `}>
+    <div
+      ref={ref}
+      style={style}
+      data-index={dataIndexPropPass}
+      className={` leading-normal `}
+    >
       {/* <span>{JSON.stringify(post, null, 2)}</span> */}
       <div
         key={salt + "-" + (post.uri || emergencySalt)}
@@ -1207,12 +1325,12 @@ export function UniversalPostRenderer({
             : setMainItem
               ? onPostClick
                 ? (e) => {
-                  setMainItem({ post: post });
-                  onPostClick(e);
-                }
+                    setMainItem({ post: post });
+                    onPostClick(e);
+                  }
                 : () => {
-                  setMainItem({ post: post });
-                }
+                    setMainItem({ post: post });
+                  }
               : undefined
         }
         style={{
@@ -1242,7 +1360,7 @@ export function UniversalPostRenderer({
               alignItems: "center",
             }}
             className="text-gray-500 dark:text-gray-400"
-          // todo moderate reposts (label, and record graph)
+            // todo moderate reposts (label, and record graph)
           >
             <IconMdiRepost /> Reposted by @{isRepost}
           </div>
@@ -1298,9 +1416,7 @@ export function UniversalPostRenderer({
                     height: isQuote ? 16 : 42,
                   }}
                 />
-              )
-              }
-
+              )}
             </div>
           </HoverCard.Trigger>
           <HoverCard.Portal>
@@ -1320,20 +1436,27 @@ export function UniversalPostRenderer({
                       alt="avatar"
                       className="rounded-full w-[58px] h-[58px] object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600"
                     />
-                  )
-                  }
+                  )}
                   <div className=" flex-1 flex flex-row align-middle justify-end">
                     <FollowButton targetdidorhandle={post.author.did} />
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <div className={`text-gray-900 dark:text-gray-100 font-medium text-md ${redactWhileLoading_name && "animate-pulse blur"}`}>
-                      {redactWhileLoading_name ? "Person Display Name" : (post.author.displayName || post.author.handle)}
+                    <div
+                      className={`text-gray-900 dark:text-gray-100 font-medium text-md ${redactWhileLoading_name && "animate-pulse blur"}`}
+                    >
+                      {redactWhileLoading_name
+                        ? "Person Display Name"
+                        : post.author.displayName || post.author.handle}
                     </div>
-                    <div className={`text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1 ${redactWhileLoading_name && "animate-pulse blur"}`}>
+                    <div
+                      className={`text-gray-500 dark:text-gray-400 text-md flex flex-row gap-1 ${redactWhileLoading_name && "animate-pulse blur"}`}
+                    >
                       <Mutual targetdidorhandle={post.author.did} />@
-                      {redactWhileLoading_name ? "person.placeholder" : post.author.handle}
+                      {redactWhileLoading_name
+                        ? "person.placeholder"
+                        : post.author.handle}
                     </div>
                   </div>
                   {uprrrsauthor?.description && (
@@ -1415,7 +1538,9 @@ export function UniversalPostRenderer({
                   }}
                   className={`text-gray-900 dark:text-gray-100  ${redactWhileLoading_name && "animate-pulse blur"}`}
                 >
-                  {redactWhileLoading_name ? "Person Display Name" : post.author.displayName || post.author.handle}
+                  {redactWhileLoading_name
+                    ? "Person Display Name"
+                    : post.author.displayName || post.author.handle}
                   {post.author.verification?.verifiedStatus == "valid" && (
                     <IconMdiVerified />
                   )}
@@ -1433,7 +1558,10 @@ export function UniversalPostRenderer({
                   }}
                   className={`text-gray-500 dark:text-gray-400 ${redactWhileLoading_name && "animate-pulse blur"}`}
                 >
-                  @{redactWhileLoading_name ? "person.placeholder" : post.author.handle}
+                  @
+                  {redactWhileLoading_name
+                    ? "person.placeholder"
+                    : post.author.handle}
                 </span>
               </div>
               <div
@@ -1474,7 +1602,9 @@ export function UniversalPostRenderer({
                 </div> */}
               </div>
             ) : (
-              <div className={`flex flex-wrap flex-row gap-1 my-1 ${redactWhileLoading_name ? "animate-pulse blur" : ""}`}>
+              <div
+                className={`flex flex-wrap flex-row gap-1 my-1 ${redactWhileLoading_name ? "animate-pulse blur" : ""}`}
+              >
                 {pronoun && (
                   <SmallAuthorLabelBadgeInner
                     text={pronoun}
@@ -1522,70 +1652,74 @@ export function UniversalPostRenderer({
                   e.stopPropagation();
                   setHasUserTouchedToggleYet(true);
                   if (!hideWarnsWhenUnauthed) {
-                    setIsOpen(!isOpen)
+                    setIsOpen(!isOpen);
                   }
                 }}
               />
             )}
-            {isOpen && (<>
-              <div
-                style={{
-                  fontSize: 16,
-                  marginBottom: !post.embed || concise ? 0 : 8,
-                  whiteSpace: "pre-wrap",
-                  textAlign: "left",
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-word",
-                  ...(concise && {
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
-                    WebkitLineClamp: 2,
-                    overflow: "hidden",
-                  }),
-                }}
-                className={`text-gray-900 dark:text-gray-100 ${redactWhileLoading_content && "animate-pulse blur"}`}
-              >
-                {fedi ? (
+            {isOpen && (
+              <>
+                <div
+                  style={{
+                    fontSize: 16,
+                    marginBottom: !post.embed || concise ? 0 : 8,
+                    whiteSpace: "pre-wrap",
+                    textAlign: "left",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
+                    ...(concise && {
+                      display: "-webkit-box",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: 2,
+                      overflow: "hidden",
+                    }),
+                  }}
+                  className={`text-gray-900 dark:text-gray-100 ${redactWhileLoading_content && "animate-pulse blur"}`}
+                >
+                  {fedi ? (
+                    <>
+                      <span
+                        className="dangerousFediContent"
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(fedi),
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      {renderTextWithFacets({
+                        text: (post.record as { text?: string }).text ?? "",
+                        facets: (post.record.facets as Facet[]) ?? [],
+                        navigate: navigate,
+                      })}
+                    </>
+                  )}
+                </div>
+                {post.embed && depth < 1 && !concise ? (
+                  <PostEmbeds
+                    redactedLoading={redactWhileLoading_content}
+                    embed={post.embed}
+                    viewContext={PostEmbedViewContext.Feed}
+                    salt={salt}
+                    navigate={navigate}
+                    postid={{ did: post.author.did, rkey: parsed.rkey }}
+                    nopics={nopics}
+                    lightboxCallback={lightboxCallback}
+                    constellationLinks={constellationLinks}
+                    referral={[...(referral || []), "im upr!"]}
+                  />
+                ) : null}
+                {post.embed && depth > 0 && (
                   <>
-                    <span
-                      className="dangerousFediContent"
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(fedi),
-                      }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    {renderTextWithFacets({
-                      text: (post.record as { text?: string }).text ?? "",
-                      facets: (post.record.facets as Facet[]) ?? [],
-                      navigate: navigate,
-                    })}
+                    <div
+                      className={`border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px] ${redactWhileLoading_content && "animate-pulse blur"}`}
+                    >
+                      (there is an embed here thats too deep to render)
+                    </div>
                   </>
                 )}
-              </div>
-              {post.embed && depth < 1 && !concise ? (
-                <PostEmbeds
-                  redactedLoading={redactWhileLoading_content}
-                  embed={post.embed}
-                  viewContext={PostEmbedViewContext.Feed}
-                  salt={salt}
-                  navigate={navigate}
-                  postid={{ did: post.author.did, rkey: parsed.rkey }}
-                  nopics={nopics}
-                  lightboxCallback={lightboxCallback}
-                  constellationLinks={constellationLinks}
-                  referral={[...referral || [], "im upr!"]}
-                />
-              ) : null}
-              {post.embed && depth > 0 && (
-                <>
-                  <div className={`border-gray-300 dark:border-gray-800 p-3 rounded-xl border italic text-gray-400 text-[14px] ${redactWhileLoading_content && "animate-pulse blur"}`}>
-                    (there is an embed here thats too deep to render)
-                  </div>
-                </>
-              )}
-            </>)}
+              </>
+            )}
             <div
               style={{
                 paddingTop: post.embed && !concise && depth < 1 ? 4 : 0,
@@ -1628,7 +1762,10 @@ export function UniversalPostRenderer({
                     style={{
                       ...btnstyle,
                     }}
-                    className={redactWhileLoading_content && "animate-pulse blur" || undefined}
+                    className={
+                      (redactWhileLoading_content && "animate-pulse blur") ||
+                      undefined
+                    }
                   >
                     <IconMdiCommentOutline />
                     {post.replyCount}
@@ -1641,7 +1778,11 @@ export function UniversalPostRenderer({
                           ...(hasRetweeted ? { color: "#5CEFAA" } : {}),
                         }}
                         aria-label="Repost or quote post"
-                        className={redactWhileLoading_content && "animate-pulse blur" || undefined}
+                        className={
+                          (redactWhileLoading_content &&
+                            "animate-pulse blur") ||
+                          undefined
+                        }
                       >
                         {hasRetweeted ? (
                           <IconMdiRepeat color="#5CEFAA" />
@@ -1691,7 +1832,10 @@ export function UniversalPostRenderer({
                       ...btnstyle,
                       ...(liked ? { color: "#EC4899" } : {}),
                     }}
-                    className={redactWhileLoading_content && "animate-pulse blur" || undefined}
+                    className={
+                      (redactWhileLoading_content && "animate-pulse blur") ||
+                      undefined
+                    }
                   >
                     {liked ? (
                       <IconMdiCardsHeart />
@@ -1707,10 +1851,10 @@ export function UniversalPostRenderer({
                         try {
                           await navigator.clipboard.writeText(
                             "https://bsky.app" +
-                            "/profile/" +
-                            post.author.handle +
-                            "/post/" +
-                            post.uri.split("/").pop(),
+                              "/profile/" +
+                              post.author.handle +
+                              "/post/" +
+                              post.uri.split("/").pop(),
                           );
                           renderSnack({
                             title: "Copied to clipboard!",
@@ -1807,10 +1951,13 @@ export function ContentWarning({
         {/* Chevron */}
         <div className="flex items-center justify-center text-gray-500 dark:text-gray-400 pl-2 gap-2 text-sm">
           {unauthedgate ? "please login to view" : isOpen ? "hide" : "show"}
-          {!unauthedgate && (<IconMdiChevronDown
-            className={`text-xl transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isOpen ? "rotate-180" : ""
+          {!unauthedgate && (
+            <IconMdiChevronDown
+              className={`text-xl transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+                isOpen ? "rotate-180" : ""
               }`}
-          />)}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -1863,15 +2010,17 @@ export function SmallAuthorLabelBadgeInner({
     <div
       className={`text-xs ${large ? "bg-gray-200" : "bg-gray-100"} dark:bg-gray-800 ${large ? "px-2 py-1" : "px-1 py-0.5"} rounded-full flex flex-row items-center gap-1`}
     >
-      {!disablepfp && (<img
-        src={resolvedpfp || defaultpfp}
-        alt="avatar"
-        className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
-        style={{
-          width: 12,
-          height: 12,
-        }}
-      />)}
+      {!disablepfp && (
+        <img
+          src={resolvedpfp || defaultpfp}
+          alt="avatar"
+          className={`rounded-full object-cover border border-gray-300 dark:border-gray-800 bg-gray-300 dark:bg-gray-600`}
+          style={{
+            width: 12,
+            height: 12,
+          }}
+        />
+      )}
       <span className="font-medium">{text}</span>
     </div>
   );
