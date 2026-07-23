@@ -4,6 +4,8 @@ import type { QueryClient, UseQueryResult } from "@tanstack/react-query";
 
 import { type linksRecordsResponse, useQueryConstellation } from "./useQuery";
 
+const pendingFollowOperations = new Set<string>();
+
 export function useGetFollowState({
   target,
   user,
@@ -48,6 +50,14 @@ export function toggleFollow({
 }) {
   if (!agent?.did || !targetDid) return;
 
+  const operationKey = `${agent.did}->${targetDid}`;
+  if (pendingFollowOperations.has(operationKey)) {
+    console.warn("Follow operation already pending for", targetDid);
+    return;
+  }
+
+  pendingFollowOperations.add(operationKey);
+
   const queryKey = [
     "constellation",
     "/links",
@@ -89,24 +99,30 @@ export function toggleFollow({
       } as linksRecordsResponse;
     });
 
-    agent.com.atproto.repo.createRecord(newRecord).catch((err) => {
-      console.error("Follow failed, reverting cache:", err);
-      // rollback cache
-      updateCache((old) => {
-        return {
-          ...old,
-          linking_records:
-            old?.linking_records.filter((r) => r.rkey !== newRecord.rkey) ?? [],
-        } as linksRecordsResponse;
+    agent.com.atproto.repo
+      .createRecord(newRecord)
+      .catch((err) => {
+        console.error("Follow failed, reverting cache:", err);
+        // rollback cache
+        updateCache((old) => {
+          return {
+            ...old,
+            linking_records:
+              old?.linking_records.filter((r) => r.rkey !== newRecord.rkey) ??
+              [],
+          } as linksRecordsResponse;
+        });
+      })
+      .finally(() => {
+        pendingFollowOperations.delete(operationKey);
       });
-    });
 
     return;
   }
 
-  followRecords.forEach((followRecord) => {
+  const deletePromises = followRecords.map((followRecord) => {
     const aturi = new AtUri(followRecord);
-    agent.com.atproto.repo
+    return agent.com.atproto.repo
       .deleteRecord({
         repo: agent.did!,
         collection: "app.bsky.graph.follow",
@@ -127,6 +143,10 @@ export function toggleFollow({
       ),
     };
   });
+
+  Promise.all(deletePromises).finally(() => {
+    pendingFollowOperations.delete(operationKey);
+  });
 }
 
 export function useGetOneToOneState(params?: {
@@ -136,7 +156,7 @@ export function useGetOneToOneState(params?: {
   path: string;
   enabled?: boolean;
 }): {
-  uris: string[],
+  uris: string[];
   isLoading: boolean;
   isError: boolean;
 } {
@@ -158,11 +178,12 @@ export function useGetOneToOneState(params?: {
       : { method: "undefined", target: "whatever", enabled: false },
     // overloading sucks so much
   ) as UseQueryResult<linksRecordsResponse | undefined, Error>;
-  if (!params || !params.user) return {
-    uris: [],
-    isError: true,
-    isLoading: false,
-  };
+  if (!params || !params.user)
+    return {
+      uris: [],
+      isError: true,
+      isLoading: false,
+    };
   const arbitrarydata = whatever.data;
   const data = arbitrarydata?.linking_records.slice(0, 50) ?? [];
 
