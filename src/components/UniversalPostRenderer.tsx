@@ -233,6 +233,30 @@ export function UniversalPostRendererATURILoader_AppView({
       />
     );
   }
+
+  const hasEmbed = (data?.record as AppBskyFeedPost.Record)?.embed;
+  const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
+  const hasVideo = hasEmbed?.$type === "app.bsky.embed.video";
+  const isquotewithmedia = hasEmbed?.$type === "app.bsky.embed.recordWithMedia";
+  const isQuotewithImages =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.images";
+  const isQuotewithVideo =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.video";
+
+  const hasMedia =
+    hasEmbed &&
+    (hasImages || hasVideo || isQuotewithImages || isQuotewithVideo);
+
+  if (filterNoReplies && thereply) return null;
+
+  if (filterMustHaveMedia && !hasMedia) return null;
+
+  if (filterMustBeReply && !thereply) return null;
+
   return (
     <UniversalPostRenderer
       referral={["appview"]}
