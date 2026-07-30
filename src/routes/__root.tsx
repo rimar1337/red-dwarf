@@ -7,7 +7,7 @@ import {
   createRootRouteWithContext,
   Link,
   // Link,
-  // Outlet,
+  Outlet,
   Scripts,
   useLocation,
   useNavigate,
@@ -17,7 +17,6 @@ import { useAtom } from "jotai";
 import * as React from "react";
 import { toast as sonnerToast } from "sonner";
 import { Toaster } from "sonner";
-import { KeepAliveOutlet, KeepAliveProvider } from "tanstack-router-keepalive";
 
 import {
   HOST_ADMIN,
@@ -124,10 +123,8 @@ function RootComponent() {
             {/* <ModerationInitializer />
             <ModerationBatcher /> */}
             <RootDocument>
-              <KeepAliveProvider>
-                <AppToaster />
-                <KeepAliveOutlet />
-              </KeepAliveProvider>
+              <AppToaster />
+              <Outlet />
             </RootDocument>
           </PollMutationQueueProvider>
         </LikeMutationQueueProvider>

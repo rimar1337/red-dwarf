@@ -91,7 +91,6 @@ export const Route = createFileRoute("/")({
   // },
   component: Home,
   pendingComponent: PendingHome, // PendingHome,
-  staticData: { keepAlive: true },
 });
 function PendingHome() {
   return <div>loading... (prefetching your timeline)</div>;
