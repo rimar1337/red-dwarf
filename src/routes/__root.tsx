@@ -102,8 +102,11 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   errorComponent: import.meta.env.DEV
-    ? undefined
-    : (props) => (
+    ? (props) => (
+      <RootDocument>
+        <DefaultCatchBoundary {...props} />
+      </RootDocument>
+    ) : (props) => (
       <RootDocument>
         <DefaultCatchBoundary {...props} />
       </RootDocument>

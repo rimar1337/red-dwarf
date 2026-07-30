@@ -18,7 +18,7 @@ import {
   defaultslingshotURL,
   defaultVideoCDN,
   enableAppViewAtom,
-  enableBetaLabelersAtom,
+  //enableBetaLabelersAtom,
   enableBitesAtom,
   enableBridgyTextAtom,
   enableWafrnTextAtom,

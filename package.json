@@ -7,10 +7,11 @@
     "start": "vite --port 3768",
     "build": "vite build && tsc",
     "serve": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "postinstall": "patch-package"
   },
   "dependencies": {
-    "@atproto/api": "^0.18.20",
+    "@atproto/api": "^0.20.34",
     "@atproto/common-web": "^0.4.11",
     "@atproto/oauth-client-browser": "^0.3.33",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -62,6 +63,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.2.0",
     "jsdom": "^26.0.0",
+    "patch-package": "^8.0.1",
     "prettier": "^3.6.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.46.1",

@@ -1,13 +1,4 @@
 import * as ATPAPI from "@atproto/api";
-import {
-  isAdultContentPref,
-  isBskyAppStatePref,
-  isContentLabelPref,
-  isFeedViewPref,
-  isLabelersPref,
-  isMutedWordsPref,
-  isSavedFeedsPref,
-} from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { Switch } from "radix-ui";
@@ -22,6 +13,16 @@ import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
 import { renderSnack } from "./__root";
 import { NotificationItem } from "./notifications";
 import { SettingHeading } from "./settings";
+
+const {
+  isAdultContentPref,
+  isBskyAppStatePref,
+  isContentLabelPref,
+  isFeedViewPref,
+  isLabelersPref,
+  isMutedWordsPref,
+  isSavedFeedsPref,
+} = ATPAPI.AppBskyActorDefs
 
 declare const __INSTANCE_MODEL__: boolean
 

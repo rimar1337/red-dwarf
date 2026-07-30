@@ -16,7 +16,7 @@ import React, {
 
 import { quickAuthAtom } from "~/utils/atoms";
 
-import { oauthClient } from "../utils/oauthClient";
+import { oauthClient, oauthEvents } from "../utils/oauthClient";
 
 type AuthStatus = "loading" | "signedIn" | "signedOut";
 type AuthMethod = "password" | "oauth" | null;
@@ -117,14 +117,15 @@ export const UnifiedAuthProvider = ({
       setQuickAuth(null);
     };
 
-    oauthClient.addEventListener(
+    // eslint-disable-next-line @eslint-react/web-api/no-leaked-event-listener
+    oauthEvents.addEventListener(
       "deleted",
       handleOAuthSessionDeleted as EventListener,
     );
     initialize();
 
     return () => {
-      oauthClient.removeEventListener(
+      oauthEvents.removeEventListener(
         "deleted",
         handleOAuthSessionDeleted as EventListener,
       );

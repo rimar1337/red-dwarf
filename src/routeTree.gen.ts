@@ -9,51 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as ModerationRouteImport } from './routes/moderation'
-import { Route as FeedsRouteImport } from './routes/feeds'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CallbackIndexRouteImport } from './routes/callback/index'
+import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as FeedsRouteImport } from './routes/feeds'
+import { Route as ModerationRouteImport } from './routes/moderation'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PathlessLayoutNestedLayoutRouteImport } from './routes/_pathlessLayout/_nested-layout'
-import { Route as ProfileDidIndexRouteImport } from './routes/profile.$did/index'
-import { Route as ProfileDidFollowsRouteImport } from './routes/profile.$did/follows'
-import { Route as ProfileDidFollowersRouteImport } from './routes/profile.$did/followers'
-import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
+import { Route as CallbackIndexRouteImport } from './routes/callback/index'
 import { Route as PathlessLayoutNestedLayoutRouteARouteImport } from './routes/_pathlessLayout/_nested-layout/route-a'
-import { Route as ProfileDidPostRkeyRouteImport } from './routes/profile.$did/post.$rkey'
+import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
+import { Route as ProfileDidIndexRouteImport } from './routes/profile.$did/index'
+import { Route as ProfileDidFollowersRouteImport } from './routes/profile.$did/followers'
+import { Route as ProfileDidFollowsRouteImport } from './routes/profile.$did/follows'
 import { Route as ProfileDidFeedRkeyRouteImport } from './routes/profile.$did/feed.$rkey'
-import { Route as ProfileDidPostRkeyRepostedByRouteImport } from './routes/profile.$did/post.$rkey.reposted-by'
-import { Route as ProfileDidPostRkeyQuotesRouteImport } from './routes/profile.$did/post.$rkey.quotes'
+import { Route as ProfileDidPostRkeyRouteImport } from './routes/profile.$did/post.$rkey'
 import { Route as ProfileDidPostRkeyLikedByRouteImport } from './routes/profile.$did/post.$rkey.liked-by'
+import { Route as ProfileDidPostRkeyQuotesRouteImport } from './routes/profile.$did/post.$rkey.quotes'
+import { Route as ProfileDidPostRkeyRepostedByRouteImport } from './routes/profile.$did/post.$rkey.reposted-by'
 import { Route as ProfileDidPostRkeyImageIRouteImport } from './routes/profile.$did/post.$rkey.image.$i'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ModerationRoute = ModerationRouteImport.update({
-  id: '/moderation',
-  path: '/moderation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FeedsRoute = FeedsRouteImport.update({
-  id: '/feeds',
-  path: '/feeds',
+const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
+  id: '/_pathlessLayout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -61,18 +45,29 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
-  id: '/_pathlessLayout',
+const FeedsRoute = FeedsRouteImport.update({
+  id: '/feeds',
+  path: '/feeds',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ModerationRoute = ModerationRouteImport.update({
+  id: '/moderation',
+  path: '/moderation',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CallbackIndexRoute = CallbackIndexRouteImport.update({
-  id: '/callback/',
-  path: '/callback/',
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PathlessLayoutNestedLayoutRoute =
@@ -80,14 +75,26 @@ const PathlessLayoutNestedLayoutRoute =
     id: '/_nested-layout',
     getParentRoute: () => PathlessLayoutRoute,
   } as any)
+const CallbackIndexRoute = CallbackIndexRouteImport.update({
+  id: '/callback/',
+  path: '/callback/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PathlessLayoutNestedLayoutRouteARoute =
+  PathlessLayoutNestedLayoutRouteARouteImport.update({
+    id: '/route-a',
+    path: '/route-a',
+    getParentRoute: () => PathlessLayoutNestedLayoutRoute,
+  } as any)
+const PathlessLayoutNestedLayoutRouteBRoute =
+  PathlessLayoutNestedLayoutRouteBRouteImport.update({
+    id: '/route-b',
+    path: '/route-b',
+    getParentRoute: () => PathlessLayoutNestedLayoutRoute,
+  } as any)
 const ProfileDidIndexRoute = ProfileDidIndexRouteImport.update({
   id: '/profile/$did/',
   path: '/profile/$did/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileDidFollowsRoute = ProfileDidFollowsRouteImport.update({
-  id: '/profile/$did/follows',
-  path: '/profile/$did/follows',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileDidFollowersRoute = ProfileDidFollowersRouteImport.update({
@@ -95,21 +102,9 @@ const ProfileDidFollowersRoute = ProfileDidFollowersRouteImport.update({
   path: '/profile/$did/followers',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PathlessLayoutNestedLayoutRouteBRoute =
-  PathlessLayoutNestedLayoutRouteBRouteImport.update({
-    id: '/route-b',
-    path: '/route-b',
-    getParentRoute: () => PathlessLayoutNestedLayoutRoute,
-  } as any)
-const PathlessLayoutNestedLayoutRouteARoute =
-  PathlessLayoutNestedLayoutRouteARouteImport.update({
-    id: '/route-a',
-    path: '/route-a',
-    getParentRoute: () => PathlessLayoutNestedLayoutRoute,
-  } as any)
-const ProfileDidPostRkeyRoute = ProfileDidPostRkeyRouteImport.update({
-  id: '/profile/$did/post/$rkey',
-  path: '/profile/$did/post/$rkey',
+const ProfileDidFollowsRoute = ProfileDidFollowsRouteImport.update({
+  id: '/profile/$did/follows',
+  path: '/profile/$did/follows',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileDidFeedRkeyRoute = ProfileDidFeedRkeyRouteImport.update({
@@ -117,10 +112,15 @@ const ProfileDidFeedRkeyRoute = ProfileDidFeedRkeyRouteImport.update({
   path: '/profile/$did/feed/$rkey',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileDidPostRkeyRepostedByRoute =
-  ProfileDidPostRkeyRepostedByRouteImport.update({
-    id: '/reposted-by',
-    path: '/reposted-by',
+const ProfileDidPostRkeyRoute = ProfileDidPostRkeyRouteImport.update({
+  id: '/profile/$did/post/$rkey',
+  path: '/profile/$did/post/$rkey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileDidPostRkeyLikedByRoute =
+  ProfileDidPostRkeyLikedByRouteImport.update({
+    id: '/liked-by',
+    path: '/liked-by',
     getParentRoute: () => ProfileDidPostRkeyRoute,
   } as any)
 const ProfileDidPostRkeyQuotesRoute =
@@ -129,10 +129,10 @@ const ProfileDidPostRkeyQuotesRoute =
     path: '/quotes',
     getParentRoute: () => ProfileDidPostRkeyRoute,
   } as any)
-const ProfileDidPostRkeyLikedByRoute =
-  ProfileDidPostRkeyLikedByRouteImport.update({
-    id: '/liked-by',
-    path: '/liked-by',
+const ProfileDidPostRkeyRepostedByRoute =
+  ProfileDidPostRkeyRepostedByRouteImport.update({
+    id: '/reposted-by',
+    path: '/reposted-by',
     getParentRoute: () => ProfileDidPostRkeyRoute,
   } as any)
 const ProfileDidPostRkeyImageIRoute =
@@ -150,12 +150,12 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/callback': typeof CallbackIndexRoute
+  '/callback/': typeof CallbackIndexRoute
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
   '/profile/$did/followers': typeof ProfileDidFollowersRoute
   '/profile/$did/follows': typeof ProfileDidFollowsRoute
-  '/profile/$did': typeof ProfileDidIndexRoute
+  '/profile/$did/': typeof ProfileDidIndexRoute
   '/profile/$did/feed/$rkey': typeof ProfileDidFeedRkeyRoute
   '/profile/$did/post/$rkey': typeof ProfileDidPostRkeyRouteWithChildren
   '/profile/$did/post/$rkey/liked-by': typeof ProfileDidPostRkeyLikedByRoute
@@ -218,12 +218,12 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/settings'
-    | '/callback'
+    | '/callback/'
     | '/route-a'
     | '/route-b'
     | '/profile/$did/followers'
     | '/profile/$did/follows'
-    | '/profile/$did'
+    | '/profile/$did/'
     | '/profile/$did/feed/$rkey'
     | '/profile/$did/post/$rkey'
     | '/profile/$did/post/$rkey/liked-by'
@@ -295,39 +295,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/moderation': {
-      id: '/moderation'
-      path: '/moderation'
-      fullPath: '/moderation'
-      preLoaderRoute: typeof ModerationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/feeds': {
-      id: '/feeds'
-      path: '/feeds'
-      fullPath: '/feeds'
-      preLoaderRoute: typeof FeedsRouteImport
+    '/_pathlessLayout': {
+      id: '/_pathlessLayout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PathlessLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -337,46 +316,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_pathlessLayout': {
-      id: '/_pathlessLayout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PathlessLayoutRouteImport
+    '/feeds': {
+      id: '/feeds'
+      path: '/feeds'
+      fullPath: '/feeds'
+      preLoaderRoute: typeof FeedsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/moderation': {
+      id: '/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof ModerationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/callback/': {
-      id: '/callback/'
-      path: '/callback'
-      fullPath: '/callback'
-      preLoaderRoute: typeof CallbackIndexRouteImport
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_pathlessLayout/_nested-layout': {
       id: '/_pathlessLayout/_nested-layout'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteImport
       parentRoute: typeof PathlessLayoutRoute
+    }
+    '/callback/': {
+      id: '/callback/'
+      path: '/callback'
+      fullPath: '/callback/'
+      preLoaderRoute: typeof CallbackIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_pathlessLayout/_nested-layout/route-a': {
+      id: '/_pathlessLayout/_nested-layout/route-a'
+      path: '/route-a'
+      fullPath: '/route-a'
+      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteARouteImport
+      parentRoute: typeof PathlessLayoutNestedLayoutRoute
+    }
+    '/_pathlessLayout/_nested-layout/route-b': {
+      id: '/_pathlessLayout/_nested-layout/route-b'
+      path: '/route-b'
+      fullPath: '/route-b'
+      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteBRouteImport
+      parentRoute: typeof PathlessLayoutNestedLayoutRoute
     }
     '/profile/$did/': {
       id: '/profile/$did/'
       path: '/profile/$did'
-      fullPath: '/profile/$did'
+      fullPath: '/profile/$did/'
       preLoaderRoute: typeof ProfileDidIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile/$did/follows': {
-      id: '/profile/$did/follows'
-      path: '/profile/$did/follows'
-      fullPath: '/profile/$did/follows'
-      preLoaderRoute: typeof ProfileDidFollowsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$did/followers': {
@@ -386,25 +393,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileDidFollowersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_pathlessLayout/_nested-layout/route-b': {
-      id: '/_pathlessLayout/_nested-layout/route-b'
-      path: '/route-b'
-      fullPath: '/route-b'
-      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteBRouteImport
-      parentRoute: typeof PathlessLayoutNestedLayoutRoute
-    }
-    '/_pathlessLayout/_nested-layout/route-a': {
-      id: '/_pathlessLayout/_nested-layout/route-a'
-      path: '/route-a'
-      fullPath: '/route-a'
-      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteARouteImport
-      parentRoute: typeof PathlessLayoutNestedLayoutRoute
-    }
-    '/profile/$did/post/$rkey': {
-      id: '/profile/$did/post/$rkey'
-      path: '/profile/$did/post/$rkey'
-      fullPath: '/profile/$did/post/$rkey'
-      preLoaderRoute: typeof ProfileDidPostRkeyRouteImport
+    '/profile/$did/follows': {
+      id: '/profile/$did/follows'
+      path: '/profile/$did/follows'
+      fullPath: '/profile/$did/follows'
+      preLoaderRoute: typeof ProfileDidFollowsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$did/feed/$rkey': {
@@ -414,11 +407,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileDidFeedRkeyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile/$did/post/$rkey/reposted-by': {
-      id: '/profile/$did/post/$rkey/reposted-by'
-      path: '/reposted-by'
-      fullPath: '/profile/$did/post/$rkey/reposted-by'
-      preLoaderRoute: typeof ProfileDidPostRkeyRepostedByRouteImport
+    '/profile/$did/post/$rkey': {
+      id: '/profile/$did/post/$rkey'
+      path: '/profile/$did/post/$rkey'
+      fullPath: '/profile/$did/post/$rkey'
+      preLoaderRoute: typeof ProfileDidPostRkeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$did/post/$rkey/liked-by': {
+      id: '/profile/$did/post/$rkey/liked-by'
+      path: '/liked-by'
+      fullPath: '/profile/$did/post/$rkey/liked-by'
+      preLoaderRoute: typeof ProfileDidPostRkeyLikedByRouteImport
       parentRoute: typeof ProfileDidPostRkeyRoute
     }
     '/profile/$did/post/$rkey/quotes': {
@@ -428,11 +428,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileDidPostRkeyQuotesRouteImport
       parentRoute: typeof ProfileDidPostRkeyRoute
     }
-    '/profile/$did/post/$rkey/liked-by': {
-      id: '/profile/$did/post/$rkey/liked-by'
-      path: '/liked-by'
-      fullPath: '/profile/$did/post/$rkey/liked-by'
-      preLoaderRoute: typeof ProfileDidPostRkeyLikedByRouteImport
+    '/profile/$did/post/$rkey/reposted-by': {
+      id: '/profile/$did/post/$rkey/reposted-by'
+      path: '/reposted-by'
+      fullPath: '/profile/$did/post/$rkey/reposted-by'
+      preLoaderRoute: typeof ProfileDidPostRkeyRepostedByRouteImport
       parentRoute: typeof ProfileDidPostRkeyRoute
     }
     '/profile/$did/post/$rkey/image/$i': {

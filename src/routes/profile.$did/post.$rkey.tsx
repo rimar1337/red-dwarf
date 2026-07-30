@@ -237,8 +237,8 @@ export function ProfilePostComponent({
     [atUri],
   );
 
-  // @ts-expect-error i hate overloads
   const { data: links } = useQueryConstellation(
+    // @ts-expect-error i hate overloads
     atUri && showMainPostRoute
       ? {
           method: "/links/all",

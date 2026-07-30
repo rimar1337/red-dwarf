@@ -1,8 +1,6 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+// __INSTANCE_MODEL__ is a build-time flag
 import * as ATPAPI from "@atproto/api";
-import {
-  isContentLabelPref,
-  isLabelersPref,
-} from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { Dialog } from "radix-ui";
@@ -13,6 +11,11 @@ import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { NotificationItem } from "~/routes/notifications";
 import { disabledLabelersAtom, slingshotURLAtom } from "~/utils/atoms";
 import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
+
+const {
+  isContentLabelPref,
+  isLabelersPref,
+} = ATPAPI.AppBskyActorDefs
 
 declare const __INSTANCE_MODEL__: boolean
 
