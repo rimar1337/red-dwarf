@@ -43,6 +43,11 @@ const router = createRouter({
   context: { queryClient },
   defaultPreload: "intent",
   scrollRestoration: true,
+  // getScrollRestorationKey: (location) => {
+  //   if (location.pathname.match(/\/profile\/.+\/post\/.+/))
+  //     return location.pathname
+  //   return location.state.__TSR_key!
+  // },
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
 });

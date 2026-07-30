@@ -84,6 +84,7 @@ export function PostEmbeds({
         rkey: postid?.rkey,
         i: number.toString(),
       },
+      resetScroll: false
     });
   }
 
@@ -145,6 +146,7 @@ export function PostEmbeds({
                 navigate({
                   to: "/profile/$did/post/$rkey",
                   params: { did: parsed.host, rkey: parsed.rkey },
+                  resetScroll: false
                 });
               }
             }}
@@ -290,6 +292,7 @@ export function PostEmbeds({
                 navigate({
                   to: "/profile/$did/post/$rkey",
                   params: { did: parsed.host, rkey: parsed.rkey },
+                  resetScroll: false
                 });
               }
             }}

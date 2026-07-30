@@ -242,6 +242,7 @@ export function UniversalPostRendererATURILoader_AppView({
         navigate({
           to: "/profile/$did/post/$rkey",
           params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
+          resetScroll: false
         })
       }
       onProfileClick={(e) => {
@@ -580,6 +581,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
         navigate({
           to: "/profile/$did/post/$rkey",
           params: { did: aturio.host, rkey: aturio.rkey },
+          resetScroll: false
         })
       }
       className="border-b border-gray-200 dark:border-gray-800 flex flex-row px-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
@@ -776,6 +778,7 @@ export function UniversalPostRendererRawRecordShim({
           navigate({
             to: "/profile/$did/post/$rkey",
             params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
+            resetScroll: false
           })
         }
         onProfileClick={(e) => {

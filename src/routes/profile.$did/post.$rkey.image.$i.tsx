@@ -44,6 +44,7 @@ function nextprev({
       i: nextIndex.toString(),
     },
     replace: true,
+    resetScroll: false
   });
 }
 

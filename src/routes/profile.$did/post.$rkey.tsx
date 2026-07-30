@@ -389,34 +389,63 @@ export function ProfilePostComponent({
   }
 
   const [parents, setParents] = React.useState<any[]>([]);
+  const [noParents, setNoParents] = React.useState(false);
   const [parentsLoading, setParentsLoading] = React.useState(false);
 
   const mainPostRef = React.useRef<HTMLDivElement>(null);
-  const hasPerformedInitialLayout = React.useRef(false);
+  //const hasPerformedInitialLayout = React.useRef(false);
+  const hasScrolled = React.useRef(false)
 
-  const [layoutReady, setLayoutReady] = React.useState(false);
+  //const [layoutReady, setLayoutReady] = React.useState(false);
 
+  // useLayoutEffect(() => {
+  //   if (!showMainPostRoute) return;
+  //   if (parents.length > 0 && mainPostRef.current) {
+  //     const mainPostElement = mainPostRef.current;
+
+  //     // if (!hasPerformedInitialLayout.current) {
+  //     //   const elementTop = mainPostElement.getBoundingClientRect().top;
+  //     //   const headerOffset = 70;
+
+  //     //   const targetScrollY = elementTop - headerOffset;
+
+  //     //   window.scrollBy(0, targetScrollY);
+
+  //     //   hasPerformedInitialLayout.current = true;
+  //     // }
+  //     mainPostElement.scrollIntoView({ behavior: 'instant', block: 'start'})
+
+  //     // todo idk what to do with this
+  //     // eslint-disable-next-line react-hooks/set-state-in-effect
+  //     // setLayoutReady(true);
+  //   }
+  // }, [parents, showMainPostRoute]);
+  
   useLayoutEffect(() => {
-    if (!showMainPostRoute) return;
-    if (parents.length > 0 && !layoutReady && mainPostRef.current) {
-      const mainPostElement = mainPostRef.current;
-
-      if (window.scrollY === 0 && !hasPerformedInitialLayout.current) {
-        const elementTop = mainPostElement.getBoundingClientRect().top;
-        const headerOffset = 70;
-
-        const targetScrollY = elementTop - headerOffset;
-
-        window.scrollBy(0, targetScrollY);
-
-        hasPerformedInitialLayout.current = true;
+    // console.log("USELAYOUTEFFECT: ", hasScrolled.current ? "true" : "false")
+    if (!hasScrolled.current) {
+      if (parents.length > 0 && !parentsLoading || noParents) {
+        // console.log("SETTING TRUE!! parents.length > 0 && !parentsLoading || noParents")
+        hasScrolled.current = true
+        mainPostRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' })
       }
-
-      // todo idk what to do with this
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLayoutReady(true);
+      // console.log("SCROLLINTOVIEW")
+      // const id1 = requestAnimationFrame(() => {
+      //   const id2 = requestAnimationFrame(() => {
+      //     // Effectively one full rendered frame later.
+      //     mainPostRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' })
+      //   })
+      //   cleanupId = id2
+      // })
+      // let cleanupId: number | undefined
+      // return () => {
+      //   cancelAnimationFrame(id1)
+      //   if (cleanupId !== undefined) {
+      //     cancelAnimationFrame(cleanupId)
+      //   }
+      // }
     }
-  }, [parents, layoutReady, showMainPostRoute]);
+  }, [parents])
 
   const [isAppviewEnabled] = useAtom(enableAppViewAtom);
   const loadablePrefs = useAtomValue(loadable(enableAppViewAtom));
@@ -426,16 +455,16 @@ export function ProfilePostComponent({
   const [appviewUrl] = useAtom(appviewUrlAtom);
   //const [slingshoturl] = useAtom(slingshotURLAtom)
 
-  React.useEffect(() => {
-    if (parentsLoading || !showMainPostRoute) {
-      setLayoutReady(false);
-    }
+  // React.useEffect(() => {
+  //   if (parentsLoading || !showMainPostRoute) {
+  //     setLayoutReady(false);
+  //   }
 
-    if (!mainPost?.value?.reply?.parent?.uri && !parentsLoading) {
-      setLayoutReady(true);
-      hasPerformedInitialLayout.current = true;
-    }
-  }, [parentsLoading, mainPost, showMainPostRoute]);
+  //   if (!mainPost?.value?.reply?.parent?.uri && !parentsLoading) {
+  //     setLayoutReady(true);
+  //     //hasPerformedInitialLayout.current = true;
+  //   }
+  // }, [parentsLoading, mainPost, showMainPostRoute]);
 
   const directparent = mainPost?.value.reply?.parent.uri;
 
@@ -445,14 +474,18 @@ export function ProfilePostComponent({
     //   setParentsLoading(true);
     //   return;
     // }
-    if (!mainPost?.value?.reply?.parent?.uri) {
+    if (!mainPost?.value) return;
+    if (!mainPost.value?.reply?.parent?.uri) {
+      // console.log("!mainPost?.value?.reply?.parent?.uri")
       setParents([]);
+      setNoParents(true)
       return;
     }
 
     let ignore = false;
     const fetchParents = async () => {
       setParentsLoading(true);
+      // console.log("setParentsLoading(true);")
       const parentChain: (
         | { uri: string; cid: string; value: any }
         | undefined
@@ -491,6 +524,7 @@ export function ProfilePostComponent({
       if (!ignore) {
         setParents(parentChain.reverse());
         setParentsLoading(false);
+        // console.log("setParentsLoading(false);")
       }
     };
 
@@ -555,7 +589,7 @@ export function ProfilePostComponent({
               />
             ))}
           </div>
-          <div ref={mainPostRef}>
+          <div ref={mainPostRef} className="scroll-mt-[70px]">
             <UniversalPostRendererATURILoader
               atUri={atUri!}
               detailed={true}

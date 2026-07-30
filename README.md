@@ -69,6 +69,14 @@ in place of a following feed you can just use any custom feed that implements th
 
 and for list feeds, you can just use something like graze or skyfeed to input a list of users and output a custom feed
 
+## Tanstack Router
+tanstack router is used as the base for most routing and scroll restoration. with a few exceptions.
+
+- the home page with the feed tabs uses a custom legacy tab system that should be phased out eventually.
+- all tabbed pages (such as Profile, Notifications, etc) use a shared tab component, with a custom navigation system, and a manual scroll restoration system (separate from tanstack router's).
+- the post thread route `/profile/$did/post/$rkey` uses a custom bespoke useLayoutEffect system with an important rule to remember that must be followed. all current and future `<Link />` and `navigate()` usages with a `to: '/profile/$did/post/$rkey'` param must also set `resetScroll: false` to not break this custom scroll restoration system.
+
+
 ## Icons
 this project uses Material icons. do not the light variant. sometimes i use `Mdi` if the icon needed doesnt exist in `MaterialSymbols`
 

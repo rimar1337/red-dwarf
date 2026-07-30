@@ -123,6 +123,7 @@ function handleImport({
               did: aturi.host,
               rkey: aturi.rkey,
             },
+            resetScroll: false
           });
           return;
         }
