@@ -14,16 +14,6 @@ import { renderSnack } from "./__root";
 import { NotificationItem } from "./notifications";
 import { SettingHeading } from "./settings";
 
-const {
-  isAdultContentPref,
-  isBskyAppStatePref,
-  isContentLabelPref,
-  isFeedViewPref,
-  isLabelersPref,
-  isMutedWordsPref,
-  isSavedFeedsPref,
-} = ATPAPI.AppBskyActorDefs
-
 declare const __INSTANCE_MODEL__: boolean
 
 
@@ -324,40 +314,40 @@ export function parsePreferences(
   for (const pref of prefs) {
     switch (pref.$type) {
       case "app.bsky.actor.defs#contentLabelPref":
-        if (!isContentLabelPref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isContentLabelPref(pref)) break;
         normalized.contentLabelPrefs[pref.label] = pref.visibility;
         break;
 
       case "app.bsky.actor.defs#mutedWordsPref":
-        if (!isMutedWordsPref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isMutedWordsPref(pref)) break;
         for (const item of pref.items ?? []) {
           normalized.mutedWords.push(item.value);
         }
         break;
 
       case "app.bsky.actor.defs#feedViewPref":
-        if (!isFeedViewPref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isFeedViewPref(pref)) break;
         normalized.feedViewPrefs[pref.feed] = pref;
         break;
 
       case "app.bsky.actor.defs#labelersPref":
-        if (!isLabelersPref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isLabelersPref(pref)) break;
         normalized.labelers.push(...(pref.labelers?.map((l) => l.did) ?? []));
         break;
 
       case "app.bsky.actor.defs#adultContentPref":
-        if (!isAdultContentPref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isAdultContentPref(pref)) break;
         normalized.adultContentEnabled = !!pref.enabled;
         break;
 
       case "app.bsky.actor.defs#savedFeedsPref":
-        if (!isSavedFeedsPref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isSavedFeedsPref(pref)) break;
         normalized.savedFeeds.pinned.push(...(pref.pinned ?? []));
         normalized.savedFeeds.saved.push(...(pref.saved ?? []));
         break;
 
       case "app.bsky.actor.defs#bskyAppStatePref":
-        if (!isBskyAppStatePref(pref)) break;
+        if (!ATPAPI.AppBskyActorDefs.isBskyAppStatePref(pref)) break;
         normalized.nuxs.push(...(pref.nuxs?.map((n) => n.id) ?? []));
         break;
 

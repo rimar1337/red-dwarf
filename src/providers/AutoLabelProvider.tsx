@@ -12,11 +12,6 @@ import { NotificationItem } from "~/routes/notifications";
 import { disabledLabelersAtom, slingshotURLAtom } from "~/utils/atoms";
 import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
 
-const {
-  isContentLabelPref,
-  isLabelersPref,
-} = ATPAPI.AppBskyActorDefs
-
 declare const __INSTANCE_MODEL__: boolean
 
 // higher prio overwrites lower prio
@@ -112,13 +107,13 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
   // 2. Identify Labeler DIDs & User Preferences (Use useMemo for stability)
   const userPrefLabelerDids = useMemo(
     () =>
-      prefs?.preferences?.find(isLabelersPref)?.labelers.map((l) => l.did) ??
+      prefs?.preferences?.find(ATPAPI.AppBskyActorDefs.isLabelersPref)?.labelers.map((l) => l.did) ??
       [],
     [prefs],
   );
 
   const userPrefContentLabelsRaw = useMemo(
-    () => prefs?.preferences?.filter(isContentLabelPref) ?? [],
+    () => prefs?.preferences?.filter(ATPAPI.AppBskyActorDefs.isContentLabelPref) ?? [],
     [prefs],
   );
 
