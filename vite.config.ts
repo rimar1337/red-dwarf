@@ -20,8 +20,17 @@ function shp(url: string): string {
   return url.replace(/^https?:\/\//, '');
 }
 
+// use via `declare const __INSTANCE_MODEL__: boolean`
+// feature is not finished, and so is disabled temporarily
+const INSTANCE_MODEL = false
+const VERSION_NUMBER = "v0.1.0"
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __INSTANCE_MODEL__: JSON.stringify(INSTANCE_MODEL),
+    __VERSION_NUMBER__: JSON.stringify(VERSION_NUMBER)
+  },
   plugins: [
     generateMetadataPlugin({
       prod: PROD_URL,

@@ -1,7 +1,13 @@
+/**
+ * THIS FILE IS NOT YET READY FOR GENERAL USAGE
+ */
+
+declare const __INSTANCE_MODEL__: boolean
 // please change the branding if you are not it hosting on reddwarf.app
 export const HOST_MAIN_TITLE = "Red Dwarf" // large text in branding
 export const HOST_SUB_TITLE = " .app" // smaller text in branding
 export const HOST_TITLE = HOST_MAIN_TITLE + HOST_SUB_TITLE // composite used in paragraphs
+export const HOST_CODE_URL = "https://tangled.org/whey.party/red-dwarf"
 // also replace favicon files and defaultpfp.png and check LogoSvg.tsx
 export const HOST_LOGO_USE_FAVICON = false; // ignores LogoSvg.tsx (recolorable svg) for a static image (the favicon)
 export const HOST_DEFAULT_HUE = 28; // default is 28 for red. mod 360. 294 is a nice purple
@@ -26,7 +32,28 @@ export const HOST_DESCRIPTION = "The official flagship hosted Red Dwarf instance
  * If the app detects that any required custom component is missing,
  * the application will refuse to run. Treat this file as critical.
  */
-export const HOST_ABOUT_MARKDOWN = `
+export const __APP__HOST_ABOUT_MARKDOWN = `
+## About Red Dwarf
+
+Red Dwarf is a Bluesky client that does not depend on Bluesky’s AppView servers.
+
+It preserves authoritative independence by fetching records directly from each user’s PDS (via Slingshot)
+and reconstructing relationships through backlinks (via Constellation), 
+while optionally using AppView as an optimization layer when available.
+
+## Hosting Your Own Instance
+
+Red Dwarf is open source. You can host your own instance specifically tailored to your needs. 
+Hosting your own instance gives you full control over policy, branding, and additional features. 
+
+Repository: [https://tangled.org/whey.party/red-dwarf](https://tangled.org/whey.party/red-dwarf)
+
+Instructions for setup, and configuration are included in the repository.
+
+<PolicyViewer />
+`
+
+export const __INSTANCE__HOST_ABOUT_MARKDOWN = `
 ## About this instance
 
 reddwarf.app is the flagship hosted instance of Red Dwarf, a Bluesky application built to provide an independent social experience. 
@@ -54,6 +81,9 @@ Instructions for setup, configuration, and labeler policies are included in the 
 
 <PolicyViewer />
 `
+
+export const HOST_ABOUT_MARKDOWN = __INSTANCE_MODEL__ ? __INSTANCE__HOST_ABOUT_MARKDOWN : __APP__HOST_ABOUT_MARKDOWN
+
 
 export const HOST_UNAUTHED_DEFAULT_FEEDS = [
   "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"

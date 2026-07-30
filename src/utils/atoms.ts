@@ -153,6 +153,12 @@ export const enableAppViewAtom = atomWithStorage<boolean>(
   "enableAppViewAtom",
   true,
 );
+
+export const enableBetaLabelersAtom = atomWithStorage<boolean>(
+  "enableBetaLabelersAtom",
+  false,
+);
+
 export const defaultAppviewURL = "https://api.bsky.app";
 export const appviewUrlAtom = atomWithStorage<string>(
   "AppviewUrl",

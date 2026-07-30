@@ -7,6 +7,8 @@ import {
 } from "~/providers/AutoLabelProvider";
 import { useQueryLabels } from "~/utils/useQuery";
 
+declare const __INSTANCE_MODEL__: boolean;
+
 export function normalizeLabels(
   labels: ATPAPI.ComAtprotoLabelDefs.Label[],
 ): ATPAPI.ComAtprotoLabelDefs.Label[] {
@@ -23,6 +25,25 @@ export function normalizeLabels(
   }
 
   return [...map.values()];
+}
+
+function useEmptyLabels(subjects: string[]): {
+  results: Map<
+    string,
+    { labelVerdict: "ignore"; labels: ATPAPI.ComAtprotoLabelDefs.Label[] }
+  >;
+  hydratedLabelDefs: Map<string, HydratedLabelValueDefinition>;
+} {
+  const results = new Map(
+    subjects.map((s) => [
+      s,
+      {
+        labelVerdict: "ignore" as const,
+        labels: [] as ATPAPI.ComAtprotoLabelDefs.Label[],
+      },
+    ]),
+  );
+  return { results, hydratedLabelDefs: new Map() };
 }
 
 function computeVerdict(
@@ -63,6 +84,13 @@ export function useAutoLabels({
   >;
   hydratedLabelDefs: Map<string, HydratedLabelValueDefinition>;
 } {
+  // __INSTANCE_MODEL__ is a build-time constant — DCE will eliminate the real branch
+  if (!__INSTANCE_MODEL__) {
+    // __INSTANCE_MODEL__ breaks linting
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useEmptyLabels(subjects);
+  }
+
   const {
     activeLabelerDids,
     mergedPrefContentLabels,
@@ -70,6 +98,8 @@ export function useAutoLabels({
     isLoading: configLoading,
     isError: configError,
     sendError,
+    // __INSTANCE_MODEL__ breaks linting
+    // eslint-disable-next-line react-hooks/rules-of-hooks
   } = useAutoLabelConfig();
 
   const results = new Map<
@@ -85,6 +115,9 @@ export function useAutoLabels({
   //   l: activeLabelerDids,
   //   strict: false,
   // });
+  
+  // __INSTANCE_MODEL__ breaks linting
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const res = useQueryLabels(subjects, activeLabelerDids);
   if (configLoading || res.isLoading) {
     for (const subject of subjects) {

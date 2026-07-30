@@ -20,9 +20,11 @@ import {
   defaultVideoCDN,
 } from "~/utils/atoms";
 
-import { ProfileSmall } from "./__root";
+import { HARDCODED_TEXT, ProfileSmall } from "./__root";
 import { NotificationItem } from "./notifications";
 //import { SettingHeading } from './settings';
+
+declare const __INSTANCE_MODEL__: boolean
 
 export const Route = createFileRoute("/about")({
   component: RouteComponent,
@@ -32,7 +34,7 @@ function RouteComponent() {
   return (
     <div className="">
       <Header
-        title={`About ${window.location.host}`}
+        title={`About ${__INSTANCE_MODEL__ ? window.location.host : "Red Dwarf"}`}
         backButtonCallback={() => {
           if (window.history.length > 1) {
             window.history.back();
@@ -45,17 +47,15 @@ function RouteComponent() {
       <div className="flex flex-col justify-around mt-4 mx-4 gap-4">
         <img className="rounded-sm" src={HOST_HERO} />
         <span className=" text-gray-500 dark:text-gray-400 leading-tight">
-          <span className=" font-bold">{window.location.host}</span> is a Red
-          Dwarf instance that you can use to participate in the Bluesky social
-          network.
+          <span className=" font-bold">{__INSTANCE_MODEL__ ? window.location.host : "Red Dwarf"}</span> {HARDCODED_TEXT}
         </span>
         {/* <img className="rounded-sm" src={HOST_HERO} /> */}
-        <span className=" text-gray-500 dark:text-gray-400">
+        {__INSTANCE_MODEL__ && (<span className=" text-gray-500 dark:text-gray-400">
           {HOST_DESCRIPTION}
-        </span>
+        </span>)}
         <div className="flex flex-col gap-1 p-4 border-1 border-gray-200 dark:border-gray-700 rounded-3xl">
           <span className="text-gray-500 dark:text-gray-400 font-bold">
-            ADMINISTERED BY:
+            {__INSTANCE_MODEL__ ? "ADMINISTERED BY:" : "APP PROFILE:"}
           </span>
           <ProfileSmall did={HOST_ADMIN} />
         </div>
@@ -220,20 +220,24 @@ function PolicyRenderer() {
   return (
     <>
       {/* settings heading or about heading? */}
-      <Heading3 title="Instance Configuration" />
-      <KeyValueGrid
-        items={[
-          {
-            label: "PDS Signups (Account Storage):",
-            value: HOST_SIGNUP_PDS || "",
-          },
-          {
-            label: "Labelmerge (Label Cache):",
-            value: HOST_LABELMERGE,
-          },
-        ]}
-      />
-      <Heading3 title="Instance Defaults" />
+      {__INSTANCE_MODEL__ && (
+        <>
+          <Heading3 title={`Instance Configuration`} />
+          <KeyValueGrid
+            items={[
+              {
+                label: "PDS Signups (Account Storage):",
+                value: HOST_SIGNUP_PDS || "",
+              },
+              {
+                label: "Labelmerge (Label Cache):",
+                value: HOST_LABELMERGE,
+              },
+            ]}
+          />
+        </>
+      )}
+      <Heading3 title={`${__INSTANCE_MODEL__ ? "Instance Defaults" : "Defaults"}`} />
       <KeyValueGrid
         items={[
           {
@@ -264,19 +268,23 @@ function PolicyRenderer() {
         ]}
       />
       {/* {hostmandate && (<Heading2 title="Host-Mandated Labelers" />)} */}
-      <Heading3 title="General Moderation" />
-      {hostmandate && <Heading4 title="Host-Mandated Labelers" />}
-      {hostmandate?.map((labeler) => {
-        return (
-          // todo this sucks
-          <NotificationItem
-            key={labeler}
-            notification={labeler}
-            labeler={true}
-            disablefollow={true}
-          />
-        );
-      })}
+      {__INSTANCE_MODEL__ && (
+        <>
+          <Heading3 title="General Moderation" />
+          {hostmandate && <Heading4 title="Host-Mandated Labelers" />}
+          {hostmandate?.map((labeler) => {
+            return (
+              // todo this sucks
+              <NotificationItem
+                key={labeler}
+                notification={labeler}
+                labeler={true}
+                disablefollow={true}
+              />
+            );
+          })}
+        </>
+      )}
       <div className="h-[300px] w-auto" />
     </>
   );

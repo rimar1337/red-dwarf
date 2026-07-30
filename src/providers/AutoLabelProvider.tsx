@@ -14,6 +14,8 @@ import { NotificationItem } from "~/routes/notifications";
 import { disabledLabelersAtom, slingshotURLAtom } from "~/utils/atoms";
 import { useQueryIdentity, useQueryPreferences } from "~/utils/useQuery";
 
+declare const __INSTANCE_MODEL__: boolean
+
 // higher prio overwrites lower prio
 export const LABEL_PRIO_DEFAULT = 0;
 export const LABEL_PRIO_USER = 5;
@@ -67,6 +69,10 @@ export function useAutoLabelConfig(): AutoLabelConfig {
 }
 
 export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
+  if (!__INSTANCE_MODEL__) {
+    return <>{children}</>;
+  }
+
   const { agent, status } = useAuth();
   const [slingshoturl] = useAtom(slingshotURLAtom);
   const queryClient = useQueryClient();

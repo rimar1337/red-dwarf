@@ -23,6 +23,9 @@ import { renderSnack } from "./__root";
 import { NotificationItem } from "./notifications";
 import { SettingHeading } from "./settings";
 
+declare const __INSTANCE_MODEL__: boolean
+
+
 const FOUR_GLOBAL_LABELS = [
   "porn",
   "sexual",
@@ -120,7 +123,7 @@ function RouteComponent() {
             window.location.assign("/");
           }
         }}
-        bottomBorderDisabled={true}
+      //bottomBorderDisabled={true}
       />
       {/* <SettingHeading title="Moderation Tools" />
       <p>
@@ -145,94 +148,100 @@ function RouteComponent() {
         limited to: Interaction settings, Muted Words & Tags, Moderation lists,
         Muted accounts, Blocked accounts, Verification settings
       </div>
-      <SettingHeading title="Global Content Filters" />
-      <div>
-        <div className="flex items-center gap-4 px-4 py-2 border-b">
-          <label
-            htmlFor={`switch-${"hardcoded"}`}
-            className="flex flex-row flex-1"
-          >
-            <div className="flex flex-col">
-              <span className="text-md">{"Adult Content"}</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {"Enable adult content"}
-              </span>
-            </div>
-          </label>
+      {__INSTANCE_MODEL__ &&
+        (
+          <>
+            <SettingHeading title="Global Content Filters" />
+            <div>
+              <div className="flex items-center gap-4 px-4 py-2 border-b">
+                <label
+                  htmlFor={`switch-${"hardcoded"}`}
+                  className="flex flex-row flex-1"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-md">{"Adult Content"}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {"Enable adult content"}
+                    </span>
+                  </div>
+                </label>
 
-          <Switch.Root
-            id={`switch-${"hardcoded"}`}
-            checked={parsedPref?.adultContentEnabled}
-            onCheckedChange={() => {
-              renderSnack({
-                title: "Sorry... Modifying preferences is not implemented yet",
-                description: "You can use another app to change preferences",
-                //button: { label: 'Try Again', onClick: () => console.log('whatever') },
-              });
-            }}
-            className="m3switch root"
-          >
-            <Switch.Thumb className="m3switch thumb " />
-          </Switch.Root>
-        </div>
+                <Switch.Root
+                  id={`switch-${"hardcoded"}`}
+                  checked={parsedPref?.adultContentEnabled}
+                  onCheckedChange={() => {
+                    renderSnack({
+                      title: "Sorry... Modifying preferences is not implemented yet",
+                      description: "You can use another app to change preferences",
+                      //button: { label: 'Try Again', onClick: () => console.log('whatever') },
+                    });
+                  }}
+                  className="m3switch root"
+                >
+                  <Switch.Thumb className="m3switch thumb " />
+                </Switch.Root>
+              </div>
 
-        {/* <TestModeration subject="did:plc:q7suwaz53ztc4mbiqyygbn43" />
+              {/* <TestModeration subject="did:plc:q7suwaz53ztc4mbiqyygbn43" />
         <TestModeration subject="did:plc:fpruhuo22xkm5o7ttr2ktxdo" />
         <TestModeration subject="did:plc:6ayddqghxhciedbaofoxkcbs" />
         <TestModeration subject="did:plc:za2ezszbzyqer7eylvtgapd5" />
         <TestModeration subject="did:plc:ia76kvnndjutgedggx2ibrem" />
         <TestModeration subject="did:plc:w2wbinubagmo4hlxx2ik5rrp" /> */}
-        <div className="">
-          {Object.entries(fourGlobalPrefs).map(([label, visibility]) => (
-            <div
-              key={label}
-              className="flex justify-between border-b py-2 px-4"
-            >
-              <label
-                htmlFor={`switch-${"hardcoded"}`}
-                className="flex flex-row flex-1"
-              >
-                <div className="flex flex-col">
-                  <span className="text-md">
-                    {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].title}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].desc}
-                  </span>
-                </div>
-              </label>
-              {/* <span className="text-md text-gray-500 dark:text-gray-400">
+              <div className="">
+                {Object.entries(fourGlobalPrefs).map(([label, visibility]) => (
+                  <div
+                    key={label}
+                    className="flex justify-between border-b py-2 px-4"
+                  >
+                    <label
+                      htmlFor={`switch-${"hardcoded"}`}
+                      className="flex flex-row flex-1"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-md">
+                          {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].title}
+                        </span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {FOUR_GLOBAL_LABELS_TEXT[label as FourGlobalLabel].desc}
+                        </span>
+                      </div>
+                    </label>
+                    {/* <span className="text-md text-gray-500 dark:text-gray-400">
                   {visibility}
                 </span> */}
-              <TripleToggle value={visibility as "ignore" | "warn" | "hide"} />
+                    <TripleToggle value={visibility as "ignore" | "warn" | "hide"} />
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-      {/* probably replace "Advanced" with "User Subscribed Moderation Labelers" or something */}
-      {hostmandate && <SettingHeading title="Host-Mandated Labelers" />}
-      {hostmandate?.map((labeler) => {
-        return (
-          // todo this sucks
-          <NotificationItem
-            key={labeler}
-            notification={labeler}
-            labeler={true}
-            disablefollow={true}
-          />
-        );
-      })}
-      <SettingHeading title="Subscribed Labelers" />
-      {parsedPref?.labelers.map((labeler) => {
-        return (
-          // todo this sucks
-          <NotificationItem
-            key={labeler}
-            notification={labeler}
-            labeler={true}
-          />
-        );
-      })}
+            {/* probably replace "Advanced" with "User Subscribed Moderation Labelers" or something */}
+            {hostmandate && <SettingHeading title="Host-Mandated Labelers" />}
+            {hostmandate?.map((labeler) => {
+              return (
+                // todo this sucks
+                <NotificationItem
+                  key={labeler}
+                  notification={labeler}
+                  labeler={true}
+                  disablefollow={true}
+                />
+              );
+            })}
+            <SettingHeading title="Subscribed Labelers" />
+            {parsedPref?.labelers.map((labeler) => {
+              return (
+                // todo this sucks
+                <NotificationItem
+                  key={labeler}
+                  notification={labeler}
+                  labeler={true}
+                />
+              );
+            })}
+          </>
+        )
+      }
     </div>
   );
 }
@@ -266,11 +275,10 @@ export function TripleToggle({
               });
               onChange?.(opt);
             }}
-            className={`flex-1 px-3 py-1.5 rounded-full transition-colors ${
-              isActive
+            className={`flex-1 px-3 py-1.5 rounded-full transition-colors ${isActive
                 ? "bg-gray-400 dark:bg-gray-600 text-white"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
-            }`}
+              }`}
           >
             {" "}
             {ignoreToShow(opt).charAt(0).toUpperCase() +

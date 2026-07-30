@@ -312,6 +312,7 @@ export function UniversalPostRendererATURILoader_Microcosm({
   filterMustHaveMedia,
   filterMustBeReply,
 }: UniversalPostRendererATURILoaderProps) {
+  // todo remove this once tree rendering is implemented, use a prop like isTree
   const TEMPLINEAR = true;
   const parsed = new AtUri(atUri);
   const did = parsed?.host;

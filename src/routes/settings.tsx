@@ -18,6 +18,7 @@ import {
   defaultslingshotURL,
   defaultVideoCDN,
   enableAppViewAtom,
+  enableBetaLabelersAtom,
   enableBitesAtom,
   enableBridgyTextAtom,
   enableWafrnTextAtom,
@@ -205,6 +206,15 @@ export function Settings() {
         description={"Show the original text of posts from Wafrn instances"}
         //init={false}
       />
+      {/* <div className="h-4" />
+      <SwitchSetting
+        atom={enableBetaLabelersAtom}
+        title={"Labelers"}
+        description={
+          "Enable moderation and informational labelers. Warning: Very unoptimized"
+        }
+        //init={false}
+      /> */}
       <div className="h-4" />
       <SwitchSetting
         atom={enableAppViewAtom}
