@@ -26,7 +26,7 @@ const INSTANCE_MODEL = false
 // disable moderation page for current deployment
 const MODERATION_PAGE = false
 // todo: 
-const VERSION_NUMBER = "v0.0.1-preview"
+const VERSION_NUMBER = "v0.0.2-preview"
 
 // https://vitejs.dev/config/
 export default defineConfig({

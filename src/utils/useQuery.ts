@@ -29,7 +29,7 @@ export function constructIdentityQuery(
   slingshoturl?: string,
 ) {
   return queryOptions({
-    queryKey: ["identity", didorhandle],
+    queryKey: ["identity+1", didorhandle],
     queryFn: async () => {
       if (!didorhandle) return undefined as undefined;
       const res = await fetch(
@@ -83,7 +83,7 @@ export function constructFastAVIdentityQuery(
   enabled?: boolean,
 ) {
   return queryOptions({
-    queryKey: ["identity", didorhandle],
+    queryKey: ["fastAVidentity", didorhandle],
     queryFn: async () => {
       try {
         console.log("whathuh trying", ["savpq", didorhandle]);
