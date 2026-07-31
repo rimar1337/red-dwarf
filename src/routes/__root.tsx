@@ -57,9 +57,10 @@ import {
   useQueryProfile,
 } from "~/utils/useQuery";
 
-declare const __INSTANCE_MODEL__: boolean
-declare const __VERSION_NUMBER__: string
-export const HARDCODED_TEXT = ` is ${__INSTANCE_MODEL__ ? " a hosted Red Dwarf instance" : " an app"} that you can use to participate in the Bluesky social network.`
+declare const __INSTANCE_MODEL__: boolean;
+declare const __MODERATION_PAGE__: boolean;
+declare const __VERSION_NUMBER__: string;
+export const HARDCODED_TEXT = ` is ${__INSTANCE_MODEL__ ? " a hosted Red Dwarf instance" : " an app"} that you can use to participate in the Bluesky social network.`;
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -102,14 +103,15 @@ export const Route = createRootRouteWithContext<{
   }),
   errorComponent: import.meta.env.DEV
     ? (props) => (
-      <RootDocument>
-        <DefaultCatchBoundary {...props} />
-      </RootDocument>
-    ) : (props) => (
-      <RootDocument>
-        <DefaultCatchBoundary {...props} />
-      </RootDocument>
-    ),
+        <RootDocument>
+          <DefaultCatchBoundary {...props} />
+        </RootDocument>
+      )
+    : (props) => (
+        <RootDocument>
+          <DefaultCatchBoundary {...props} />
+        </RootDocument>
+      ),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
 });
@@ -157,11 +159,11 @@ export function renderSnack({
       button={
         button?.label
           ? {
-            label: button?.label,
-            onClick: () => {
-              button?.onClick?.();
-            },
-          }
+              label: button?.label,
+              onClick: () => {
+                button?.onClick?.();
+              },
+            }
           : undefined
       }
     />
@@ -227,10 +229,8 @@ function Snack(props: ToastProps) {
   );
 }
 
-function DotDivider(){
-  return (
-    <span> · </span>
-  )
+function DotDivider() {
+  return <span> · </span>;
 }
 
 /* Types */
@@ -270,20 +270,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     | "moderation"
     | "about"
     | "home" = isFeeds
-      ? "feeds"
-      : isSearch
-        ? "search"
-        : isSettings
-          ? "settings"
-          : isNotifications
-            ? "notifications"
-            : isProfile
-              ? "profile"
-              : isModeration
-                ? "moderation"
-                : isAbout
-                  ? "about"
-                  : "home";
+    ? "feeds"
+    : isSearch
+      ? "search"
+      : isSettings
+        ? "settings"
+        : isNotifications
+          ? "notifications"
+          : isProfile
+            ? "profile"
+            : isModeration
+              ? "moderation"
+              : isAbout
+                ? "about"
+                : "home";
 
   const [, setComposerPost] = useAtom(composerAtom);
 
@@ -367,19 +367,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }
             text="Feeds"
           />
-          <MaterialNavItem
-            visible={!!agent?.did}
-            InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
-            ActiveIcon={<IconMdiShield className="w-6 h-6" />}
-            active={locationEnum === "moderation"}
-            onClickCallbback={() =>
-              navigate({
-                to: "/moderation",
-                //params: { did: agent.assertDid },
-              })
-            }
-            text="Moderation"
-          />
+          {__MODERATION_PAGE__ && (
+            <MaterialNavItem
+              visible={!!agent?.did}
+              InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
+              ActiveIcon={<IconMdiShield className="w-6 h-6" />}
+              active={locationEnum === "moderation"}
+              onClickCallbback={() =>
+                navigate({
+                  to: "/moderation",
+                  //params: { did: agent.assertDid },
+                })
+              }
+              text="Moderation"
+            />
+          )}
           <MaterialNavItem
             visible={!!agent?.did}
             InactiveIcon={
@@ -666,20 +668,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             }
             text="Feeds"
           />
-          <MaterialNavItem
-            small
-            visible={!!agent?.did}
-            InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
-            ActiveIcon={<IconMdiShield className="w-6 h-6" />}
-            active={locationEnum === "moderation"}
-            onClickCallbback={() =>
-              navigate({
-                to: "/moderation",
-                //params: { did: agent.assertDid },
-              })
-            }
-            text="Moderation"
-          />
+          {__MODERATION_PAGE__ && (
+            <MaterialNavItem
+              small
+              visible={!!agent?.did}
+              InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
+              ActiveIcon={<IconMdiShield className="w-6 h-6" />}
+              active={locationEnum === "moderation"}
+              onClickCallbback={() =>
+                navigate({
+                  to: "/moderation",
+                  //params: { did: agent.assertDid },
+                })
+              }
+              text="Moderation"
+            />
+          )}
           <MaterialNavItem
             small
             visible={!!agent?.did}
@@ -778,17 +782,28 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             {!agent?.did && (
               <>
                 <span className=" text-gray-500 dark:text-gray-400 text-sm leading-tight">
-                  <span className=" font-bold">{__INSTANCE_MODEL__ ? window.location.host : "Red Dwarf"}</span>{HARDCODED_TEXT}
+                  <span className=" font-bold">
+                    {__INSTANCE_MODEL__ ? window.location.host : "Red Dwarf"}
+                  </span>
+                  {HARDCODED_TEXT}
                 </span>
                 <img className="rounded-sm" src={HOST_HERO} />
-                {__INSTANCE_MODEL__ && (<span className=" text-gray-500 dark:text-gray-400 text-sm">
-                  {HOST_DESCRIPTION}
-                </span>)}
+                {__INSTANCE_MODEL__ && (
+                  <span className=" text-gray-500 dark:text-gray-400 text-sm">
+                    {HOST_DESCRIPTION}
+                  </span>
+                )}
                 <div className="flex flex-col gap-1 ">
                   <span className="text-gray-500 dark:text-gray-400 text-sm font-bold">
                     {__INSTANCE_MODEL__ ? "ADMINISTERED BY:" : "APP PROFILE:"}
                   </span>
-                  <ProfileSmall did={__INSTANCE_MODEL__ ? HOST_ADMIN : "did:plc:tufumi46dykq4fzwtp2ur6kx"} />
+                  <ProfileSmall
+                    did={
+                      __INSTANCE_MODEL__
+                        ? HOST_ADMIN
+                        : "did:plc:tufumi46dykq4fzwtp2ur6kx"
+                    }
+                  />
                 </div>
               </>
             )}
@@ -799,9 +814,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             {/* TODO: add red dwarf the software policy along with instance policy
             here */}
             <span className="shrink-0 font-bold">Red Dwarf:</span>
-            <Link to="/about"><span className=" underline">About</span></Link>
+            <Link to="/about">
+              <span className=" underline">About</span>
+            </Link>
             <DotDivider />
-            <a href={HOST_CODE_URL} rel="noopener" target="_blank" className="underline wrap-anywhere break-all">View source code</a>
+            <a
+              href={HOST_CODE_URL}
+              rel="noopener"
+              target="_blank"
+              className="underline wrap-anywhere break-all"
+            >
+              View source code
+            </a>
             <DotDivider />
             <span className="shrink-0">{__VERSION_NUMBER__ || "v????"}</span>
           </div>
@@ -1038,10 +1062,11 @@ export function MaterialNavItem({
   if (small)
     return (
       <button
-        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${active
+        className={`flex flex-col items-center rounded-lg transition-colors ${small} gap-1 ${
+          active
             ? "text-gray-900 dark:text-gray-100"
             : "text-gray-600 dark:text-gray-400"
-          }`}
+        }`}
         onClick={() => {
           onClickCallbback();
         }}
@@ -1061,10 +1086,11 @@ export function MaterialNavItem({
 
   return (
     <button
-      className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${active
+      className={`flex flex-row h-12 min-h-12 max-h-12 px-4 py-0.5 w-full items-center rounded-full transition-colors flex-1 gap-1 ${
+        active
           ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-900"
-        }`}
+      }`}
       onClick={() => {
         onClickCallbback();
       }}
@@ -1099,10 +1125,11 @@ function MaterialPillButton({
   const active = false;
   return (
     <button
-      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${active
+      className={`flex border border-gray-400 dark:border-gray-400 flex-row h-12 min-h-12 max-h-12 ${small ? "p-3 w-12" : "px-4 py-0.5"} items-center rounded-full transition-colors gap-1 ${
+        active
           ? "text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:bg-gray-700 bg-gray-200 hover:dark:bg-gray-600"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800"
-        }`}
+      }`}
       onClick={() => {
         onClickCallbback();
       }}

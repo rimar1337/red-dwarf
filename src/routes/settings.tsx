@@ -31,6 +31,8 @@ import {
 
 import { MaterialNavItem } from "./__root";
 
+declare const __MODERATION_PAGE__: boolean
+
 export const Route = createFileRoute("/settings")({
   component: Settings,
 });
@@ -87,19 +89,21 @@ export function Settings() {
           }
           text="Feeds"
         />
-        <MaterialNavItem
-          visible={!!agent?.did}
-          InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
-          ActiveIcon={<IconMdiShield className="w-6 h-6" />}
-          active={false}
-          onClickCallbback={() =>
-            navigate({
-              to: "/moderation",
-              //params: { did: agent.assertDid },
-            })
-          }
-          text="Moderation"
-        />
+        {__MODERATION_PAGE__ && (
+          <MaterialNavItem
+            visible={!!agent?.did}
+            InactiveIcon={<IconMdiShieldOutline className="w-6 h-6" />}
+            ActiveIcon={<IconMdiShield className="w-6 h-6" />}
+            active={false}
+            onClickCallbback={() =>
+              navigate({
+                to: "/moderation",
+                //params: { did: agent.assertDid },
+              })
+            }
+            text="Moderation"
+          />
+        )}
         <MaterialNavItem
           visible={true}
           InactiveIcon={<IconMaterialSymbolsInfoOutline className="w-6 h-6" />}
