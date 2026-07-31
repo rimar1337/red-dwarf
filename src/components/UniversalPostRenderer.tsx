@@ -192,6 +192,10 @@ export function UniversalPostRendererATURILoader_AppView({
   const navigate = useNavigate();
   const parsedaturi = new AtUri(atUri);
 
+  const [selfBottomBorder, setSelfBottomBorder] = useState(true)
+  const [selfBottomReplyLine, setSelfBottomReplyLine] = useState(false)
+
+  // todo: consider providing an option to opt into constellation counts instead of the appview's
   const { data, isLoading, isEnabled, isError, error } =
     useQuerySingularAVPostQuery({ aturi: atUri, avurl: avurl });
 
@@ -267,63 +271,94 @@ export function UniversalPostRendererATURILoader_AppView({
 
   if (filterMustBeReply && !thereply) return null;
 
+  const replies = data?.replyCount || 0
+
+  function selfBottomBorderCallback(selfBottomBorderValue: boolean): void {
+    setSelfBottomBorder(selfBottomBorderValue)
+  }
+  function selfBottomReplyLineCallback(setSelfReplyLineValue: boolean): void {
+    setSelfBottomReplyLine(setSelfReplyLineValue)
+  }
+
   return (
-    <UniversalPostRenderer
-      referral={["appview"]}
-      expanded={detailed}
-      onPostClick={() =>
-        parsedaturi &&
-        navigate({
-          to: "/profile/$did/post/$rkey",
-          params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
-          resetScroll: false,
-        })
-      }
-      onProfileClick={(e) => {
-        e.stopPropagation();
-        if (parsedaturi) {
+    <>
+      <UniversalPostRenderer
+        referral={["appview"]}
+        expanded={detailed}
+        onPostClick={() =>
+          parsedaturi &&
           navigate({
-            to: "/profile/$did",
-            params: { did: parsedaturi.host },
-          });
+            to: "/profile/$did/post/$rkey",
+            params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
+            resetScroll: false,
+          })
         }
-      }}
-      post={
-        data || {
-          uri: atUri,
-          cid: atUri,
-          author: {
+        onProfileClick={(e) => {
+          e.stopPropagation();
+          if (parsedaturi) {
+            navigate({
+              to: "/profile/$did",
+              params: { did: parsedaturi.host },
+            });
+          }
+        }}
+        post={
+          data || {
+            uri: atUri,
+            cid: atUri,
+            author: {
+              did: parsedaturi.host,
+              handle: parsedaturi.host,
+            },
+            record: {},
+            indexedAt: "",
+          }
+        } // todo: this is bad. just make it so that UPR allows missing data
+        uprrrsauthor={{
+          ...(data?.author || {
             did: parsedaturi.host,
             handle: parsedaturi.host,
-          },
-          record: {},
-          indexedAt: "",
-        }
-      } // todo: this is bad. just make it so that UPR allows missing data
-      uprrrsauthor={{
-        ...(data?.author || {
-          did: parsedaturi.host,
-          handle: parsedaturi.host,
-        }),
-        $type: "app.bsky.actor.defs#profileViewDetailed",
-      }}
-      salt={atUri}
-      bottomReplyLine={bottomReplyLine}
-      topReplyLine={topReplyLine}
-      bottomBorder={bottomBorder}
-      feedviewpost={feedviewpost}
-      feedviewpostreplyhandle={feedviewpostreplyhandle}
-      repostedby={feedviewpostrepostedbyhandle}
-      style={style}
-      ref={ref}
-      dataIndexPropPass={dataIndexPropPass}
-      nopics={nopics}
-      concise={concise}
-      lightboxCallback={lightboxCallback}
-      maxReplies={maxReplies}
-      isQuote={isQuote}
-      constellationLinks={{}}
-    />
+          }),
+          $type: "app.bsky.actor.defs#profileViewDetailed",
+        }}
+        salt={atUri}
+        bottomReplyLine={selfBottomReplyLine}
+        topReplyLine={topReplyLine}
+        bottomBorder={selfBottomBorder}
+        feedviewpost={feedviewpost}
+        feedviewpostreplyhandle={feedviewpostreplyhandle}
+        repostedby={feedviewpostrepostedbyhandle}
+        style={style}
+        ref={ref}
+        dataIndexPropPass={dataIndexPropPass}
+        nopics={nopics}
+        concise={concise}
+        lightboxCallback={lightboxCallback}
+        maxReplies={maxReplies}
+        isQuote={isQuote}
+        constellationLinks={{}}
+      />
+      {replies > 0 && (
+        <MicrocosmReplyChainFetcher
+          atUri={atUri}
+          maxReplies={maxReplies}
+          replies={replies}
+          isQuote={isQuote}
+          bottomBorder={bottomBorder}
+          bottomReplyLine={bottomReplyLine}
+          feedviewpost={feedviewpost}
+          repostedby={repostedby}
+          style={style}
+          ref={ref}
+          dataIndexPropPass={dataIndexPropPass}
+          nopics={nopics}
+          concise={concise}
+          lightboxCallback={lightboxCallback}
+          bottomBorderCallback={selfBottomBorderCallback}
+          bottomReplyLineCallback={selfBottomReplyLineCallback}
+        />
+      )}
+    </>
   );
 }
 export function UniversalPostRendererATURILoader_Microcosm({
@@ -370,35 +405,27 @@ export function UniversalPostRendererATURILoader_Microcosm({
     resolved ? `at://${resolved?.did}/app.bsky.actor.profile/self` : undefined,
   );
 
-  const [likes, setLikes] = React.useState<number | null>(null);
-  const [reposts, setReposts] = React.useState<number | null>(null);
-  const [replies, setReplies] = React.useState<number | null>(null);
+  //const [likes, setLikes] = React.useState<number | null>(null);
+  //const [reposts, setReposts] = React.useState<number | null>(null);
+  //const [replies, setReplies] = React.useState<number | null>(null);
 
-  React.useEffect(() => {
-    setLikes(
-      links
-        ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
-        : null,
-    );
-    setReposts(
-      links
-        ? // add the two quote forms as well
-          links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records +
-            // .embed.record.uri
-            links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]
-              ?.records +
-            // .embed.record.record.uri
-            links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]
-              ?.records || 0
-        : null,
-    );
-    setReplies(
-      links
-        ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]
-            ?.records || 0
-        : null,
-    );
-  }, [links]);
+  const likes = links
+    ? links?.links?.["app.bsky.feed.like"]?.[".subject.uri"]?.records || 0
+    : null;
+
+  const reposts = links
+    ? // add the two quote forms as well
+      links?.links?.["app.bsky.feed.repost"]?.[".subject.uri"]?.records +
+        // .embed.record.uri
+        links?.links?.["app.bsky.feed.post"]?.[".embed.record.uri"]?.records +
+        // .embed.record.record.uri
+        links?.links?.["app.bsky.feed.post"]?.[".embed.record.record.uri"]
+          ?.records || 0
+    : null;
+
+  const replies = links
+    ? links?.links?.["app.bsky.feed.post"]?.[".reply.parent.uri"]?.records || 0
+    : null;
 
   const [constellationurl] = useAtom(constellationURLAtom);
 
@@ -565,6 +592,210 @@ export function UniversalPostRendererATURILoader_Microcosm({
         filterMustHaveMedia={filterMustHaveMedia}
         filterMustBeReply={filterMustBeReply}
       />
+      <MicrocosmReplyChainRenderer
+        atUri={atUri}
+        maxReplies={maxReplies}
+        replies={replies}
+        isQuote={isQuote}
+        oldestOpsReplyElseNewestNonOpsReply={
+          oldestOpsReplyElseNewestNonOpsReply
+        }
+        bottomBorder={bottomBorder}
+        feedviewpost={feedviewpost}
+        repostedby={repostedby}
+        style={style}
+        ref={ref}
+        dataIndexPropPass={dataIndexPropPass}
+        nopics={nopics}
+        concise={concise}
+        lightboxCallback={lightboxCallback}
+      />
+    </>
+  );
+}
+
+// todo: consider moving this entire logic inside of _AppView
+function MicrocosmReplyChainFetcher({
+  atUri,
+  maxReplies,
+  replies,
+  isQuote,
+  bottomBorder = true,
+  bottomReplyLine = false,
+  feedviewpost = false,
+  repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
+  concise,
+  lightboxCallback,
+  bottomBorderCallback,
+  bottomReplyLineCallback,
+}: {
+  atUri: string;
+  maxReplies?: number;
+  replies: number | null;
+  isQuote?: boolean;
+  bottomBorder?: boolean;
+  bottomReplyLine?: boolean;
+  feedviewpost?: boolean;
+  repostedby?: string;
+  style?: React.CSSProperties;
+  ref?: React.RefObject<HTMLDivElement>;
+  dataIndexPropPass?: number;
+  nopics?: boolean;
+  concise?: boolean;
+  lightboxCallback?: (d: LightboxProps) => void;
+  bottomBorderCallback?: (bottomBorder: boolean) => void;
+  bottomReplyLineCallback?: (bottomReplyLine: boolean) => void;
+}) {
+  // todo remove this once tree rendering is implemented, use a prop like isTree
+  const TEMPLINEAR = true
+  const [constellationurl] = useAtom(constellationURLAtom);
+
+  const infinitequeryresults = useInfiniteQuery({
+    ...yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks(
+      {
+        constellation: constellationurl,
+        method: "/links",
+        target: atUri,
+        collection: "app.bsky.feed.post",
+        path: ".reply.parent.uri",
+      },
+    ),
+    enabled: !!atUri && !!maxReplies && !isQuote,
+  });
+
+  const { data: repliesData } = infinitequeryresults;
+
+  useEffect(() => {
+    if (!maxReplies || isQuote || TEMPLINEAR) return;
+    if (
+      infinitequeryresults.hasNextPage &&
+      !infinitequeryresults.isFetchingNextPage
+    ) {
+      console.log("Fetching the next page...");
+      infinitequeryresults.fetchNextPage();
+    }
+  }, [TEMPLINEAR, infinitequeryresults, isQuote, maxReplies]);
+
+  const replyAturis = repliesData
+    ? repliesData.pages.flatMap((page) =>
+        page
+          ? page.linking_records.map((record) => {
+              const aturi = `at://${record.did}/${record.collection}/${record.rkey}`;
+              return aturi;
+            })
+          : [],
+      )
+    : [];
+  const { oldestOpsReply, oldestOpsReplyElseNewestNonOpsReply } = (() => {
+    if (isQuote || !replyAturis || replyAturis.length === 0 || !maxReplies)
+      return {
+        oldestOpsReply: undefined,
+        oldestOpsReplyElseNewestNonOpsReply: undefined,
+      };
+
+    const opdid = new AtUri(atUri).host;
+
+    const opReplies = replyAturis.filter(
+      (aturi) => new AtUri(aturi).host === opdid,
+    );
+
+    if (opReplies.length > 0) {
+      const opreply = opReplies[opReplies.length - 1];
+      return {
+        oldestOpsReply: opreply,
+        oldestOpsReplyElseNewestNonOpsReply: opreply,
+      };
+    } else {
+      return {
+        oldestOpsReply: undefined,
+        oldestOpsReplyElseNewestNonOpsReply: replyAturis[0],
+      };
+    }
+  })();
+
+  const parentBottomBorder =
+          maxReplies && oldestOpsReplyElseNewestNonOpsReply
+            ? false
+            : maxReplies === 0
+              ? false
+              : bottomBorder
+  
+  const parentBottomReplyLine =
+          maxReplies && oldestOpsReplyElseNewestNonOpsReply
+            ? true
+            : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
+              ? false
+              : maxReplies === 0 && (!replies || (!!replies && replies === 0))
+                ? false
+                : bottomReplyLine
+
+  if (bottomBorderCallback) {
+    bottomBorderCallback(parentBottomBorder)
+  }
+  if (bottomReplyLineCallback) {
+    bottomReplyLineCallback(parentBottomReplyLine)
+  }
+
+  return (
+    <MicrocosmReplyChainRenderer
+      atUri={atUri}
+      maxReplies={maxReplies}
+      replies={replies}
+      isQuote={isQuote}
+      oldestOpsReplyElseNewestNonOpsReply={
+        oldestOpsReplyElseNewestNonOpsReply
+      }
+      bottomBorder={bottomBorder}
+      feedviewpost={feedviewpost}
+      repostedby={repostedby}
+      style={style}
+      ref={ref}
+      dataIndexPropPass={dataIndexPropPass}
+      nopics={nopics}
+      concise={concise}
+      lightboxCallback={lightboxCallback}
+    />
+  )
+}
+
+
+function MicrocosmReplyChainRenderer({
+  atUri,
+  maxReplies,
+  replies,
+  isQuote,
+  oldestOpsReplyElseNewestNonOpsReply,
+  bottomBorder = true,
+  feedviewpost = false,
+  repostedby,
+  style,
+  ref,
+  dataIndexPropPass,
+  nopics,
+  concise,
+  lightboxCallback
+}: {
+  atUri: string;
+  maxReplies?: number;
+  replies: number | null;
+  isQuote?: boolean;
+  oldestOpsReplyElseNewestNonOpsReply?: string;
+  bottomBorder?: boolean;
+  feedviewpost?: boolean;
+  repostedby?: string;
+  style?: React.CSSProperties;
+  ref?: React.RefObject<HTMLDivElement>;
+  dataIndexPropPass?: number;
+  nopics?: boolean;
+  concise?: boolean;
+  lightboxCallback?: (d: LightboxProps) => void;
+}) {
+  return (
+    <>
       <>
         {maxReplies !== undefined &&
         maxReplies === 0 &&
