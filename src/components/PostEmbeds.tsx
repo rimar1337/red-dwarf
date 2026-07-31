@@ -2,6 +2,7 @@ import * as ATPAPI from "@atproto/api";
 import {
   AppBskyEmbedDefs,
   AppBskyEmbedExternal,
+  AppBskyEmbedGallery,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
   AppBskyEmbedRecordWithMedia,
@@ -27,16 +28,17 @@ import {
 
 type Embed =
   | AppBskyEmbedRecord.View
+  | AppBskyEmbedGallery.View
   | AppBskyEmbedImages.View
   | AppBskyEmbedVideo.View
   | AppBskyEmbedExternal.View
   | AppBskyEmbedRecordWithMedia.View
   | { $type: string; [k: string]: unknown };
 
-enum PostEmbedViewContext {
-  ThreadHighlighted = "ThreadHighlighted",
-  Feed = "Feed",
-  FeedEmbedRecordWithMedia = "FeedEmbedRecordWithMedia",
+export enum PostEmbedViewContext {
+  Anchor = "anchor",
+  Normal = "normal",
+  Quote = "quote"
 }
 
 const stopgap = {
@@ -84,7 +86,7 @@ export function PostEmbeds({
         rkey: postid?.rkey,
         i: number.toString(),
       },
-      resetScroll: false
+      resetScroll: false,
     });
   }
 
@@ -146,7 +148,7 @@ export function PostEmbeds({
                 navigate({
                   to: "/profile/$did/post/$rkey",
                   params: { did: parsed.host, rkey: parsed.rkey },
-                  resetScroll: false
+                  resetScroll: false,
                 });
               }
             }}
@@ -292,7 +294,7 @@ export function PostEmbeds({
                 navigate({
                   to: "/profile/$did/post/$rkey",
                   params: { did: parsed.host, rkey: parsed.rkey },
-                  resetScroll: false
+                  resetScroll: false,
                 });
               }
             }}
@@ -309,6 +311,119 @@ export function PostEmbeds({
       console.log("what the hell is a ", embed);
       return <>sorry</>;
     }
+  }
+
+  if (AppBskyEmbedGallery.isView(embed)) {
+    const { items } = embed;
+
+    // tied to an assumption that images will be the only gallery item type
+    const { lightboxImages, images } = items.reduce(
+      (acc, item) => {
+        if (!AppBskyEmbedGallery.isViewImage(item)) return acc;
+
+        acc.lightboxImages.push({
+          src: item.fullsize,
+          alt: item.alt,
+        });
+
+        acc.images.push(item);
+
+        return acc;
+      },
+      {
+        lightboxImages: [] as { src: string; alt: string }[],
+        images: [] as ATPAPI.$Typed<AppBskyEmbedGallery.ViewImage>[],
+      },
+    );
+
+    if (lightboxCallback) {
+      lightboxCallback({ images: lightboxImages });
+    }
+
+    if (nopics) return;
+
+    const offset = viewContext === PostEmbedViewContext.Quote ? 12 : 16;
+    const gutter = viewContext === PostEmbedViewContext.Normal ? 42+12 : 0;
+
+    if (images.length > 0) {
+      return (
+        <div className=" flex w-full">
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginTop: 0,
+              //width: "100%",
+              // 300 normally, 220 in quotes
+              height: viewContext === PostEmbedViewContext.Quote ? 220 : 300,
+              // 16 normally, 12 quotes, +42 with gutter
+              marginLeft: -16-gutter, 
+              marginRight: -offset,
+              paddingLeft: 16+gutter,
+              paddingRight: offset,
+              // borderRadius: 12,
+              //overflow: "hidden",
+            }}
+            className=" overflow-x-auto overflow-y-hidden scrollbar-none"
+          >
+            {images.map((img, i) => (
+              <div
+                key={i}
+                style={{
+                  position: "relative",
+                  //width: "100%",
+                  height: "100%",
+                  aspectRatio: img.aspectRatio
+                    ? (() => {
+                        const { width, height } = img.aspectRatio;
+                        const ratio = width / height;
+                        return ratio < 0.5 ? "1 / 2" : `${width} / ${height}`;
+                      })()
+                    : "1 / 1",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}
+                className="shrink-0 border border-gray-200 dark:border-gray-800 was7 bg-gray-200 dark:bg-gray-900"
+              >
+                {redactedLoading ? (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                    className="bg-gray-300 dark:bg-gray-600 blur animate-pulse "
+                  />
+                ) : (
+                  <>
+                    <div className=" top-1 right-1 bg-gray-800/60 rounded-lg absolute z-10 py-0.5 px-1 text-center items-center flex">
+                      <span className=" text-gray-100 text-[8px] text-center">{i+1}/{images.length}</span>
+                    </div>
+                    <img
+                      src={img.fullsize}
+                      alt={img.alt}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex(i);
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          
+        </div>
+      );
+    }
+    
+    console.log("what the hell is a ", embed);
+    return <>Unknown Gallery Type</>;
   }
 
   if (AppBskyEmbedImages.isView(embed)) {

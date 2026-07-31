@@ -56,7 +56,7 @@ import {
   yknowIReallyHateThisButWhateverGuardedConstructConstellationInfiniteQueryLinks,
 } from "~/utils/useQuery";
 
-import { PostEmbeds } from "./PostEmbeds";
+import { PostEmbeds, PostEmbedViewContext } from "./PostEmbeds";
 import {
   btnstyle,
   fullDateTimeFormat,
@@ -236,6 +236,7 @@ export function UniversalPostRendererATURILoader_AppView({
 
   const hasEmbed = (data?.record as AppBskyFeedPost.Record)?.embed;
   const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
+  const hasGallery = hasEmbed?.$type === "app.bsky.embed.gallery";
   const hasVideo = hasEmbed?.$type === "app.bsky.embed.video";
   const isquotewithmedia = hasEmbed?.$type === "app.bsky.embed.recordWithMedia";
   const isQuotewithImages =
@@ -246,10 +247,19 @@ export function UniversalPostRendererATURILoader_AppView({
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
       "app.bsky.embed.video";
+  const isQuotewithGallery =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.gallery";
 
   const hasMedia =
     hasEmbed &&
-    (hasImages || hasVideo || isQuotewithImages || isQuotewithVideo);
+    (hasImages ||
+      hasVideo ||
+      hasGallery ||
+      isQuotewithImages ||
+      isQuotewithVideo ||
+      isQuotewithGallery);
 
   if (filterNoReplies && thereply) return null;
 
@@ -266,7 +276,7 @@ export function UniversalPostRendererATURILoader_AppView({
         navigate({
           to: "/profile/$did/post/$rkey",
           params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
-          resetScroll: false
+          resetScroll: false,
         })
       }
       onProfileClick={(e) => {
@@ -605,7 +615,7 @@ function MoreReplies({ atUri }: { atUri: string }) {
         navigate({
           to: "/profile/$did/post/$rkey",
           params: { did: aturio.host, rkey: aturio.rkey },
-          resetScroll: false
+          resetScroll: false,
         })
       }
       className="border-b border-gray-200 dark:border-gray-800 flex flex-row px-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
@@ -691,8 +701,9 @@ export function UniversalPostRendererRawRecordShim({
 }) {
   const navigate = useNavigate();
 
-  const hasEmbed = (postRecord?.value as ATPAPI.AppBskyFeedPost.Record)?.embed;
+  const hasEmbed = (postRecord?.value as AppBskyFeedPost.Record)?.embed;
   const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
+  const hasGallery = hasEmbed?.$type === "app.bsky.embed.gallery";
   const hasVideo = hasEmbed?.$type === "app.bsky.embed.video";
   const isquotewithmedia = hasEmbed?.$type === "app.bsky.embed.recordWithMedia";
   const isQuotewithImages =
@@ -703,10 +714,19 @@ export function UniversalPostRendererRawRecordShim({
     isquotewithmedia &&
     (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
       "app.bsky.embed.video";
+  const isQuotewithGallery =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.gallery";
 
   const hasMedia =
     hasEmbed &&
-    (hasImages || hasVideo || isQuotewithImages || isQuotewithVideo);
+    (hasImages ||
+      hasVideo ||
+      hasGallery ||
+      isQuotewithImages ||
+      isQuotewithVideo ||
+      isQuotewithGallery);
 
   const {
     data: hydratedEmbed,
@@ -802,7 +822,7 @@ export function UniversalPostRendererRawRecordShim({
           navigate({
             to: "/profile/$did/post/$rkey",
             params: { did: parsedaturi.host, rkey: parsedaturi.rkey },
-            resetScroll: false
+            resetScroll: false,
           })
         }
         onProfileClick={(e) => {
@@ -1214,6 +1234,40 @@ export function UniversalPostRenderer({
     redactFinalPost ||
     redactFinalBlock;
 
+  const hasEmbed = (post.record as AppBskyFeedPost.Record)?.embed; //(postRecord?.value as AppBskyFeedPost.Record)?.embed;
+  const hasImages = hasEmbed?.$type === "app.bsky.embed.images";
+  const hasGallery = hasEmbed?.$type === "app.bsky.embed.gallery";
+  const hasVideo = hasEmbed?.$type === "app.bsky.embed.video";
+  const isquotewithmedia = hasEmbed?.$type === "app.bsky.embed.recordWithMedia";
+  const isQuotewithImages =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.images";
+  const isQuotewithVideo =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.video";
+  const isQuotewithGallery =
+    isquotewithmedia &&
+    (hasEmbed as ATPAPI.AppBskyEmbedRecordWithMedia.Main)?.media?.$type ===
+      "app.bsky.embed.gallery";
+
+  const hasMedia =
+    hasEmbed &&
+    (hasImages ||
+      hasVideo ||
+      hasGallery ||
+      isQuotewithImages ||
+      isQuotewithVideo ||
+      isQuotewithGallery);
+
+  const hasAnyGallery = isQuotewithGallery || hasGallery;
+  const expandNameForGallery =
+    hasAnyGallery &&
+    ((post.record as { text?: string }).text ?? "") === "" &&
+    !isQuote &&
+    !nopics;
+
   // todo consider if adding an explicit "post removed" visible component is better for this
   //if (redactFinalSome) return null
   // todo preserve reply lines
@@ -1523,7 +1577,7 @@ export function UniversalPostRenderer({
               />
             )}
           </div>
-          <div style={{ flex: 1, maxWidth: "100%" }}>
+          <div style={{ flex: 1, maxWidth: "100%", minWidth: 0 }}>
             <div
               style={{
                 display: "flex",
@@ -1548,7 +1602,8 @@ export function UniversalPostRenderer({
                   gap: expanded ? 0 : 6,
                   alignItems: expanded ? "flex-start" : "center",
                   flexDirection: expanded ? "column" : "row",
-                  height: expanded ? 42 : "1rem",
+                  height: expanded ? 42 : expandNameForGallery ? 32 : "1rem",
+                  paddingTop: expandNameForGallery ? 5 : 0,
                 }}
               >
                 <span
@@ -1596,7 +1651,8 @@ export function UniversalPostRenderer({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  height: "1rem",
+                  height: expandNameForGallery ? 32 : "1rem",
+                  paddingTop: expandNameForGallery ? 5 : 0,
                 }}
               >
                 <span
@@ -1727,7 +1783,13 @@ export function UniversalPostRenderer({
                   <PostEmbeds
                     redactedLoading={redactWhileLoading_content}
                     embed={post.embed}
-                    viewContext={PostEmbedViewContext.Feed}
+                    viewContext={
+                      isQuote
+                        ? PostEmbedViewContext.Quote
+                        : expanded
+                          ? PostEmbedViewContext.Anchor
+                          : PostEmbedViewContext.Normal
+                    }
                     salt={salt}
                     navigate={navigate}
                     postid={{ did: post.author.did, rkey: parsed.rkey }}
@@ -1924,12 +1986,6 @@ export function UniversalPostRenderer({
       </div>
     </div>
   );
-}
-
-enum PostEmbedViewContext {
-  ThreadHighlighted = "ThreadHighlighted",
-  Feed = "Feed",
-  FeedEmbedRecordWithMedia = "FeedEmbedRecordWithMedia",
 }
 
 export function ContentWarning({
