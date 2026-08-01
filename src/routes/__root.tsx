@@ -2,6 +2,7 @@
 
 // dont forget to run this
 // npx @tanstack/router-cli generate
+import { AppBskyActorDefs } from "@atproto/api";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
@@ -51,6 +52,7 @@ import {
   useAtomCssVar,
 } from "~/utils/atoms";
 import { seo } from "~/utils/seo";
+import { getAvatarUrl } from "~/utils/useHydrated";
 import {
   useQueryIdentity,
   useQueryPreferences,
@@ -1172,12 +1174,6 @@ export const ProfileSmall = ({
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
-  function getAvatarUrl(p: typeof profile) {
-    const link = p?.avatar?.ref?.["$link"];
-    if (!link || !did) return null;
-    return `https://${imgcdn}/img/avatar/plain/${did}/${link}@jpeg`;
-  }
-
   const onProfileClick = (e: React.MouseEvent<Element, MouseEvent>) => {
     e.stopPropagation();
     navigate({
@@ -1214,7 +1210,7 @@ export const ProfileSmall = ({
       className={`hover:cursor-pointer flex flex-row items-center gap-2.5 ${large ? "mb-1" : ""}`}
     >
       <img
-        src={getAvatarUrl(profile) ?? undefined}
+        src={getAvatarUrl(imgcdn, profile, did) ?? undefined}
         alt="avatar"
         className={`object-cover rounded-full ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
       />
@@ -1252,7 +1248,7 @@ function FeedListDesktopSidebar() {
 
   const savedFeeds = React.useMemo(() => {
     const savedFeedsPref = prefs?.preferences?.find(
-      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
+      AppBskyActorDefs.isSavedFeedsPrefV2,
     );
     return savedFeedsPref?.items || [];
   }, [prefs]);

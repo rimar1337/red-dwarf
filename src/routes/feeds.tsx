@@ -6,6 +6,7 @@ import * as React from "react";
 import { Header } from "~/components/Header";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { imgCDNAtom, quickAuthAtom } from "~/utils/atoms";
+import { getAvatarUrl } from "~/utils/useHydrated";
 import {
   useQueryArbitrary,
   useQueryIdentity,
@@ -34,7 +35,7 @@ export function Feeds() {
 
   const savedFeeds = React.useMemo(() => {
     const savedFeedsPref = prefs?.preferences?.find(
-      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
+      ATPAPI.AppBskyActorDefs.isSavedFeedsPrefV2,
     );
     return savedFeedsPref?.items || [];
   }, [prefs]);
@@ -110,13 +111,7 @@ function FeedItem({ feedUri }: { feedUri: string }) {
     );
   }
 
-  function getAvatarUrl() {
-    const link = feed?.avatar?.ref?.["$link"];
-    if (!link) return null;
-    return `https://${imgcdn}/img/avatar/plain/${aturi?.host}/${link}@jpeg`;
-  }
-
-  const avatarUrl = getAvatarUrl();
+  const avatarUrl = getAvatarUrl(imgcdn, feed, aturi?.host);
 
   return (
     <Link
@@ -191,13 +186,7 @@ export function FeedIcon({
     );
   }
 
-  function getAvatarUrl() {
-    const link = feed?.avatar?.ref?.["$link"];
-    if (!link) return null;
-    return `https://${imgcdn}/img/avatar/plain/${aturi?.host}/${link}@jpeg`;
-  }
-
-  const avatarUrl = getAvatarUrl();
+  const avatarUrl = getAvatarUrl(imgcdn, feed, aturi?.host);
   if (!avatarUrl) {
     return (
       <div className={className}>

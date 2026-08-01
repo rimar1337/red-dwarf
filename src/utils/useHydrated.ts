@@ -1,13 +1,16 @@
 import {
   type $Typed,
   AppBskyActorDefs,
+  AppBskyActorProfile,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
   AppBskyEmbedRecordWithMedia,
   AppBskyEmbedVideo,
+  AppBskyFeedGenerator,
   AppBskyFeedPost,
   AtUri,
+  BlobRef,
 } from "@atproto/api";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
@@ -22,6 +25,31 @@ function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
   return obj as $Typed<T>;
 }
 
+// todo: use jsonToLex in favor of accessing of $link directly (type mismatch between actual raw json and library types)
+export function getHackyCIDFromRef(item?: BlobRef["ref"]): string | undefined {
+  const maybeCID = (item as { $link?: string })?.["$link"];
+  return maybeCID;
+}
+
+export function getAvatarUrl(
+  imgcdn: string,
+  p?: AppBskyActorProfile.Main | AppBskyFeedGenerator.Main,
+  resolvedDid?: string,
+) {
+  const link = getHackyCIDFromRef(p?.avatar?.ref);
+  if (!link || !resolvedDid) return null;
+  return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
+}
+export function getBannerUrl(
+  imgcdn: string,
+  p?: AppBskyActorProfile.Main,
+  resolvedDid?: string,
+) {
+  const link = getHackyCIDFromRef(p?.banner?.ref);
+  if (!link || !resolvedDid) return null;
+  return `https://${imgcdn}/img/banner/plain/${resolvedDid}/${link}@jpeg`;
+}
+
 export function hydrateEmbedImages(
   embed: AppBskyEmbedImages.Main,
   did: string,
@@ -31,7 +59,7 @@ export function hydrateEmbedImages(
     $type: "app.bsky.embed.images#view" as const,
     images: embed.images
       .map((img) => {
-        const link = img.image.ref?.["$link"];
+        const link = getHackyCIDFromRef(img.image.ref);
         if (!link) return null;
         return {
           thumb: `https://${cdn}/img/feed_thumbnail/plain/${did}/${link}@jpeg`,
@@ -49,14 +77,15 @@ export function hydrateEmbedExternal(
   did: string,
   cdn: string,
 ): $Typed<AppBskyEmbedExternal.View> {
+  const maybeCID = getHackyCIDFromRef(embed.external.thumb?.ref);
   return asTyped({
     $type: "app.bsky.embed.external#view" as const,
     external: {
       uri: embed.external.uri,
       title: embed.external.title,
       description: embed.external.description,
-      thumb: embed.external.thumb?.ref?.$link
-        ? `https://${cdn}/img/feed_thumbnail/plain/${did}/${embed.external.thumb.ref.$link}@jpeg`
+      thumb: maybeCID
+        ? `https://${cdn}/img/feed_thumbnail/plain/${did}/${maybeCID}@jpeg`
         : undefined,
     },
   });
@@ -67,7 +96,7 @@ export function hydrateEmbedVideo(
   did: string,
   videocdn: string,
 ): $Typed<AppBskyEmbedVideo.View> {
-  const videoLink = embed.video.ref.$link;
+  const videoLink = getHackyCIDFromRef(embed.video.ref)!;
   return asTyped({
     $type: "app.bsky.embed.video#view" as const,
     playlist: `https://${videocdn}/watch/${did}/${videoLink}/playlist.m3u8`,
@@ -100,13 +129,15 @@ function hydrateEmbedRecord(
     });
   }
 
+  const maybeAvatarCID = getHackyCIDFromRef(quotedProfile.value.avatar?.ref);
+
   const author: $Typed<AppBskyActorDefs.ProfileViewBasic> = asTyped({
     $type: "app.bsky.actor.defs#profileViewBasic" as const,
     did: quotedIdentity.did,
     handle: quotedIdentity.handle,
     displayName: quotedProfile.value.displayName ?? quotedIdentity.handle,
-    avatar: quotedProfile.value.avatar?.ref?.$link
-      ? `https://${cdn}/img/avatar/plain/${quotedIdentity.did}/${quotedProfile.value.avatar.ref.$link}@jpeg`
+    avatar: maybeAvatarCID
+      ? `https://${cdn}/img/avatar/plain/${quotedIdentity.did}/${maybeAvatarCID}@jpeg`
       : undefined,
     viewer: {},
     labels: [],

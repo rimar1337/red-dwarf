@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { imgCDNAtom } from "~/utils/atoms";
+import { getAvatarUrl } from "~/utils/useHydrated";
 import { useQueryIdentity, useQueryProfile } from "~/utils/useQuery";
 
 // --- 1. The Main Component (Orchestrator with `compact` prop) ---
@@ -330,12 +331,6 @@ export const ProfileThing = ({
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
-  function getAvatarUrl(p: typeof profile) {
-    const link = p?.avatar?.ref?.["$link"];
-    if (!link || !did) return null;
-    return `https://${imgcdn}/img/avatar/plain/${did}/${link}@jpeg`;
-  }
-
   if (!profiledata) {
     return (
       // Skeleton loader
@@ -362,7 +357,7 @@ export const ProfileThing = ({
       className={`flex flex-row items-center gap-2.5 ${large ? "mb-1" : ""}`}
     >
       <img
-        src={getAvatarUrl(profile) ?? undefined}
+        src={getAvatarUrl(imgcdn, profile, did) ?? undefined}
         alt="avatar"
         className={`object-cover rounded-full ${large ? "w-10 h-10" : "w-[30px] h-[30px]"}`}
       />

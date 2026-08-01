@@ -34,6 +34,12 @@ import {
 } from "~/utils/followState";
 import { useFastSetLikesFromFeed } from "~/utils/likeMutationQueue";
 import {
+  getAvatarUrl,
+  getBannerUrl,
+  getHackyCIDFromRef,
+} from "~/utils/useHydrated";
+import {
+  type GetRecordJSON,
   useInfiniteQueryAuthorFeed,
   useQueryArbitrary,
   useQueryConstellation,
@@ -199,17 +205,6 @@ function ProfileComponent() {
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
-  function getAvatarUrl(p: typeof profile) {
-    const link = p?.avatar?.ref?.["$link"];
-    if (!link || !resolvedDid) return null;
-    return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
-  }
-  function getBannerUrl(p: typeof profile) {
-    const link = p?.banner?.ref?.["$link"];
-    if (!link || !resolvedDid) return null;
-    return `https://${imgcdn}/img/banner/plain/${resolvedDid}/${link}@jpeg`;
-  }
-
   const displayName =
     profile?.displayName || (resolvedHandle ? `@${resolvedHandle}` : did);
   const handle = resolvedHandle ? `@${resolvedHandle}` : resolvedDid || did;
@@ -372,7 +367,7 @@ function ProfileComponent() {
           style={{
             backgroundImage: strictModerationLoading
               ? undefined
-              : `url(${getBannerUrl(profile)})`,
+              : `url(${getBannerUrl(imgcdn, profile, resolvedDid)})`,
             backgroundColor: strictModerationLoading
               ? "var(--color-placeholder)"
               : undefined,
@@ -391,7 +386,7 @@ function ProfileComponent() {
                 className={`w-28 h-28 bg-gray-400 dark:bg-gray-600 animate-pulse`}
               />
             </div>
-          ) : !getAvatarUrl(profile) && isLabeler ? (
+          ) : !getAvatarUrl(imgcdn, profile, resolvedDid) && isLabeler ? (
             <div
               className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} items-center justify-center flex object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700`}
             >
@@ -399,7 +394,7 @@ function ProfileComponent() {
             </div>
           ) : (
             <img
-              src={getAvatarUrl(profile) || "/favicon.png"}
+              src={getAvatarUrl(imgcdn, profile, resolvedDid) || "/favicon.png"}
               alt="avatar"
               className={`w-28 h-28 ${isLabeler ? "rounded-md" : "rounded-full"} object-cover border-4 border-white dark:border-gray-950 bg-gray-300 dark:bg-gray-700`}
             />
@@ -943,7 +938,7 @@ export function FeedItemRender({
   disableBottomBorder,
   disablePropagation,
 }: {
-  feed: { uri: string; cid: string; value: any };
+  feed: GetRecordJSON<any>;
   listmode?: boolean;
   disableBottomBorder?: boolean;
   disablePropagation?: boolean;
@@ -957,7 +952,7 @@ export function FeedItemRender({
   const [imgcdn] = useAtom(imgCDNAtom);
 
   function getAvatarThumbnailUrl(f: typeof feed) {
-    const link = f?.value.avatar?.ref?.["$link"];
+    const link = getHackyCIDFromRef(f?.value.avatar?.ref);
     if (!link || !resolvedDid) return null;
     return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
   }

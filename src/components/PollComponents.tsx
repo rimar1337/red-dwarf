@@ -9,6 +9,7 @@ import {
 //import { useAuth } from "~/providers/UnifiedAuthProvider";
 import { renderSnack } from "~/routes/__root";
 import { imgCDNAtom } from "~/utils/atoms";
+import { getAvatarUrl } from "~/utils/useHydrated";
 import {
   useQueryArbitrary,
   useQueryConstellation,
@@ -223,10 +224,7 @@ export function PollEmbed({
         <div className="space-y-3">
           {options.map((optionText, index) => {
             const optionKey = ["a", "b", "c", "d"][index] as
-              | "a"
-              | "b"
-              | "c"
-              | "d";
+              "a" | "b" | "c" | "d";
             const { topVoterDids } = results[optionKey];
             const optionState = results[optionKey];
             const hasVotedForOption = optionState.hasVoted;
@@ -331,7 +329,7 @@ export function PollOptionAvatar({ did }: { did: string }) {
     `at://${did}/app.bsky.actor.profile/self`,
   );
 
-  const avatarUrl = getAvatarUrl(profileRecord, did, imgcdn);
+  const avatarUrl = getAvatarUrl(imgcdn, profileRecord?.value, did);
 
   if (!avatarUrl) {
     return <div className="w-full h-full bg-gray-500" />;
@@ -349,10 +347,4 @@ export function PollOptionAvatar({ did }: { did: string }) {
       }}
     />
   );
-}
-
-function getAvatarUrl(opProfile: any, did: string, cdn: string) {
-  const link = opProfile?.value?.avatar?.ref?.["$link"];
-  if (!link) return null;
-  return `https://${cdn}/img/avatar/plain/${did}/${link}@jpeg`;
 }

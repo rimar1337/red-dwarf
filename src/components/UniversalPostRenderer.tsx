@@ -46,8 +46,9 @@ import {
 } from "~/utils/atoms";
 import { useGetOneToOneState } from "~/utils/followState";
 import { useFastLike } from "~/utils/likeMutationQueue";
-import { useHydratedEmbed } from "~/utils/useHydrated";
+import { getAvatarUrl, useHydratedEmbed } from "~/utils/useHydrated";
 import {
+  type GetRecordJSON,
   useQueryConstellation,
   useQueryIdentity,
   useQueryPost,
@@ -192,8 +193,8 @@ export function UniversalPostRendererATURILoader_AppView({
   const navigate = useNavigate();
   const parsedaturi = new AtUri(atUri);
 
-  const [selfBottomBorder, setSelfBottomBorder] = useState(true)
-  const [selfBottomReplyLine, setSelfBottomReplyLine] = useState(false)
+  const [selfBottomBorder, setSelfBottomBorder] = useState(true);
+  const [selfBottomReplyLine, setSelfBottomReplyLine] = useState(false);
 
   // todo: consider providing an option to opt into constellation counts instead of the appview's
   const { data, isLoading, isEnabled, isError, error } =
@@ -271,13 +272,13 @@ export function UniversalPostRendererATURILoader_AppView({
 
   if (filterMustBeReply && !thereply) return null;
 
-  const replies = data?.replyCount || 0
+  const replies = data?.replyCount || 0;
 
   function selfBottomBorderCallback(selfBottomBorderValue: boolean): void {
-    setSelfBottomBorder(selfBottomBorderValue)
+    setSelfBottomBorder(selfBottomBorderValue);
   }
   function selfBottomReplyLineCallback(setSelfReplyLineValue: boolean): void {
-    setSelfBottomReplyLine(setSelfReplyLineValue)
+    setSelfBottomReplyLine(setSelfReplyLineValue);
   }
 
   return (
@@ -651,7 +652,7 @@ function MicrocosmReplyChainFetcher({
   bottomReplyLineCallback?: (bottomReplyLine: boolean) => void;
 }) {
   // todo remove this once tree rendering is implemented, use a prop like isTree
-  const TEMPLINEAR = true
+  const TEMPLINEAR = true;
   const [constellationurl] = useAtom(constellationURLAtom);
 
   const infinitequeryresults = useInfiniteQuery({
@@ -718,26 +719,26 @@ function MicrocosmReplyChainFetcher({
   })();
 
   const parentBottomBorder =
-          maxReplies && oldestOpsReplyElseNewestNonOpsReply
-            ? false
-            : maxReplies === 0
-              ? false
-              : bottomBorder
-  
+    maxReplies && oldestOpsReplyElseNewestNonOpsReply
+      ? false
+      : maxReplies === 0
+        ? false
+        : bottomBorder;
+
   const parentBottomReplyLine =
-          maxReplies && oldestOpsReplyElseNewestNonOpsReply
-            ? true
-            : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
-              ? false
-              : maxReplies === 0 && (!replies || (!!replies && replies === 0))
-                ? false
-                : bottomReplyLine
+    maxReplies && oldestOpsReplyElseNewestNonOpsReply
+      ? true
+      : maxReplies && !oldestOpsReplyElseNewestNonOpsReply
+        ? false
+        : maxReplies === 0 && (!replies || (!!replies && replies === 0))
+          ? false
+          : bottomReplyLine;
 
   if (bottomBorderCallback) {
-    bottomBorderCallback(parentBottomBorder)
+    bottomBorderCallback(parentBottomBorder);
   }
   if (bottomReplyLineCallback) {
-    bottomReplyLineCallback(parentBottomReplyLine)
+    bottomReplyLineCallback(parentBottomReplyLine);
   }
 
   return (
@@ -746,9 +747,7 @@ function MicrocosmReplyChainFetcher({
       maxReplies={maxReplies}
       replies={replies}
       isQuote={isQuote}
-      oldestOpsReplyElseNewestNonOpsReply={
-        oldestOpsReplyElseNewestNonOpsReply
-      }
+      oldestOpsReplyElseNewestNonOpsReply={oldestOpsReplyElseNewestNonOpsReply}
       bottomBorder={bottomBorder}
       feedviewpost={feedviewpost}
       repostedby={repostedby}
@@ -759,9 +758,8 @@ function MicrocosmReplyChainFetcher({
       concise={concise}
       lightboxCallback={lightboxCallback}
     />
-  )
+  );
 }
-
 
 function MicrocosmReplyChainRenderer({
   atUri,
@@ -777,7 +775,7 @@ function MicrocosmReplyChainRenderer({
   dataIndexPropPass,
   nopics,
   concise,
-  lightboxCallback
+  lightboxCallback,
 }: {
   atUri: string;
   maxReplies?: number;
@@ -871,10 +869,20 @@ function MoreReplies({ atUri }: { atUri: string }) {
   );
 }
 
-function getAvatarUrl(opProfile: any, did: string, cdn: string) {
-  const link = opProfile?.value?.avatar?.ref?.["$link"];
-  if (!link) return null;
-  return `https://${cdn}/img/avatar/plain/${did}/${link}@jpeg`;
+// todo please do it properly
+function selfLabelsToLabels(
+  selfLabels: ATPAPI.ComAtprotoLabelDefs.SelfLabels | undefined,
+  ctx: { src: string; uri: string; cid?: string; cts: string },
+): ATPAPI.ComAtprotoLabelDefs.Label[] {
+  return (selfLabels?.values ?? []).map((self) => ({
+    $type: "com.atproto.label.defs#label",
+    src: ctx.src, // author DID
+    uri: ctx.uri, // record at-uri
+    cid: ctx.cid, // record cid
+    val: self.val,
+    cts: ctx.cts, // AppView uses indexedAt; for raw records use record.createdAt
+    neg: false,
+  }));
 }
 
 export function UniversalPostRendererRawRecordShim({
@@ -904,8 +912,8 @@ export function UniversalPostRendererRawRecordShim({
   filterMustHaveMedia,
   filterMustBeReply,
 }: {
-  postRecord: any;
-  profileRecord: any;
+  postRecord?: GetRecordJSON<ATPAPI.AppBskyFeedPost.Record>;
+  profileRecord?: GetRecordJSON<ATPAPI.AppBskyActorProfile.Record>;
   aturi: string;
   resolved: any;
   likesCount?: number | null;
@@ -974,9 +982,18 @@ export function UniversalPostRendererRawRecordShim({
       did: resolved?.did || "",
       handle: resolved?.handle || "",
       displayName: profileRecord?.value?.displayName || "",
-      avatar: getAvatarUrl(profileRecord, resolved?.did, imgcdn) || "",
+      avatar: getAvatarUrl(imgcdn, profileRecord?.value, resolved?.did) || "",
       viewer: undefined,
-      labels: profileRecord?.labels || undefined,
+      labels:
+        selfLabelsToLabels(
+          profileRecord?.value.labels as ATPAPI.ComAtprotoLabelDefs.SelfLabels,
+          {
+            src: resolved?.did || "",
+            uri: profileRecord?.uri || "",
+            cid: profileRecord?.cid,
+            cts: profileRecord?.value?.createdAt || "",
+          },
+        ) || undefined,
       verification: undefined,
       pronouns: profileRecord?.value?.pronouns || undefined,
     }),
@@ -1007,19 +1024,29 @@ export function UniversalPostRendererRawRecordShim({
       quoteCount: 0,
       indexedAt: postRecord?.value?.createdAt || "",
       viewer: undefined,
-      labels: postRecord?.labels || undefined,
+      labels:
+        selfLabelsToLabels(
+          postRecord?.value?.labels as ATPAPI.ComAtprotoLabelDefs.SelfLabels,
+          {
+            src: resolved?.did || "",
+            uri: postRecord?.uri || "",
+            cid: postRecord?.cid,
+            cts: postRecord?.value?.createdAt || "",
+          },
+        ) || undefined,
       threadgate: undefined,
     }),
     [
       aturi,
       postRecord?.cid,
       postRecord?.value,
-      postRecord?.labels,
+      postRecord?.uri,
       fakeprofileviewbasic,
       hydratedEmbed,
       repliesCount,
       repostsCount,
       likesCount,
+      resolved?.did,
     ],
   );
 
@@ -2298,7 +2325,7 @@ export function SmallAuthorLabelBadge({
     `at://${label.src}/app.bsky.actor.profile/self`,
   );
 
-  const resolvedpfp = getAvatarUrl(opProfile, label.src, imgcdn);
+  const resolvedpfp = getAvatarUrl(imgcdn, opProfile?.value, label.src);
 
   return (
     <SmallAuthorLabelBadgeInner

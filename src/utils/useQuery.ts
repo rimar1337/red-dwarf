@@ -168,11 +168,7 @@ export function constructPostQuery(uri?: string, slingshoturl?: string) {
       }
       try {
         if (!res.ok) throw new Error("Failed to fetch post");
-        return data as {
-          uri: string;
-          cid: string;
-          value: any;
-        };
+        return data as GetRecordJSON<any>;
       } catch (_e) {
         return undefined;
       }
@@ -186,22 +182,14 @@ export function constructPostQuery(uri?: string, slingshoturl?: string) {
     gcTime: /*0//*/ 5 * 60 * 1000,
   });
 }
-export function useQueryPost(uri: string): UseQueryResult<
-  {
-    uri: string;
-    cid: string;
-    value: ATPAPI.AppBskyFeedPost.Record;
-  },
-  Error
->;
+export function useQueryPost(
+  uri: string,
+): UseQueryResult<GetRecordJSON<ATPAPI.AppBskyFeedPost.Record>, Error>;
 export function useQueryPost(): UseQueryResult<undefined, Error>;
-export function useQueryPost(uri?: string): UseQueryResult<
-  | {
-      uri: string;
-      cid: string;
-      value: ATPAPI.AppBskyFeedPost.Record;
-    }
-  | undefined,
+export function useQueryPost(
+  uri?: string,
+): UseQueryResult<
+  GetRecordJSON<ATPAPI.AppBskyFeedPost.Record> | undefined,
   Error
 >;
 export function useQueryPost(uri?: string) {
@@ -232,11 +220,7 @@ export function constructProfileQuery(uri?: string, slingshoturl?: string) {
       }
       try {
         if (!res.ok) throw new Error("Failed to fetch post");
-        return data as {
-          uri: string;
-          cid: string;
-          value: any;
-        };
+        return data as GetRecordJSON<any>;
       } catch (_e) {
         return undefined;
       }
@@ -250,22 +234,20 @@ export function constructProfileQuery(uri?: string, slingshoturl?: string) {
     gcTime: /*0//*/ 5 * 60 * 1000,
   });
 }
-export function useQueryProfile(uri: string): UseQueryResult<
-  {
-    uri: string;
-    cid: string;
-    value: ATPAPI.AppBskyActorProfile.Record;
-  },
-  Error
->;
+
+export type GetRecordJSON<T> = {
+  uri: string;
+  cid: string;
+  value: T;
+};
+export function useQueryProfile(
+  uri: string,
+): UseQueryResult<GetRecordJSON<ATPAPI.AppBskyActorProfile.Record>, Error>;
 export function useQueryProfile(): UseQueryResult<undefined, Error>;
-export function useQueryProfile(uri?: string): UseQueryResult<
-  | {
-      uri: string;
-      cid: string;
-      value: ATPAPI.AppBskyActorProfile.Record;
-    }
-  | undefined,
+export function useQueryProfile(
+  uri?: string,
+): UseQueryResult<
+  GetRecordJSON<ATPAPI.AppBskyActorProfile.Record> | undefined,
   Error
 >;
 export function useQueryProfile(uri?: string) {
@@ -588,11 +570,7 @@ export function constructRecordQuery(
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch record");
       try {
-        return (await res.json()) as {
-          uri: string;
-          cid: string;
-          value: any;
-        };
+        return (await res.json()) as GetRecordJSON<any>;
       } catch (_e) {
         return undefined;
       }
@@ -657,11 +635,7 @@ export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
       }
       try {
         if (!res.ok) throw new Error("Failed to fetch post");
-        return data as {
-          uri: string;
-          cid: string;
-          value: any;
-        };
+        return data as GetRecordJSON<any>;
       } catch (_e) {
         return undefined;
       }
@@ -675,24 +649,13 @@ export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
     gcTime: /*0//*/ 5 * 60 * 1000,
   });
 }
-export function useQueryArbitrary(uri: string): UseQueryResult<
-  {
-    uri: string;
-    cid: string;
-    value: any;
-  },
-  Error
->;
+export function useQueryArbitrary(
+  uri: string,
+): UseQueryResult<GetRecordJSON<any>, Error>;
 export function useQueryArbitrary(): UseQueryResult<undefined, Error>;
-export function useQueryArbitrary(uri?: string): UseQueryResult<
-  | {
-      uri: string;
-      cid: string;
-      value: any;
-    }
-  | undefined,
-  Error
->;
+export function useQueryArbitrary(
+  uri?: string,
+): UseQueryResult<GetRecordJSON<any> | undefined, Error>;
 export function useQueryArbitrary(uri?: string) {
   const [slingshoturl] = useAtom(slingshotURLAtom);
   return useQuery(constructArbitraryQuery(uri, slingshoturl));
@@ -709,11 +672,7 @@ export function constructFallbackNothingQuery() {
 
 type ListRecordsResponse = {
   cursor?: string;
-  records: {
-    uri: string;
-    cid: string;
-    value: ATPAPI.AppBskyFeedPost.Record;
-  }[];
+  records: GetRecordJSON<ATPAPI.AppBskyFeedPost.Record>[];
 };
 
 export function constructAuthorFeedQuery(
@@ -1138,7 +1097,8 @@ function flattenLabelQueries(
 }
 
 // batShitQueryClient
-export const unpersistedQueryClient = new QueryClient(/*{
+export const unpersistedQueryClient = new QueryClient(
+  /*{
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -1146,7 +1106,8 @@ export const unpersistedQueryClient = new QueryClient(/*{
       gcTime: 5 * 60 * 1000,
     },
   },
-}*/);
+}*/
+);
 
 interface MicroSingleResult {
   l: string;

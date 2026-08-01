@@ -21,6 +21,7 @@ import {
   imgCDNAtom,
   postInteractionsFiltersAtom,
 } from "~/utils/atoms";
+import { getAvatarUrl } from "~/utils/useHydrated";
 import {
   useInfiniteQueryAuthorFeed,
   useQueryConstellation,
@@ -587,13 +588,7 @@ export function NotificationItem({
 
   const [imgcdn] = useAtom(imgCDNAtom);
 
-  function getAvatarUrl(p: typeof profile) {
-    const link = p?.avatar?.ref?.["$link"];
-    if (!link || !resolvedDid) return null;
-    return `https://${imgcdn}/img/avatar/plain/${resolvedDid}/${link}@jpeg`;
-  }
-
-  const avatar = getAvatarUrl(profile);
+  const avatar = getAvatarUrl(imgcdn, profile, resolvedDid);
 
   return (
     <div

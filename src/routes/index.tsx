@@ -1,3 +1,4 @@
+import { AppBskyActorDefs } from "@atproto/api";
 import {
   createFileRoute,
   useLocation,
@@ -182,7 +183,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   const savedFeeds = React.useMemo(() => {
     const savedFeedsPref = prefs?.preferences?.find(
-      (p: any) => p?.$type === "app.bsky.actor.defs#savedFeedsPrefV2",
+      AppBskyActorDefs.isSavedFeedsPrefV2,
     );
     return savedFeedsPref?.items || [];
   }, [prefs]);
