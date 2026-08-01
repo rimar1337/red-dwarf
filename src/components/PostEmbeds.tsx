@@ -38,7 +38,7 @@ type Embed =
 export enum PostEmbedViewContext {
   Anchor = "anchor",
   Normal = "normal",
-  Quote = "quote"
+  Quote = "quote",
 }
 
 const stopgap = {
@@ -343,7 +343,9 @@ export function PostEmbeds({
     if (nopics) return;
 
     const offset = viewContext === PostEmbedViewContext.Quote ? 12 : 16;
-    const gutter = viewContext === PostEmbedViewContext.Normal ? 42+12 : 0;
+    const gutter = viewContext === PostEmbedViewContext.Normal ? 42 + 12 : 0;
+    //const height = viewContext === PostEmbedViewContext.Quote ? 220 : 300
+    //const heightMobile = viewContext === PostEmbedViewContext.Quote ? 190 : 260
 
     if (images.length > 0) {
       return (
@@ -355,16 +357,17 @@ export function PostEmbeds({
               marginTop: 0,
               //width: "100%",
               // 300 normally, 220 in quotes
-              height: viewContext === PostEmbedViewContext.Quote ? 220 : 300,
+              // mobile: 260 normally, 190 in quotes.
+              // height: viewContext === PostEmbedViewContext.Quote ? 220 : 300,
               // 16 normally, 12 quotes, +42 with gutter
-              marginLeft: -16-gutter, 
+              marginLeft: -16 - gutter,
               marginRight: -offset,
-              paddingLeft: 16+gutter,
+              paddingLeft: 16 + gutter,
               paddingRight: offset,
               // borderRadius: 12,
               //overflow: "hidden",
             }}
-            className=" overflow-x-auto overflow-y-hidden scrollbar-none"
+            className={`overflow-x-auto overflow-y-hidden scrollbar-none  ${viewContext === PostEmbedViewContext.Quote ? "h-47.5 sm:h-55" : "h-65 sm:h-75"}`}
           >
             {images.map((img, i) => (
               <div
@@ -397,7 +400,9 @@ export function PostEmbeds({
                 ) : (
                   <>
                     <div className=" top-1 right-1 bg-gray-800/60 rounded-lg absolute z-10 py-0.5 px-1 text-center items-center flex">
-                      <span className=" text-gray-100 text-[8px] text-center">{i+1}/{images.length}</span>
+                      <span className=" text-gray-100 text-[8px] text-center">
+                        {i + 1}/{images.length}
+                      </span>
                     </div>
                     <img
                       src={img.fullsize}
@@ -417,11 +422,10 @@ export function PostEmbeds({
               </div>
             ))}
           </div>
-          
         </div>
       );
     }
-    
+
     console.log("what the hell is a ", embed);
     return <>Unknown Gallery Type</>;
   }
