@@ -1,39 +1,47 @@
+import { execSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import AutoImport from 'unplugin-auto-import/vite'
-import IconsResolver from 'unplugin-icons/resolver'
-import Icons from 'unplugin-icons/vite'
+import AutoImport from "unplugin-auto-import/vite";
+import IconsResolver from "unplugin-icons/resolver";
+import Icons from "unplugin-icons/vite";
 import { defineConfig } from "vite";
 
 import { generateMetadataPlugin } from "./oauthdev.mts";
 
-const PROD_URL = "https://reddwarf.app"
-const DEV_URL = "https://local3768forumtest.whey.party"
+const PROD_URL = "https://reddwarf.app";
+const DEV_URL = "https://local3768forumtest.whey.party";
 
-const PROD_HANDLE_RESOLVER_PDS = "https://pds-nd.whey.party"
-const DEV_HANDLE_RESOLVER_PDS = "https://bsky.social"
+const PROD_HANDLE_RESOLVER_PDS = "https://pds-nd.whey.party";
+const DEV_HANDLE_RESOLVER_PDS = "https://bsky.social";
+let commitHash = "";
+try {
+  commitHash = execSync("git rev-parse --short HEAD").toString().trim();
+} catch {
+  /* empty */
+}
 
 function shp(url: string): string {
-  return url.replace(/^https?:\/\//, '');
+  return url.replace(/^https?:\/\//, "");
 }
 
 // use via `declare const __INSTANCE_MODEL__: boolean`
 // feature is not finished, and so is disabled temporarily
-const INSTANCE_MODEL = false
+const INSTANCE_MODEL = false;
 // disable moderation page for current deployment
-const MODERATION_PAGE = false
-// todo: 
-const VERSION_NUMBER = "v0.0.2-preview"
+const MODERATION_PAGE = false;
+// todo:
+const VERSION_NUMBER = "v0.0.2-preview";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
     __INSTANCE_MODEL__: JSON.stringify(INSTANCE_MODEL),
     __MODERATION_PAGE__: JSON.stringify(MODERATION_PAGE),
-    __VERSION_NUMBER__: JSON.stringify(VERSION_NUMBER)
+    __VERSION_NUMBER__: JSON.stringify(VERSION_NUMBER),
+    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   plugins: [
     generateMetadataPlugin({
@@ -45,7 +53,7 @@ export default defineConfig({
     TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact({
       babel: {
-        plugins: ['babel-plugin-react-compiler'],
+        plugins: ["babel-plugin-react-compiler"],
       },
     }),
     tailwindcss(),
@@ -55,17 +63,17 @@ export default defineConfig({
       ],
       resolvers: [
         IconsResolver({
-          prefix: 'Icon',
-          extension: 'jsx',
-          enabledCollections: ['mdi','material-symbols'],
+          prefix: "Icon",
+          extension: "jsx",
+          enabledCollections: ["mdi", "material-symbols"],
         }),
       ],
-      dts: 'src/auto-imports.d.ts',
+      dts: "src/auto-imports.d.ts",
     }),
     Icons({
       //autoInstall: true,
-      compiler: 'jsx',
-      jsx: 'react'
+      compiler: "jsx",
+      jsx: "react",
     }),
   ],
   // test: {
@@ -79,7 +87,7 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: [shp(PROD_URL),shp(DEV_URL)],
+    allowedHosts: [shp(PROD_URL), shp(DEV_URL)],
   },
   css: {
     devSourcemap: true,

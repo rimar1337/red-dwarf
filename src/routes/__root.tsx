@@ -60,6 +60,8 @@ import {
 declare const __INSTANCE_MODEL__: boolean;
 declare const __MODERATION_PAGE__: boolean;
 declare const __VERSION_NUMBER__: string;
+declare const __COMMIT_HASH__: string;
+
 export const HARDCODED_TEXT = ` is ${__INSTANCE_MODEL__ ? " a hosted Red Dwarf instance" : " an app"} that you can use to participate in the Bluesky social network.`;
 
 export const Route = createRootRouteWithContext<{
@@ -828,6 +830,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </a>
             <DotDivider />
             <span className="shrink-0">{__VERSION_NUMBER__ || "v????"}</span>
+            {__COMMIT_HASH__ && (
+              <>
+                <DotDivider />
+                <span className="shrink-0">{__COMMIT_HASH__ || "????"}</span>
+              </>
+            )}
           </div>
         </aside>
       </div>

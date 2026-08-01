@@ -24,7 +24,9 @@ import { HARDCODED_TEXT, ProfileSmall } from "./__root";
 import { NotificationItem } from "./notifications";
 //import { SettingHeading } from './settings';
 
-declare const __INSTANCE_MODEL__: boolean
+declare const __INSTANCE_MODEL__: boolean;
+declare const __VERSION_NUMBER__: string;
+declare const __COMMIT_HASH__: string;
 
 export const Route = createFileRoute("/about")({
   component: RouteComponent,
@@ -47,12 +49,17 @@ function RouteComponent() {
       <div className="flex flex-col justify-around mt-4 mx-4 gap-4">
         <img className="rounded-sm" src={HOST_HERO} />
         <span className=" text-gray-500 dark:text-gray-400 leading-tight">
-          <span className=" font-bold">{__INSTANCE_MODEL__ ? window.location.host : "Red Dwarf"}</span> {HARDCODED_TEXT}
+          <span className=" font-bold">
+            {__INSTANCE_MODEL__ ? window.location.host : "Red Dwarf"}
+          </span>{" "}
+          {HARDCODED_TEXT}
         </span>
         {/* <img className="rounded-sm" src={HOST_HERO} /> */}
-        {__INSTANCE_MODEL__ && (<span className=" text-gray-500 dark:text-gray-400">
-          {HOST_DESCRIPTION}
-        </span>)}
+        {__INSTANCE_MODEL__ && (
+          <span className=" text-gray-500 dark:text-gray-400">
+            {HOST_DESCRIPTION}
+          </span>
+        )}
         <div className="flex flex-col gap-1 p-4 border-1 border-gray-200 dark:border-gray-700 rounded-3xl">
           <span className="text-gray-500 dark:text-gray-400 font-bold">
             {__INSTANCE_MODEL__ ? "ADMINISTERED BY:" : "APP PROFILE:"}
@@ -237,7 +244,9 @@ function PolicyRenderer() {
           />
         </>
       )}
-      <Heading3 title={`${__INSTANCE_MODEL__ ? "Instance Defaults" : "Defaults"}`} />
+      <Heading3
+        title={`${__INSTANCE_MODEL__ ? "Instance Defaults" : "Defaults"}`}
+      />
       <KeyValueGrid
         items={[
           {
@@ -264,6 +273,19 @@ function PolicyRenderer() {
           {
             label: "AppView (Bluesky Index):",
             value: defaultAppviewURL,
+          },
+        ]}
+      />
+      <Heading3 title={`Debug Information`} />
+      <KeyValueGrid
+        items={[
+          {
+            label: "Version:",
+            value: __VERSION_NUMBER__,
+          },
+          {
+            label: "Commit Hash:",
+            value: __COMMIT_HASH__,
           },
         ]}
       />
