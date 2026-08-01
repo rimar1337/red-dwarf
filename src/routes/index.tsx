@@ -464,7 +464,7 @@ export function FeedTabOnTop({
   const selectedFeed = persistentSelectedFeed;
   const setSelectedFeed = setPersistentSelectedFeed;
   const rkey = item.value.split("/").pop() || item.value;
-  const isActive = selectedFeed === item.value;
+  const isActive = selectedFeed === item.value && isAtHome;
   const { data: feedrecord } = useQueryArbitrary(item.value);
   const label = feedrecord?.value?.displayName || rkey;
   return (
