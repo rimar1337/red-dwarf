@@ -7,15 +7,25 @@ import viteReact from "@vitejs/plugin-react";
 import AutoImport from "unplugin-auto-import/vite";
 import IconsResolver from "unplugin-icons/resolver";
 import Icons from "unplugin-icons/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 import { generateMetadataPlugin } from "./oauthdev.mts";
 
-const PROD_URL = "https://reddwarf.app";
-const DEV_URL = "https://local3768forumtest.whey.party";
+const env = loadEnv(process.env.NODE_ENV || "development", process.cwd(), "");
+const PROD_URL = env.VITE_PROD_URL;
+const DEV_URL = env.VITE_DEV_URL;
+const PORT = Number(env.VITE_PORT);
 
-const PROD_HANDLE_RESOLVER_PDS = "https://pds-nd.whey.party";
-const DEV_HANDLE_RESOLVER_PDS = "https://bsky.social";
+const PROD_HANDLE_RESOLVER_PDS =
+  env.VITE_PROD_HANDLE_RESOLVER || "https://selfhosted.social";
+const DEV_HANDLE_RESOLVER_PDS =
+  env.VITE_DEV_HANDLE_RESOLVER || "https://bsky.social";
+
+if (!PROD_URL || !DEV_URL || !PORT) {
+  throw new Error(
+    "Set VITE_PROD_URL, VITE_DEV_URL, and VITE_PORT in .env (copy .env.example).",
+  );
+}
 let commitHash = "";
 try {
   commitHash = execSync("git rev-parse --short HEAD").toString().trim();
@@ -88,6 +98,10 @@ export default defineConfig({
   },
   server: {
     allowedHosts: [shp(PROD_URL), shp(DEV_URL)],
+    port: PORT,
+  },
+  preview: {
+    port: PORT,
   },
   css: {
     devSourcemap: true,

@@ -12,21 +12,25 @@ huge thanks to [Microcosm](https://microcosm.blue/) for making this possible
 issue tracker kanban board: [currently on GitHub Projects](https://github.com/users/rimar1337/projects/1/views/1)
 
 ## running dev and build
-in the `vite.config.ts` file you should change these values
-```ts
-const PROD_URL = "https://reddwarf.app"
-const DEV_URL = "https://local3768forumtest.whey.party"
+copy `.env.example` to `.env` and change these values
+```sh
+cp .env.example .env
 ```
-the PROD_URL is what will compile your oauth client metadata so it is very important to change that. same for DEV_URL if you are using a tunnel for dev work
+```dotenv
+VITE_DEV_URL=https://dev.reddwarf.app
+VITE_PROD_URL=https://reddwarf.app
+VITE_PORT=3769
+```
+the PROD_URL is what will compile your oauth client metadata so it is very important to change that. same for DEV_URL if you are using a tunnel for dev work. the tunnel is only needed for oauth though; if you use an app password you dont need it, and localhost is fine.
 
 run dev with `npm run dev` (port 3768) and build with `npm run build` (the output is the `dist` folder)
 
 
 
 you probably dont need to change these
-```ts
-const PROD_HANDLE_RESOLVER_PDS = "https://pds-nd.whey.party"
-const DEV_HANDLE_RESOLVER_PDS = "https://bsky.social"
+```dotenv
+# VITE_PROD_HANDLE_RESOLVER=https://selfhosted.social
+# VITE_DEV_HANDLE_RESOLVER=https://bsky.social
 ```
 if you do want to change these, i recommend changing both of these to your own PDS url. i separate the prod and dev urls so that you can change it as needed. here i separated it because if the prod resolver and prod url shares the same domain itll error and prevent logins
 
