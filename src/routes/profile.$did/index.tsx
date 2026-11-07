@@ -86,6 +86,7 @@ function ProfileComponent() {
           user: agentDid,
           collection: "app.bsky.graph.block",
           path: ".subject",
+          enabled: true,
         }
       : undefined,
   );
@@ -96,6 +97,7 @@ function ProfileComponent() {
           user: authorDid,
           collection: "app.bsky.graph.block",
           path: ".subject",
+          enabled: true,
         }
       : undefined,
   );
@@ -1313,6 +1315,7 @@ export function Mutual({ targetdidorhandle }: { targetdidorhandle: string }) {
           user: identity?.did ?? targetdidorhandle,
           collection: "app.bsky.graph.follow",
           path: ".subject",
+          enabled: true,
         }
       : undefined,
   );

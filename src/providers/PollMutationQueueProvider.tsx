@@ -295,7 +295,7 @@ export function usePollMutationQueue() {
   return context;
 }
 
-function usePollSelfVotes(pollUri: string, enabled?: boolean) {
+function usePollSelfVotes(pollUri: string, enabled: boolean) {
   const { agent } = useAuth();
   const agentDid = agent?.did;
 
@@ -359,7 +359,7 @@ export function usePollData(
   pollCid: string | undefined,
   isMultiple: boolean,
   serverCounts: { a: number; b: number; c: number; d: number },
-  enabled?: boolean,
+  enabled: boolean,
 ) {
   const { agent } = useAuth();
   const myDid = agent?.did;

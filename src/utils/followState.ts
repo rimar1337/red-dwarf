@@ -149,17 +149,21 @@ export function toggleFollow({
   });
 }
 
+export type OneToOneState = {
+  uris: string[];
+  status: "disabled" | "loading" | "ready" | "error";
+  isLoading: boolean;
+  isError: boolean;
+};
+
 export function useGetOneToOneState(params?: {
   target: string;
   user: string;
   collection: string;
   path: string;
-  enabled?: boolean;
-}): {
-  uris: string[];
-  isLoading: boolean;
-  isError: boolean;
-} {
+  enabled: boolean;
+}): OneToOneState {
+  const enabled = params?.enabled ?? false;
   const whatever = useQueryConstellation(
     params && params.user
       ? {
@@ -173,17 +177,20 @@ export function useGetOneToOneState(params?: {
           customkey: params.collection.includes("reddwarf.poll.vote")
             ? "constellation-polls"
             : undefined,
-          enabled: params.enabled || false,
+          enabled,
         }
       : { method: "undefined", target: "whatever", enabled: false },
     // overloading sucks so much
   ) as UseQueryResult<linksRecordsResponse | undefined, Error>;
+
   if (!params || !params.user)
     return {
       uris: [],
-      isError: true,
+      status: "disabled",
       isLoading: false,
+      isError: false,
     };
+
   const arbitrarydata = whatever.data;
   const data = arbitrarydata?.linking_records.slice(0, 50) ?? [];
 
@@ -192,14 +199,34 @@ export function useGetOneToOneState(params?: {
       uris: data.map((linksRecord) => {
         return `at://${linksRecord.did}/${linksRecord.collection}/${linksRecord.rkey}`;
       }),
-      isError: false,
+      status: "ready",
       isLoading: false,
+      isError: false,
+    };
+  }
+
+  if (whatever.isError) {
+    return {
+      uris: [],
+      status: "error",
+      isLoading: false,
+      isError: true,
+    };
+  }
+
+  if (whatever.isPending) {
+    return {
+      uris: [],
+      status: enabled ? "loading" : "disabled",
+      isLoading: enabled,
+      isError: false,
     };
   }
 
   return {
     uris: [],
-    isError: whatever.isLoading,
-    isLoading: whatever.isError,
+    status: "ready",
+    isLoading: false,
+    isError: false,
   };
 }

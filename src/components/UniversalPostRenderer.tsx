@@ -213,6 +213,10 @@ export function UniversalPostRendererATURILoader_AppView({
     repostedby ? aturirepostbydid : undefined,
   );
   const feedviewpostrepostedbyhandle = repostedbyhookvalue?.data?.handle;
+  // `data === undefined` without `isError` means AppView definitively has no
+  // post for this URI. `isError` means transport/timeout. Both fall back to
+  // Microcosm; the query cache treats them differently (a miss stays fresh,
+  // an error does not retry on mount or focus).
   if (!isLoading && data === undefined) {
     return (
       <UniversalPostRendererATURILoader_Microcosm
@@ -1285,6 +1289,7 @@ export function UniversalPostRenderer({
           user: agentDid,
           collection: "app.bsky.graph.block",
           path: ".subject",
+          enabled: true,
         }
       : undefined,
   );
@@ -1295,6 +1300,7 @@ export function UniversalPostRenderer({
           user: authorDid,
           collection: "app.bsky.graph.block",
           path: ".subject",
+          enabled: true,
         }
       : undefined,
   );

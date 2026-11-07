@@ -1462,10 +1462,10 @@ export async function innerAVPostsQueryFn(
 
       const url = `${avurl}/xrpc/app.bsky.feed.getPosts?${params.toString()}`;
 
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(3_000) });
       if (!res.ok) {
         throw new Error(
-          `Labelmerge fetch failed: ${res.status} ${res.statusText}`,
+          `AppView getPosts failed: ${res.status} ${res.statusText}`,
         );
       }
 
@@ -1563,7 +1563,7 @@ const postquerymerge = create(
       const result: SingularAVPostResult | undefined = item; //outputMap[key]
       return result;
     },
-    scheduler: windowScheduler(10 * 100), // 1 second
+    scheduler: windowScheduler(50), // coalesce a feed without adding a visible second
   },
 );
 
@@ -1587,10 +1587,10 @@ export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
         params.append("uris", aturi);
         const url = `${avurl}/xrpc/app.bsky.feed.getPosts?${params.toString()}`;
 
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: AbortSignal.timeout(3_000) });
         if (!res.ok) {
           throw new Error(
-            `Labelmerge fetch failed: ${res.status} ${res.statusText}`,
+            `AppView getPosts failed: ${res.status} ${res.statusText}`,
           );
         }
 
@@ -1606,10 +1606,20 @@ export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
       // )) as SingularAVPostResult;
 
       if (result === undefined) {
-        throw new Error("what the hell happened");
+        // Valid AppView response that simply does not contain this URI.
+        // This is not an error: keep it cached for staleTime and let the
+        // renderer fall back to Microcosm without refetching on every mount.
+        return undefined;
       }
       return result;
     },
+
+    // AppView is a best-effort source. The Microcosm fallback is the retry.
+    retry: 0,
+    retryOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
 
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 5 * 60 * 1000,
