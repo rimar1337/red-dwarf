@@ -1530,7 +1530,8 @@ export function UniversalPostRenderer({
     hasAnyGallery &&
     ((post.record as { text?: string }).text ?? "") === "" &&
     !isQuote &&
-    !nopics;
+    !nopics &&
+    !expanded
 
   // todo consider if adding an explicit "post removed" visible component is better for this
   //if (redactFinalSome) return null

@@ -369,6 +369,8 @@ export function PostEmbeds({
             }}
             className={`overflow-x-auto overflow-y-hidden scrollbar-none  ${viewContext === PostEmbedViewContext.Quote ? "h-47.5 sm:h-55" : "h-65 sm:h-75"}`}
           >
+            <div className="tailwind-cache-stimulator hidden opacity-0 absolute h-65 sm:h-75" />
+            <div className="tailwind-cache-stimulator hidden opacity-0 absolute h-47.5 sm:h-55" />
             {images.map((img, i) => (
               <div
                 key={i}
