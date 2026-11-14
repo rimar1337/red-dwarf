@@ -6,9 +6,9 @@ export const generateClientMetadata = (appOrigin: string) => {
 
   return {
     client_id: `${appOrigin}/client-metadata.json`,
-    client_name: "ForumTest",
+    client_name: "Red Dwarf",
     client_uri: appOrigin,
-    logo_uri: `${appOrigin}/logo192.png`,
+    logo_uri: `${appOrigin}/redstar.png`,
     tos_uri: `${appOrigin}/terms-of-service`,
     policy_uri: `${appOrigin}/privacy-policy`,
     redirect_uris: [`${appOrigin}${callbackPath}`] as [string, ...string[]],
