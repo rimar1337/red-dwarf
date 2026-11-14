@@ -1615,6 +1615,10 @@ export function constructSingularAVPostQuery(options: SingularAVPostQuery) {
     },
 
     // AppView is a best-effort source. The Microcosm fallback is the retry.
+    // this wont ever get stale, which is sad, but like its mostly fine because
+    // its the appview route and thats just the fast path. real fix is to make
+    // post not blur when it had data from previous render but upstream data
+    // source is loading for refreshing
     retry: 0,
     retryOnMount: false,
     refetchOnWindowFocus: false,

@@ -1,4 +1,9 @@
-import { Agent, AtpAgent, type AtpSessionData } from "@atproto/api";
+import {
+  Agent,
+  AtpAgent,
+  type AtpPersistSessionHandler,
+  type AtpSessionData,
+} from "@atproto/api";
 import {
   type OAuthSession,
   TokenInvalidError,
@@ -11,6 +16,7 @@ import React, {
   use,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -36,6 +42,67 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue>({} as AuthContextValue);
 
+const SERVICE_KEY = "service";
+const SESSION_KEY = "sess";
+
+const setStoredService = (service: string | null) => {
+  try {
+    if (service === null) {
+      localStorage.removeItem(SERVICE_KEY);
+    } else {
+      localStorage.setItem(SERVICE_KEY, service);
+    }
+  } catch (e) {
+    console.error("Failed to store the service.", e);
+  }
+};
+
+const forgetStoredSession = (refreshJwt: string) => {
+  let storedJwt: string | undefined;
+  try {
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored) {
+      storedJwt = (JSON.parse(stored) as AtpSessionData | null)?.refreshJwt;
+    }
+  } catch (e) {
+    console.error("The stored session could not be read.", e);
+  }
+
+  if (storedJwt && storedJwt !== refreshJwt) return;
+
+  try {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SERVICE_KEY);
+  } catch (e) {
+    console.error("Failed to forget the session.", e);
+  }
+};
+
+const createPersistSession = (
+  initialSession: AtpSessionData | undefined,
+  onExpired: () => void,
+): AtpPersistSessionHandler => {
+  let refreshJwt = initialSession?.refreshJwt;
+
+  return (event, session) => {
+    if (event === "network-error") return;
+
+    if (session) {
+      refreshJwt = session.refreshJwt;
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      } catch (e) {
+        console.error("Failed to persist the session.", e);
+      }
+      return;
+    }
+
+    if (event !== "expired") return;
+    if (refreshJwt) forgetStoredSession(refreshJwt);
+    onExpired();
+  };
+};
+
 export const UnifiedAuthProvider = ({
   children,
 }: {
@@ -45,7 +112,15 @@ export const UnifiedAuthProvider = ({
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [oauthSession, setOauthSession] = useState<OAuthSession | null>(null);
-  const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
+  const [, setQuickAuth] = useAtom(quickAuthAtom);
+
+  const clearAuthState = useCallback(() => {
+    setAgent(null);
+    setAuthMethod(null);
+    setOauthSession(null);
+    setStatus("signedOut");
+    setQuickAuth(null);
+  }, [setQuickAuth]);
 
   const initialize = useCallback(async () => {
     try {
@@ -62,42 +137,60 @@ export const UnifiedAuthProvider = ({
       }
     } catch (e) {
       console.error("OAuth init failed, checking password session.", e);
-      if (!quickAuth) {
-        // quickAuth restoration. if last used method is oauth we immediately call for oauth redo
-        // (and set a persistent atom somewhere to not retry again if it failed)
-      }
     }
 
-    try {
-      const service = localStorage.getItem("service");
-      const sessionString = localStorage.getItem("sess");
+    const service = localStorage.getItem(SERVICE_KEY);
+    const sessionString = localStorage.getItem(SESSION_KEY);
 
-      if (service && sessionString) {
-        // /*mass comment*/ console.log("Resuming password-based session using AtpAgent...");
-        const apiAgent = new AtpAgent({ service });
-        const session: AtpSessionData = JSON.parse(sessionString);
-        await apiAgent.resumeSession(session);
-
-        // /*mass comment*/ console.log("Password-based session resumed successfully.");
-        setAgent(apiAgent);
-        setAuthMethod("password");
-        setStatus("signedIn");
-        setQuickAuth(apiAgent?.did || null);
+    if (service && sessionString) {
+      let session: AtpSessionData;
+      try {
+        session = JSON.parse(sessionString) as AtpSessionData;
+      } catch (e) {
+        console.error("The stored session could not be read.", e);
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SERVICE_KEY);
+        clearAuthState();
         return;
       }
-    } catch (e) {
-      console.error("Failed to resume password-based session.", e);
-      localStorage.removeItem("sess");
-      localStorage.removeItem("service");
+
+      let apiAgent: AtpAgent;
+      try {
+        apiAgent = new AtpAgent({
+          service,
+          persistSession: createPersistSession(session, clearAuthState),
+        });
+      } catch (e) {
+        console.error("The stored service is not a usable URL.", e);
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SERVICE_KEY);
+        clearAuthState();
+        return;
+      }
+
+      try {
+        await apiAgent.resumeSession(session);
+      } catch (e) {
+        if (!apiAgent.session) {
+          console.error("The stored session is no longer valid.", e);
+          clearAuthState();
+          return;
+        }
+        console.error(
+          "Failed to refresh the stored session; keeping it for a retry.",
+          e,
+        );
+      }
+
+      setAgent(apiAgent);
+      setAuthMethod("password");
+      setStatus("signedIn");
+      setQuickAuth(apiAgent?.did || null);
+      return;
     }
 
-    // /*mass comment*/ console.log("No active session found.");
-    setStatus("signedOut");
-    setAgent(null);
-    setAuthMethod(null);
-    // do we want to null it here?
-    setQuickAuth(null);
-  }, [quickAuth, setQuickAuth]);
+    clearAuthState();
+  }, [clearAuthState, setQuickAuth]);
 
   useEffect(() => {
     const handleOAuthSessionDeleted = (
@@ -110,19 +203,13 @@ export const UnifiedAuthProvider = ({
         `OAuth Session for ${event.detail.sub} was deleted.`,
         event.detail.cause,
       );
-      setAgent(null);
-      setOauthSession(null);
-      setAuthMethod(null);
-      setStatus("signedOut");
-      setQuickAuth(null);
+      clearAuthState();
     };
 
-    // eslint-disable-next-line @eslint-react/web-api/no-leaked-event-listener
     oauthEvents.addEventListener(
       "deleted",
       handleOAuthSessionDeleted as EventListener,
     );
-    initialize();
 
     return () => {
       oauthEvents.removeEventListener(
@@ -130,7 +217,18 @@ export const UnifiedAuthProvider = ({
         handleOAuthSessionDeleted as EventListener,
       );
     };
-  }, [initialize, setQuickAuth]);
+  }, [clearAuthState]);
+
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    initialize().catch((e) => {
+      // Whatever threw, `loading` is not a state to leave the UI in.
+      console.error("Auth initialization failed.", e);
+      clearAuthState();
+    });
+  }, [initialize, clearAuthState]);
 
   const loginWithPassword = async (
     user: string,
@@ -138,32 +236,30 @@ export const UnifiedAuthProvider = ({
     service: string = "https://bsky.social",
   ) => {
     if (status !== "signedOut") return;
+
+    const previousService = localStorage.getItem(SERVICE_KEY);
     setStatus("loading");
+    setStoredService(service);
+
     try {
-      let sessionData: AtpSessionData | undefined;
       const apiAgent = new AtpAgent({
         service,
-        persistSession: (_evt, sess) => {
-          sessionData = sess;
-        },
+        persistSession: createPersistSession(undefined, clearAuthState),
       });
       await apiAgent.login({ identifier: user, password });
 
-      if (sessionData) {
-        localStorage.setItem("service", service);
-        localStorage.setItem("sess", JSON.stringify(sessionData));
-        setAgent(apiAgent);
-        setAuthMethod("password");
-        setStatus("signedIn");
-        setQuickAuth(apiAgent?.did || null);
-        // /*mass comment*/ console.log("Successfully logged in with password.");
-      } else {
+      if (!apiAgent.session) {
         throw new Error("Session data not persisted after login.");
       }
+
+      setAgent(apiAgent);
+      setAuthMethod("password");
+      setStatus("signedIn");
+      setQuickAuth(apiAgent.did || null);
     } catch (e) {
       console.error("Password login failed:", e);
-      setStatus("signedOut");
-      setQuickAuth(null);
+      setStoredService(previousService);
+      clearAuthState();
       throw e;
     }
   };
@@ -193,21 +289,16 @@ export const UnifiedAuthProvider = ({
         await oauthClient.revoke(oauthSession.sub);
         // /*mass comment*/ console.log("OAuth session revoked.");
       } else if (authMethod === "password") {
-        localStorage.removeItem("service");
-        localStorage.removeItem("sess");
-        await (agent as AtpAgent).com.atproto.server.deleteSession();
-        // /*mass comment*/ console.log("Password-based session deleted.");
+        await (agent as AtpAgent).logout();
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SERVICE_KEY);
       }
     } catch (e) {
       console.error("Logout failed:", e);
     } finally {
-      setAgent(null);
-      setAuthMethod(null);
-      setOauthSession(null);
-      setStatus("signedOut");
-      setQuickAuth(null);
+      clearAuthState();
     }
-  }, [status, agent, authMethod, oauthSession, setQuickAuth]);
+  }, [status, agent, authMethod, oauthSession, clearAuthState]);
 
   return (
     <AuthContext
