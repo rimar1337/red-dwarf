@@ -25,8 +25,13 @@ import { renderTextWithFacets } from "~/components/UtilityFunctions";
 import { getGetHydratedLabelDefs, useAutoLabels } from "~/hooks/useAutoLabels";
 import type { HydratedLabelValueDefinition } from "~/providers/AutoLabelProvider";
 //import { useModeration } from "~/hooks/useModeration";
-import { useAuth } from "~/providers/UnifiedAuthProvider";
-import { enableBitesAtom, imgCDNAtom, profileChipsAtom } from "~/utils/atoms";
+import { getPublicAgent, useAuth } from "~/providers/UnifiedAuthProvider";
+import {
+  appviewUrlAtom,
+  enableBitesAtom,
+  imgCDNAtom,
+  profileChipsAtom,
+} from "~/utils/atoms";
 import {
   toggleFollow,
   useGetFollowState,
@@ -1363,7 +1368,7 @@ export function RichTextRenderer({ description }: { description: string }) {
   const [richDescription, setRichDescription] = useState<string | ReactNode[]>(
     description,
   );
-  const { agent } = useAuth();
+  const [appviewUrl] = useAtom(appviewUrlAtom);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -1373,9 +1378,12 @@ export function RichTextRenderer({ description }: { description: string }) {
 
     async function processRichText() {
       try {
-        if (!agent?.did) return;
+        // real bug is equating agent existence with logged in state
+        // todo: decouple those wrong assumptions across the entire codebase
+        // temporarily: just invent a new empty unauthed agent once from
+        // the Unified Auth Provider for these hacky use cases
         const rt = new RichText({ text: description });
-        await rt.detectFacets(agent);
+        await rt.detectFacets(getPublicAgent(appviewUrl));
 
         if (!mounted) return;
 
@@ -1403,7 +1411,7 @@ export function RichTextRenderer({ description }: { description: string }) {
     return () => {
       mounted = false;
     };
-  }, [description, agent, navigate]);
+  }, [description, appviewUrl, navigate]);
 
   return <>{richDescription}</>;
 }

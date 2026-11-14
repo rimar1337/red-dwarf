@@ -20,7 +20,7 @@ import React, {
   useState,
 } from "react";
 
-import { quickAuthAtom } from "~/utils/atoms";
+import { defaultAppviewURL, quickAuthAtom } from "~/utils/atoms";
 
 import { oauthClient, oauthEvents } from "../utils/oauthClient";
 
@@ -102,6 +102,27 @@ const createPersistSession = (
     onExpired();
   };
 };
+
+let publicAgent: { service: string; agent: AtpAgent } | null = null;
+
+// real bug is equating agent existence with logged in state
+// todo: decouple those wrong assumptions across the entire codebase
+// temporarily: just invent a new empty unauthed agent once from
+// the Unified Auth Provider for these hacky use cases
+export function getPublicAgent(service: string = defaultAppviewURL): AtpAgent {
+  // whatever the settings say, minus a trailing slash, plus a scheme if the
+  // user typed a bare host
+  const url = (service.trim() || defaultAppviewURL).replace(/\/+$/, "");
+  const withScheme = /^https?:\/\//.test(url) ? url : `https://${url}`;
+
+  if (publicAgent?.service !== withScheme) {
+    publicAgent = {
+      service: withScheme,
+      agent: new AtpAgent({ service: withScheme }),
+    };
+  }
+  return publicAgent.agent;
+}
 
 export const UnifiedAuthProvider = ({
   children,
