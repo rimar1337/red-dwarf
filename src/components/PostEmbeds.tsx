@@ -298,7 +298,7 @@ export function PostEmbeds({
                 });
               }
             }}
-            depth={1}
+            depth={0}
           />
         </div>
       );
