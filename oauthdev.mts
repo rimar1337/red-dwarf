@@ -5,7 +5,7 @@ export const generateClientMetadata = (appOrigin: string) => {
   const callbackPath = "/callback";
 
   return {
-    client_id: `${appOrigin}/client-metadata.json`,
+    client_id: `${appOrigin}/oauth-client-metadata.json`,
     client_name: "Red Dwarf",
     client_uri: appOrigin,
     logo_uri: `${appOrigin}/redstar.png`,
@@ -57,7 +57,7 @@ export function generateMetadataPlugin({
       const outputPath = path.resolve(
         process.cwd(),
         "public",
-        "client-metadata.json"
+        "oauth-client-metadata.json"
       );
 
       fs.writeFileSync(outputPath, JSON.stringify(metadata, null, 2));
@@ -74,7 +74,7 @@ export function generateMetadataPlugin({
       fs.writeFileSync(resolverOutPath, JSON.stringify(resolvers, null, 2));
 
 
-      // /*mass comment*/ console.log(`✅ Generated client-metadata.json for ${appOrigin}`);
+      // /*mass comment*/ console.log(`✅ Generated oauth-client-metadata.json for ${appOrigin}`);
     },
   };
 }

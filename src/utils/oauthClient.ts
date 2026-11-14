@@ -8,7 +8,7 @@ const handleResolverPDS = resolvers.resolver || "https://bsky.social";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore this should be fine ? the vite plugin should generate this before errors
-import clientMetadata from "../../public/client-metadata.json" with { type: "json" };
+import clientMetadata from "../../public/oauth-client-metadata.json" with { type: "json" };
 
 export const oauthEvents = new EventTarget()
 
