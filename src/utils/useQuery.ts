@@ -1090,11 +1090,11 @@ export type PartialLabelResult = {
   error?: LabelMergeQueryLabelsOutputSchemaError[];
 };
 
-function flattenLabelQueries(
-  partials: PartialLabelQuery[],
-): SingularLabelQuery[] {
-  return partials.flatMap((p) => p.l.map((label) => ({ s: p.s, l: label })));
-}
+// defer function flattenLabelQueries(
+//   partials: PartialLabelQuery[],
+// ): SingularLabelQuery[] {
+//   return partials.flatMap((p) => p.l.map((label) => ({ s: p.s, l: label })));
+// }
 
 // batShitQueryClient
 export const unpersistedQueryClient = new QueryClient(
@@ -1109,10 +1109,10 @@ export const unpersistedQueryClient = new QueryClient(
 }*/
 );
 
-interface MicroSingleResult {
-  l: string;
-  t: number;
-}
+// defer interface MicroSingleResult {
+//   l: string;
+//   t: number;
+// }
 
 const labelmerge = create(
   /*<Record<String,SingularLabelResult>[], SingularLabelQuery>*/ {

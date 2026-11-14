@@ -391,7 +391,7 @@ export function UniversalPostRendererATURILoader_Microcosm({
   const TEMPLINEAR = true;
   const parsed = new AtUri(atUri);
   const did = parsed?.host;
-  const rkey = parsed?.rkey;
+  // defer const rkey = parsed?.rkey;
 
   const {
     data: postQuery,

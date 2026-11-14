@@ -1258,7 +1258,7 @@ function FeedListDesktopSidebar() {
   }, [savedFeeds]);
 
   const shimmedunautheddefault = HOST_UNAUTHED_DEFAULT_FEEDS.map(
-    (aturi: string, idx: number) => {
+    (aturi: string, _idx /* defer */: number) => {
       return {
         value: aturi,
         pinned: true,

@@ -1,4 +1,4 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 
 import { isAtTopAtom } from "~/utils/atoms";
@@ -12,7 +12,7 @@ export function Header({
   title?: string;
   bottomBorderDisabled?: boolean;
 }) {
-  const router = useRouter();
+  // const router = useRouter();
   const [isAtTop] = useAtom(isAtTopAtom);
   //const what = router.history.
   return (

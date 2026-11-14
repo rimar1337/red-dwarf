@@ -2,7 +2,7 @@ import type { $Typed, Facet } from "@atproto/api";
 import * as React from "react";
 
 export const CACHE_TIMEOUT = 5 * 60 * 1000;
-const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
+// defer const HANDLE_DID_CACHE_TIMEOUT = 60 * 60 * 1000; // 1 hour
 
 export function asTyped<T extends { $type: string }>(obj: T): $Typed<T> {
   return obj as $Typed<T>;

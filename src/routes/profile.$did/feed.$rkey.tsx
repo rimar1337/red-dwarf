@@ -23,7 +23,7 @@ function FeedRoute() {
   const aturi = new AtUri(uri);
   const { data: feeddata } = useQueryArbitrary(uri);
 
-  const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
+  const [quickAuth, _] = useAtom(quickAuthAtom);
   const isAuthRestoring = quickAuth ? status === "loading" : false;
 
   const authed = status === "signedIn";

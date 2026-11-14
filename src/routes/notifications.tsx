@@ -576,7 +576,7 @@ export function NotificationItem({
   labelererror?: string;
 }) {
   const aturi = new AtUri(notification);
-  const bite = aturi.collection === "net.wafrn.feed.bite";
+  // defer const bite = aturi.collection === "net.wafrn.feed.bite";
   const navigate = useNavigate();
   const { data: identity } = useQueryIdentity(aturi.host);
   const resolvedDid = identity?.did;

@@ -312,14 +312,14 @@ export function SwitchSetting({
 }
 
 function Hue() {
-  const [hue, setHue] = useAtom(hueAtom);
+  const [_, setHue] = useAtom(hueAtom);
   return (
     <div className="flex flex-col px-4">
-      <span className="z-[2] text-md">Hue</span>
-      <span className="z-[2] text-sm text-gray-500 dark:text-gray-400">
+      <span className="z-2 text-md">Hue</span>
+      <span className="z-2 text-sm text-gray-500 dark:text-gray-400">
         Change the colors of the app
       </span>
-      <div className="z-[1] flex flex-row items-center gap-4">
+      <div className="z-1 flex flex-row items-center gap-4">
         <SliderComponent atom={hueAtom} max={360} />
         <button
           onClick={() => setHue(defaulthue ?? 28)}
@@ -445,7 +445,7 @@ export const SliderPrimitive: React.FC<SliderPProps> = ({
       step={step}
       onValueChange={(v: number[]) => {}}
     >
-      <Slider.Track className="relative flex-grow h-4 bg-gray-300 dark:bg-gray-700 rounded-full">
+      <Slider.Track className="relative grow h-4 bg-gray-300 dark:bg-gray-700 rounded-full">
         <Slider.Range className="absolute h-full bg-gray-500 dark:bg-gray-400 rounded-l-full rounded-r-none" />
       </Slider.Track>
       <Slider.Thumb className=" hidden shadow-[0_0_0_8px_var(--color-white)] dark:shadow-[0_0_0_8px_var(--color-gray-950)] block w-[3px] h-12 bg-gray-500 dark:bg-gray-400 rounded-md focus:outline-none" />

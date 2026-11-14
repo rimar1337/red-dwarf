@@ -10,9 +10,9 @@ import {
 } from "@atproto/xrpc";
 import { schemas } from "./lexicons.js";
 // import { CID } from 'multiformats/cid'
-import { type OmitKey, type Un$Typed } from "./util.js";
+// defer import { type OmitKey, type Un$Typed } from "./util.js";
 import * as AppReddwarfLabelmergeQueryLabels from "./types/app/reddwarf/labelmerge/queryLabels.js";
-import * as ComAtprotoLabelDefs from "./types/com/atproto/label/defs.js";
+// defer import * as ComAtprotoLabelDefs from "./types/com/atproto/label/defs.js";
 
 export * as AppReddwarfLabelmergeQueryLabels from "./types/app/reddwarf/labelmerge/queryLabels.js";
 export * as ComAtprotoLabelDefs from "./types/com/atproto/label/defs.js";

@@ -68,8 +68,8 @@ function ProfileComponent() {
   // booo bad this is not always the did it might be a handle, use identity.did instead
   const { did } = Route.useParams();
   const { agent } = useAuth();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  // defer const navigate = useNavigate();
+  // defer const queryClient = useQueryClient();
   const {
     data: identity,
     isLoading: isIdentityLoading,
@@ -414,7 +414,7 @@ function ProfileComponent() {
           <FollowButton targetdidorhandle={did} />
           <button
             className="rounded-full h-10 w-10 text-[15px] flex justify-center items-center bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-            onClick={(e) => {
+            onClick={() => {
               renderSnack({
                 title: "Not Implemented Yet",
                 description: "Sorry...",
@@ -479,7 +479,7 @@ function ProfileComponent() {
                   large
                 />
               )}
-              {informAuthorLabels.map((label, index) => (
+              {informAuthorLabels.map((label) => (
                 <SmallAuthorLabelBadge
                   label={label}
                   key={label.cts + label.src + label.val}
@@ -802,8 +802,8 @@ function FeedsTab({ did }: { did: string }) {
       <div>
         {feeds.map((feed) => {
           if (!feed || !feed?.value) return;
-          const feedGenRecord =
-            feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
+          // defer const feedGenRecord =
+          //   feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
           return <FeedItemRender feed={feed as any} key={feed.uri} />;
         })}
       </div>
@@ -1041,8 +1041,8 @@ function ListsTab({ did }: { did: string }) {
       <div>
         {feeds.map((feed) => {
           if (!feed || !feed?.value) return;
-          const feedGenRecord =
-            feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
+          // defer const feedGenRecord =
+          //   feed.value as unknown as ATPAPI.AppBskyFeedGenerator.Record;
           return (
             <FeedItemRender listmode={true} feed={feed as any} key={feed.uri} />
           );
@@ -1217,7 +1217,7 @@ export function FollowButton({
       ) : (
         <button
           className=" shrink-0 font-medium rounded-full h-10 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors px-4 py-2 text-[14px]"
-          onClick={(e) => {
+          onClick={() => {
             renderSnack({
               title: "Not Implemented Yet",
               description: "Sorry...",

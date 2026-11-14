@@ -104,10 +104,6 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
   const {
     agent,
     status,
-    authMethod,
-    loginWithPassword,
-    loginWithOAuth,
-    logout,
   } = useAuth();
   const authed = !!agent?.did;
 
@@ -167,7 +163,7 @@ export function Home({ hidden = false }: { hidden?: boolean }) {
 
   // const savedFeeds = savedFeedsPref?.items || [];
 
-  const [quickAuth, setQuickAuth] = useAtom(quickAuthAtom);
+  const [quickAuth, _] = useAtom(quickAuthAtom);
   const isAuthRestoring = quickAuth ? status === "loading" : false;
 
   const identityresultmaybe = useQueryIdentity(

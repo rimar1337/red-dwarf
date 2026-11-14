@@ -53,7 +53,7 @@ export function PostEmbeds({
   embed,
   moderation,
   onOpen,
-  allowNestedQuotes,
+  // defer allowNestedQuotes,
   viewContext,
   salt,
   navigate,
@@ -67,7 +67,7 @@ export function PostEmbeds({
   embed?: Embed;
   moderation?: ModerationDecision;
   onOpen?: () => void;
-  allowNestedQuotes?: boolean;
+  // defer allowNestedQuotes?: boolean;
   viewContext?: PostEmbedViewContext;
   salt: string;
   navigate: (_: any) => void;

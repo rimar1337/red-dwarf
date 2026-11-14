@@ -1,5 +1,4 @@
 import type { SVGProps } from "react";
-import React from "react";
 
 import { HOST_LOGO_USE_FAVICON } from "~/../policy";
 

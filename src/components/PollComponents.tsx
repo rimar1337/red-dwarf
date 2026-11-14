@@ -1,6 +1,5 @@
 //import * as ATPAPI from "@atproto/api"
 import { useAtom } from "jotai";
-import * as React from "react";
 
 import {
   usePollData,

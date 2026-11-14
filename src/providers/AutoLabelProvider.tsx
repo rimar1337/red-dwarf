@@ -37,11 +37,11 @@ type labeldefpref = {
   err?: string;
 };
 
-type hydratedlabeldefpref = {
-  did: string;
-  labeldefs?: HydratedLabelValueDefinition[];
-  err?: string;
-};
+// defer type hydratedlabeldefpref = {
+//   did: string;
+//   labeldefs?: HydratedLabelValueDefinition[];
+//   err?: string;
+// };
 
 type AutoLabelConfig = {
   activeLabelerDids: string[];
@@ -75,7 +75,7 @@ export function AutoLabelProvider({ children }: { children: React.ReactNode }) {
   const [slingshoturl] = useAtom(slingshotURLAtom);
   const queryClient = useQueryClient();
 
-  const [disabledLabelers, setDisabledLabelers] = useAtom(disabledLabelersAtom);
+  const [disabledLabelers, _] = useAtom(disabledLabelersAtom);
 
   // Modal state
   const [errorModalOpen, setErrorModalOpen] = React.useState(false);
