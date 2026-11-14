@@ -16,7 +16,6 @@ export default defineConfig([
       reactHooks.configs.flat["recommended-latest"],
     ],
     plugins: {
-      "react-hooks": reactHooks,
       "simple-import-sort": simpleImportSort,
       "unused-imports": unusedImports,
     },

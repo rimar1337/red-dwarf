@@ -1,3 +1,4 @@
+import { AppBskyActorDefs } from "@atproto/api";
 import { useQueries } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
 import { useEffect, useRef } from "react";
@@ -75,8 +76,8 @@ export const ModerationInitializer = () => {
   // Important: If unauthed, userPrefDids MUST be empty, even if cache exists.
   const userPrefDids = !isUnauthed
     ? (prefs?.preferences
-        ?.find((pref: any) => pref.$type === "app.bsky.actor.defs#labelersPref")
-        ?.labelers?.map((l: any) => l.did) ?? [])
+        ?.find(AppBskyActorDefs.isLabelersPref)
+        ?.labelers.map((l) => l.did) ?? [])
     : [];
 
   // 5. Force Bsky DID + User DIDs
