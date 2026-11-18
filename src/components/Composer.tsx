@@ -12,7 +12,7 @@ import { ProfileThing } from "./Login";
 import { useOGGenerator } from "./OGPoll";
 import { UniversalPostRendererATURILoader } from "./UniversalPostRenderer";
 
-const MAX_POST_LENGTH = 300;
+const MAX_POST_GRAPHEMES = 300;
 
 // Helper to calculate expiry dates
 const addHours = (date: Date, h: number) => {
@@ -71,7 +71,9 @@ export function Composer() {
     useQueryPost(parentUri);
 
   async function handlePost() {
-    if (!agent || !postText.trim() || postText.length > MAX_POST_LENGTH) return;
+    const graphemes = new RichText({ text: postText }).graphemeLength;
+
+    if (!agent || !postText.trim() || graphemes > MAX_POST_GRAPHEMES) return;
 
     setPosting(true);
     setPostError(null);
@@ -247,7 +249,8 @@ export function Composer() {
     }
   };
 
-  const charsLeft = MAX_POST_LENGTH - postText.length;
+  const charsLeft =
+    MAX_POST_GRAPHEMES - new RichText({ text: postText }).graphemeLength;
   // Disable if empty text OR if poll is active but only 1 option is filled
   const isPollInvalid = showPoll && (!pollData.a || !pollData.b);
   const isPostButtonDisabled =
