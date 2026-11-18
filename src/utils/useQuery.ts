@@ -169,16 +169,11 @@ export function constructPostQuery(uri?: string, slingshoturl?: string) {
   });
 }
 export function useQueryPost(
-  uri: string,
-): UseQueryResult<GetRecordJSON<ATPAPI.AppBskyFeedPost.Record>, Error>;
-export function useQueryPost(): UseQueryResult<undefined, Error>;
-export function useQueryPost(
   uri?: string,
 ): UseQueryResult<
   GetRecordJSON<ATPAPI.AppBskyFeedPost.Record> | undefined,
   Error
->;
-export function useQueryPost(uri?: string) {
+> {
   const [slingshoturl] = useAtom(slingshotURLAtom);
   return useQuery(constructPostQuery(uri, slingshoturl));
 }
@@ -213,16 +208,11 @@ export type GetRecordJSON<T> = {
   value: T;
 };
 export function useQueryProfile(
-  uri: string,
-): UseQueryResult<GetRecordJSON<ATPAPI.AppBskyActorProfile.Record>, Error>;
-export function useQueryProfile(): UseQueryResult<undefined, Error>;
-export function useQueryProfile(
   uri?: string,
 ): UseQueryResult<
   GetRecordJSON<ATPAPI.AppBskyActorProfile.Record> | undefined,
   Error
->;
-export function useQueryProfile(uri?: string) {
+> {
   const [slingshoturl] = useAtom(slingshotURLAtom);
   return useQuery(constructProfileQuery(uri, slingshoturl));
 }
@@ -608,13 +598,8 @@ export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
   });
 }
 export function useQueryArbitrary(
-  uri: string,
-): UseQueryResult<GetRecordJSON<any>, Error>;
-export function useQueryArbitrary(): UseQueryResult<undefined, Error>;
-export function useQueryArbitrary(
   uri?: string,
-): UseQueryResult<GetRecordJSON<any> | undefined, Error>;
-export function useQueryArbitrary(uri?: string) {
+): UseQueryResult<GetRecordJSON<any> | undefined, Error> {
   const [slingshoturl] = useAtom(slingshotURLAtom);
   return useQuery(constructArbitraryQuery(uri, slingshoturl));
 }
