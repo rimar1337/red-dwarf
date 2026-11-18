@@ -84,22 +84,20 @@ export function Composer() {
       await rt.detectFacets(agent);
 
       if (rt.facets?.length) {
-        rt.facets = rt.facets.filter((item) => {
-          if (item.$type !== "app.bsky.richtext.facet") return true;
-          if (!item.features?.length) return true;
+        const filtered = rt.facets.flatMap((facet) => {
+          if (facet.$type !== "app.bsky.richtext.facet") return [facet];
 
-          item.features = item.features.filter((feature) => {
-            if (feature.$type !== "app.bsky.richtext.facet#mention")
-              return true;
-            const did =
-              feature.$type === "app.bsky.richtext.facet#mention"
-                ? (feature as AppBskyRichtextFacet.Mention)?.did
-                : undefined;
-            return typeof did === "string" && did.startsWith("did:");
+          const features = facet.features.filter((feature) => {
+            if (!AppBskyRichtextFacet.isMention(feature)) return true;
+            return (
+              typeof feature.did === "string" && feature.did.startsWith("did:")
+            );
           });
 
-          return item.features.length > 0;
+          return features.length > 0 ? [{ ...facet, features }] : [];
         });
+
+        rt.facets = filtered.length > 0 ? filtered : undefined;
       }
 
       let uploadedPollImageBlob = null;
