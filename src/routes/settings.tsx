@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Slider, Switch } from "radix-ui";
@@ -28,8 +29,9 @@ import {
   slingshotURLAtom,
   videoCDNAtom,
 } from "~/utils/atoms";
+import { localStoragePersister } from "~/utils/queryClient";
 
-import { MaterialNavItem } from "./__root";
+import { MaterialNavItem, renderSnack } from "./__root";
 
 declare const __MODERATION_PAGE__: boolean
 
@@ -239,6 +241,8 @@ export function Settings() {
           init={defaultAppviewURL}
         />
       </div>
+      <SettingHeading title="Cached Data" />
+      <ClearCacheSetting />
       <p className="text-gray-500 dark:text-gray-400 py-4 px-4 text-sm border rounded-xl mx-4 mt-8 mb-4">
         Notice: Please restart/refresh the app if changes arent applying
         correctly
@@ -385,6 +389,51 @@ export function TextInputSetting({
                      text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
         >
           Reset
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ClearCacheSetting() {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (!confirming) return;
+    const timeout = window.setTimeout(() => setConfirming(false), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [confirming]);
+
+  const clearCache = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+
+    setConfirming(false);
+    queryClient.clear();
+    await localStoragePersister.removeClient();
+    renderSnack({ title: "Cache cleared" });
+  };
+
+  return (
+    <div className="flex flex-col px-4 pb-2">
+      <span className="text-md">Local Cache</span>
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        Posts, profiles and identities stored on this device. Clearing them
+        does not affect your account or these settings.
+      </span>
+      <div className="flex flex-row items-center gap-4 pt-2">
+        <button
+          onClick={clearCache}
+          className={`px-6 py-2 h-12 rounded-full transition ${
+            confirming
+              ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          }`}
+        >
+          {confirming ? "Tap again to clear cache" : "Clear Cache"}
         </button>
       </div>
     </div>
