@@ -22,7 +22,12 @@ import type {
 } from "~/api/labelmerge/types/app/reddwarf/labelmerge/queryLabels";
 import { useAuth } from "~/providers/UnifiedAuthProvider";
 
-import { constellationURLAtom, lycanURLAtom, slingshotURLAtom } from "./atoms";
+import {
+  constellationURLAtom,
+  defaultslingshotURL,
+  lycanURLAtom,
+  slingshotURLAtom,
+} from "./atoms";
 
 export function constructIdentityQuery(
   didorhandle?: string,
@@ -145,23 +150,56 @@ export function useQueryFastAVIdentity(
   );
 }
 
+export type GetRecordJSON<T> = {
+  uri: string;
+  cid: string;
+  value: T;
+};
+
+function isGetRecordJSON(value: unknown): value is GetRecordJSON<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "uri" in value &&
+    typeof value.uri === "string" &&
+    "cid" in value &&
+    typeof value.cid === "string" &&
+    "value" in value
+  );
+}
+
+// internal: do not export. callers should use useQueryArbitrary for untyped
+// records, or add a typed construct/useQuery pair for a specific record.
+async function fetchUriRecord<T>(
+  uri: string,
+  slingshoturl: string,
+): Promise<GetRecordJSON<T> | undefined> {
+  const res = await fetch(
+    `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
+  );
+
+  if (res.status === 400) return undefined;
+  if (!res.ok) {
+    throw new Error(`Failed to fetch record: ${res.status} ${res.statusText}`);
+  }
+
+  const body: unknown = await res.json();
+  if (!isGetRecordJSON(body)) {
+    throw new Error("Malformed record response");
+  }
+
+  return body as GetRecordJSON<T>;
+}
+
 export function constructPostQuery(uri?: string, slingshoturl?: string) {
   return queryOptions({
     queryKey: ["post", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined;
-      const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
+      return fetchUriRecord<ATPAPI.AppBskyFeedPost.Record>(
+        uri,
+        slingshoturl || defaultslingshotURL,
       );
-
-      if (res.status === 400) return undefined;
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch record: ${res.status} ${res.statusText}`,
-        );
-      }
-
-      return (await res.json()) as GetRecordJSON<any>;
     },
     retry: 1,
     staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
@@ -183,18 +221,10 @@ export function constructProfileQuery(uri?: string, slingshoturl?: string) {
     queryKey: ["profile", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined;
-      const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
+      return fetchUriRecord<ATPAPI.AppBskyActorProfile.Record>(
+        uri,
+        slingshoturl || defaultslingshotURL,
       );
-
-      if (res.status === 400) return undefined;
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch record: ${res.status} ${res.statusText}`,
-        );
-      }
-
-      return (await res.json()) as GetRecordJSON<any>;
     },
     retry: 1,
     staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
@@ -202,11 +232,6 @@ export function constructProfileQuery(uri?: string, slingshoturl?: string) {
   });
 }
 
-export type GetRecordJSON<T> = {
-  uri: string;
-  cid: string;
-  value: T;
-};
 export function useQueryProfile(
   uri?: string,
 ): UseQueryResult<
@@ -579,18 +604,7 @@ export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
     queryKey: ["arbitrary", uri],
     queryFn: async () => {
       if (!uri) return undefined as undefined;
-      const res = await fetch(
-        `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
-      );
-
-      if (res.status === 400) return undefined;
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch record: ${res.status} ${res.statusText}`,
-        );
-      }
-
-      return (await res.json()) as GetRecordJSON<any>;
+      return fetchUriRecord<any>(uri, slingshoturl || defaultslingshotURL);
     },
     retry: 1,
     staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
