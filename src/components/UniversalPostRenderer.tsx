@@ -333,6 +333,7 @@ export function UniversalPostRendererATURILoader_AppView({
         feedviewpost={feedviewpost}
         feedviewpostreplyhandle={feedviewpostreplyhandle}
         repostedby={feedviewpostrepostedbyhandle}
+        repostedbyDid={aturirepostbydid}
         style={style}
         ref={ref}
         dataIndexPropPass={dataIndexPropPass}
@@ -1105,6 +1106,7 @@ export function UniversalPostRendererRawRecordShim({
         feedviewpost={feedviewpost}
         feedviewpostreplyhandle={feedviewpostreplyhandle}
         repostedby={feedviewpostrepostedbyhandle}
+        repostedbyDid={aturirepostbydid}
         style={style}
         ref={ref}
         dataIndexPropPass={dataIndexPropPass}
@@ -1135,6 +1137,7 @@ export function UniversalPostRenderer({
   feedviewpostreplyhandle,
   depth = 0,
   repostedby,
+  repostedbyDid,
   style,
   ref,
   dataIndexPropPass,
@@ -1160,6 +1163,7 @@ export function UniversalPostRenderer({
   feedviewpostreplyhandle?: string;
   depth?: number;
   repostedby?: string;
+  repostedbyDid?: string;
   style?: React.CSSProperties;
   ref?: React.RefObject<HTMLDivElement>;
   dataIndexPropPass?: number;
@@ -1298,6 +1302,36 @@ export function UniversalPostRenderer({
       ? {
           target: agentDid,
           user: authorDid,
+          collection: "app.bsky.graph.block",
+          path: ".subject",
+          enabled: true,
+        }
+      : undefined,
+  );
+
+  // A repost is authored by the reposter, not the post author, so block
+  // relationships for the reposter have to be checked separately. Otherwise a
+  // repost made by an account that has blocked you (or that you blocked) still
+  // shows up in feeds.
+  const reposterDid =
+    repostedbyDid && repostedbyDid !== authorDid ? repostedbyDid : undefined;
+
+  const userBlocksReposter = useGetOneToOneState(
+    agentDid && reposterDid
+      ? {
+          target: reposterDid,
+          user: agentDid,
+          collection: "app.bsky.graph.block",
+          path: ".subject",
+          enabled: true,
+        }
+      : undefined,
+  );
+  const reposterBlocksUser = useGetOneToOneState(
+    agentDid && reposterDid
+      ? {
+          target: agentDid,
+          user: reposterDid,
           collection: "app.bsky.graph.block",
           path: ".subject",
           enabled: true,
@@ -1451,7 +1485,10 @@ export function UniversalPostRenderer({
   const redactWhileLoadingPost =
     contentModLoading || contentModError || contentModUnknown;
   const redactWhileLoadingBlock =
-    userBlocksAuthor.isLoading || authorBlocksUser.isLoading;
+    userBlocksAuthor.isLoading ||
+    authorBlocksUser.isLoading ||
+    userBlocksReposter.isLoading ||
+    reposterBlocksUser.isLoading;
   const redactWhileLoadingSome =
     redactWhileLoadingAuthor ||
     redactWhileLoadingProfile ||
@@ -1483,7 +1520,10 @@ export function UniversalPostRenderer({
     redactWhileLoadingBlock;
 
   const redactFinalBlock =
-    userBlocksAuthor.uris.length > 0 || authorBlocksUser.uris.length > 0;
+    userBlocksAuthor.uris.length > 0 ||
+    authorBlocksUser.uris.length > 0 ||
+    userBlocksReposter.uris.length > 0 ||
+    reposterBlocksUser.uris.length > 0;
 
   const redactFinalAuthor =
     hideAuthorLabels.length > 0 || isForceHiddenAuthor || redactFinalBlock;
@@ -1585,6 +1625,12 @@ export function UniversalPostRenderer({
               )}
               {authorBlocksUser.uris.length > 0 && (
                 <li className=" text-sm ml-[18px]">User Blocking You</li>
+              )}
+              {userBlocksReposter.uris.length > 0 && (
+                <li className=" text-sm ml-[18px]">Reposter Blocked by You</li>
+              )}
+              {reposterBlocksUser.uris.length > 0 && (
+                <li className=" text-sm ml-[18px]">Reposter Blocking You</li>
               )}
               {hideAuthorLabels.length > 0 && (
                 <>
