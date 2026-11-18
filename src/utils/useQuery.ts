@@ -153,31 +153,17 @@ export function constructPostQuery(uri?: string, slingshoturl?: string) {
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
       );
-      let data: any;
-      try {
-        data = await res.json();
-      } catch {
-        return undefined;
-      }
+
       if (res.status === 400) return undefined;
-      if (
-        data?.error === "InvalidRequest" &&
-        data.message?.includes("Could not find repo")
-      ) {
-        return undefined; // cache “not found”
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch record: ${res.status} ${res.statusText}`,
+        );
       }
-      try {
-        if (!res.ok) throw new Error("Failed to fetch post");
-        return data as GetRecordJSON<any>;
-      } catch (_e) {
-        return undefined;
-      }
+
+      return (await res.json()) as GetRecordJSON<any>;
     },
-    retry: (failureCount, error) => {
-      // dont retry 400 errors
-      if ((error as any)?.message?.includes("400")) return false;
-      return failureCount < 2;
-    },
+    retry: 1,
     staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
     gcTime: /*0//*/ 5 * 60 * 1000,
   });
@@ -205,31 +191,17 @@ export function constructProfileQuery(uri?: string, slingshoturl?: string) {
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
       );
-      let data: any;
-      try {
-        data = await res.json();
-      } catch {
-        return undefined;
-      }
+
       if (res.status === 400) return undefined;
-      if (
-        data?.error === "InvalidRequest" &&
-        data.message?.includes("Could not find repo")
-      ) {
-        return undefined; // cache “not found”
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch record: ${res.status} ${res.statusText}`,
+        );
       }
-      try {
-        if (!res.ok) throw new Error("Failed to fetch post");
-        return data as GetRecordJSON<any>;
-      } catch (_e) {
-        return undefined;
-      }
+
+      return (await res.json()) as GetRecordJSON<any>;
     },
-    retry: (failureCount, error) => {
-      // dont retry 400 errors
-      if ((error as any)?.message?.includes("400")) return false;
-      return failureCount < 2;
-    },
+    retry: 1,
     staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
     gcTime: /*0//*/ 5 * 60 * 1000,
   });
@@ -620,31 +592,17 @@ export function constructArbitraryQuery(uri?: string, slingshoturl?: string) {
       const res = await fetch(
         `https://${slingshoturl}/xrpc/com.bad-example.repo.getUriRecord?at_uri=${encodeURIComponent(uri)}`,
       );
-      let data: any;
-      try {
-        data = await res.json();
-      } catch {
-        return undefined;
-      }
+
       if (res.status === 400) return undefined;
-      if (
-        data?.error === "InvalidRequest" &&
-        data.message?.includes("Could not find repo")
-      ) {
-        return undefined; // cache “not found”
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch record: ${res.status} ${res.statusText}`,
+        );
       }
-      try {
-        if (!res.ok) throw new Error("Failed to fetch post");
-        return data as GetRecordJSON<any>;
-      } catch (_e) {
-        return undefined;
-      }
+
+      return (await res.json()) as GetRecordJSON<any>;
     },
-    retry: (failureCount, error) => {
-      // dont retry 400 errors
-      if ((error as any)?.message?.includes("400")) return false;
-      return failureCount < 2;
-    },
+    retry: 1,
     staleTime: /*0,//*/ 5 * 60 * 1000, // 5 minutes
     gcTime: /*0//*/ 5 * 60 * 1000,
   });
