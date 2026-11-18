@@ -1,7 +1,6 @@
 import "~/styles/app.css";
 
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
@@ -13,22 +12,9 @@ import reportWebVitals from "./reportWebVitals.ts";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 import { isAtTopAtom } from "./utils/atoms.ts";
+import { localStoragePersister, queryClient } from "./utils/queryClient.ts";
 
 //initAtomToCssVar(hueAtom, "--tw-gray-hue")
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days
-      // todo: the proper fix is to make UPR and other components safe during refetches
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    },
-  },
-});
-const localStoragePersister = createSyncStoragePersister({
-  storage: window.localStorage,
-});
 
 persistQueryClient({
   queryClient,
